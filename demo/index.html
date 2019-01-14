@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>DTree3</title>
+<style>
+html, body {
+  height: 100%;
+}
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: 0;
+}
+#show-length {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+.links {
+  fill: none;
+  stroke: #000;
+}
+.link-extensions {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: .25;
+}
+.labels {
+  font: 10px sans-serif;
+}
+.link--active {
+  stroke: #000 !important;
+  stroke-width: 1.5px;
+}
+.link-extension--active {
+  stroke-opacity: .6;
+}
+.label--active {
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+  <button id="toggle-length">Show Branch length</button>&nbsp;
+  <button id="toggle-smooth">Smooth Lines</button>&nbsp;
+  <button id="toggle-animation">Turn Off Animation</button>&nbsp;
+
+  <script src="//d3js.org/d3.v5.min.js"></script>
+  <script src="//unpkg.com/patristic@0.1.0/dist/patristic.js"></script>
+  <script src="../index.js"></script>
+  <script>
+  var tree;
+  fetch('life.nwk').then(function(response){
+    response.text().then(t => {
+      tree = new Dtree(t);
+      tree.draw('body');
+      d3.select("#toggle-length").on("click", function(){
+        if(tree.distance){
+          this.innerText = "Hide Branch Lengths";
+        } else {
+          this.innerText = "Show Branch Lengths";
+        }
+        tree.setDistance(!tree.distance);
+      });
+
+      d3.select("#toggle-smooth").on("click", function(){
+        if(tree.mode == 'square'){
+          tree.setMode('smooth');
+          this.innerText = "Straighten Lines";
+        } else {
+          tree.setMode('square');
+          this.innerText = "Smooth Lines";
+        }
+      });
+
+      d3.select("#toggle-animation").on("click", function(){
+        tree.animation = !tree.animation;
+        if(tree.animation){
+          this.innerText = "Turn Animation Off";
+        } else {
+          this.innerText = "Turn Animation On";
+        }
+      });
+    });
+  });
+  </script>
+</body>
+</html>
