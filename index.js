@@ -9,6 +9,11 @@
 }(typeof self !== 'undefined' ? self : this, function(){
   "use strict";
 
+  /**
+   * This class function creates a Dtree object.
+   * @param {string} newick A valid newick string
+   * @returns {Dtree} a Dtree object representing the newick tree
+   */
   function Dtree(newick){
     Object.assign(this, {
       mode: 'square',
@@ -18,6 +23,9 @@
       tree: patristic.parseNewick(newick)
     });
   }
+
+  Dtree.validModes = ['smooth', 'square'];
+  Dtree.validLayouts = ['circular', 'radial', 'hierarchical', 'vertical', 'horizontal', 'inverted'];
 
   Dtree.prototype.draw = function(selector){
     if(!selector && !this.parent){
@@ -60,16 +68,14 @@
       .selectAll("path")
       .data(this.hierarchy.links().filter(d => !d.target.children))
       .enter().append("path")
-        .each(function(d){ d.target.linkExtensionNode = this; })
-        .attr("d", d => _linkStep(d.target.x, d.target.y, d.target.x, innerRadius));
+        .each(function(d){ d.target.linkExtensionNode = this; });
 
     this.link = chart.append("g")
         .attr("class", "links")
       .selectAll("path")
       .data(this.hierarchy.links())
       .enter().append("path")
-        .each(function(d) { d.target.linkNode = this; })
-        .attr("d", d => _linkStep(d.source.x, d.source.y, d.target.x, innerRadius));
+        .each(function(d) { d.target.linkNode = this; });
 
     chart.append("g")
         .attr("class", "labels")
@@ -81,8 +87,6 @@
         .text(d => d.data.id)
         .on("mouseover", mouseovered(true))
         .on("mouseout", mouseovered(false));
-
-    this._setLabelTransform();
 
     function moveToFront(){
       this.parentNode.appendChild(this);
@@ -106,21 +110,26 @@
       d.radius = (y0 += d.data.length) * k;
       if(d.children) d.children.forEach(d => setRadius(d, y0, k));
     }
+
+    this.redraw();
   };
 
   Dtree.prototype._setLabelTransform = function(){
     var innerRadius = this.innerRadius;
     var labels = d3.select(this.parent + " .labels").selectAll("text").data(this.hierarchy.leaves());
-    console.log(labels);
     if(this.layout == 'circular'){
       labels.attr("transform", function(d){
         return "rotate(" + (d.x - 90) + ")translate(" + (innerRadius + 4) + ",0)" + (d.x < 180 ? "" : "rotate(180)");
       });
     } else {
       labels.attr("transform", function(d){
-        return "translate("+d.x+","+d.y+")";
+        return "translate(" + d.x + "," + d.y + ")";
       });
     }
+  };
+
+  Dtree.prototype.setTree = function(newick){
+    this.tree = patristic.parseNewick(newick);
   };
 
   Dtree.prototype.redraw = function(){
@@ -129,11 +138,11 @@
     var t = d3.transition().duration(this.animation ? 750 : 0);
     var mode = this.mode;
     if(this.distance){
-      this.linkExtension.transition(t).attr("d", d => _linkStep(d.target.x, d.target.y, d.target.x, innerRadius, mode));
-      this.link.transition(t).attr("d", d => _linkStep(d.source.x, d.source.y, d.target.x, d.target.y, mode));
-    } else {
       this.linkExtension.transition(t).attr("d", d => _linkStep(d.target.x, d.target.radius, d.target.x, innerRadius, mode));
       this.link.transition(t).attr("d", d => _linkStep(d.source.x, d.source.radius, d.target.x, d.target.radius, mode));
+    } else {
+      this.linkExtension.transition(t).attr("d", d => _linkStep(d.target.x, d.target.y, d.target.x, innerRadius, mode));
+      this.link.transition(t).attr("d", d => _linkStep(d.source.x, d.source.y, d.target.x, d.target.y, mode));
     }
     return this;
   };
@@ -145,9 +154,10 @@
   };
 
   Dtree.prototype.setMode = function(newMode){
-    if(['smooth', 'square'].includes(newMode)){
+    if(Dtree.validModes.includes(newMode)){
       this.mode = newMode;
     }
+    //Three of the next four lines are a hack to prevent a boatload of errors from trying to animate the construction of the circular tree with right angles.
     var animCache = this.animation;
     if(newMode == 'square') this.animation = false;
     this.redraw();
@@ -156,7 +166,7 @@
   };
 
   Dtree.prototype.setLayout = function(newMode){
-    if(['circular', 'radial', 'hierarchical', 'vertical', 'horizontal', 'inverted'].includes(newMode)){
+    if(Dtree.validLayouts.includes(newMode)){
       this.mode = newMode;
     }
     this.redraw();

@@ -4,12 +4,18 @@
   "description": "Yet another d3-powered Phylogenetic tree renderer.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "doc": "./node_modules/documentation/bin/documentation.js build index.js -f md -o docs/README.md",
+    "demo": "node_modules/http-server/bin/http-server"
   },
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
     "d3": "^5.7.0",
     "patristic": "^0.1.0"
+  },
+  "devDependencies": {
+    "documentation": "^9.1.1",
+    "http-server": "^0.11.1"
   }
 }
