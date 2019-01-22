@@ -1,94 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<title>DTree3 Demo</title>
-<style>
-html, body {
-  height: 100%;
-}
-body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  margin: 0;
-}
-#menu {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  text-align: right;
-}
-button {
-  width: 100px;
-}
-.links {
-  fill: none;
-  stroke: #000;
-}
-.link-extensions {
-  fill: none;
-  stroke: #000;
-  stroke-opacity: .25;
-}
-.labels {
-  font: 10px sans-serif;
-}
-.link--active {
-  stroke: #000 !important;
-  stroke-width: 1.5px;
-}
-.link-extension--active {
-  stroke-opacity: .6;
-}
-.label--active {
-  font-weight: bold;
-}
-</style>
+  <meta charset="utf-8">
+  <title>Tidy Tree</title>
+  <script src="../node_modules/d3/dist/d3.min.js"></script>
+	<style>
+  html, body{
+    height: 100%;
+  }
+  #options {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    text-align: right;
+    background: white;
+  }
+  .wrap{
+    width: 100px;
+    text-align: center;
+    display:inline-block;
+  }
+  select {
+    width: 100px;
+  }
+  .node circle {
+	  fill: #fff;
+	  stroke: steelblue;
+	  stroke-width: 3px;
+	}
+	.link {
+    stroke-width: 2px;
+	}
+	</style>
 </head>
 <body>
-  <div id="menu">
-    <label>Branch Lengths: <button id="toggle-length">Show</button></label><br />
-    <label>Lines: <button id="toggle-smooth">Smooth</button></label><br />
-    <label>Animation: <button id="toggle-animation">On</button></label>
-  </div>
+  <form id="options">
+    <fieldset>
+      <legend>Tree Options</legend>
+      <label for="layout">Layout</label>
+      <select id="layout">
+        <option>vertical</option>
+        <option>horizontal</option>
+        <option>circular</option>
+      </select><br />
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option>smooth</option>
+        <option>square</option>
+      </select><br />
+      <label for="type">Type</label>
+      <select id="type">
+        <option>tree</option>
+        <option>dendrogram</option>
+      </select><br />
+      <label for="inverted">Inverted</label>
+      <div class="wrap">
+        <input id="inverted" type="checkbox" />
+      </div><br />
+      <label for="animate">Animate</label>
+      <div class="wrap">
+        <input id="animate" type="checkbox" checked />
+      </div>
+    </fieldset>
+  </form>
+<script src="//unpkg.com/patristic@0.1.0/dist/patristic.js"></script>
+<script src="../index.js"></script>
+<script>
+var tree;
 
-  <script src="//d3js.org/d3.v5.min.js"></script>
-  <script src="//unpkg.com/patristic@0.1.0/dist/patristic.js"></script>
-  <script src="../index.js"></script>
-  <script>
-  var tree;
-  fetch('life.nwk').then(function(response){
-    response.text().then(t => {
-      tree = new Dtree(t);
-      tree.draw('body');
-      d3.select("#toggle-length").on("click", function(){
-        tree.setDistance(!tree.distance);
-        if(tree.distance){
-          this.innerText = "Hide";
-        } else {
-          this.innerText = "Show";
-        }
-      });
-
-      d3.select("#toggle-smooth").on("click", function(){
-        if(tree.mode == 'square'){
-          tree.setMode('smooth');
-          this.innerText = "Smooth";
-        } else {
-          tree.setMode('square');
-          this.innerText = "Straight";
-        }
-      });
-
-      d3.select("#toggle-animation").on("click", function(){
-        tree.animation = !tree.animation;
-        if(tree.animation){
-          this.innerText = "On";
-        } else {
-          this.innerText = "Off";
-        }
-      });
-    });
+fetch('life.nwk').then(function(response){
+  response.text().then(t => {
+    tree = new TidyTree(t);
+    tree.draw('body');
   });
-  </script>
+});
+
+d3.selectAll('select').on('change', function(){
+  var thing = this.id[0].toUpperCase() + this.id.slice(1);
+  tree['set'+thing](this.value);
+});
+
+d3.selectAll('input').on('change', function(){
+  var thing = this.id[0].toUpperCase() + this.id.slice(1);
+  tree['set' + thing](this.checked);
+});
+</script>
 </body>
 </html>

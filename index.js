@@ -1,198 +1,297 @@
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
-    define([], function(){ return (root.Dtree = factory()); });
+    define([], function(){ return (root.TidyTree = factory()); });
   } else if (typeof module === 'object' && module.exports) {
     module.exports = factory();
   } else {
-    root.Dtree = factory();
+    root.TidyTree = factory();
   }
 }(typeof self !== 'undefined' ? self : this, function(){
   "use strict";
 
-  /**
-   * This class function creates a Dtree object.
+	/**
+   * This class function creates a TidyTree object.
    * @param {string} newick A valid newick string
-   * @returns {Dtree} a Dtree object representing the newick tree
    */
-  function Dtree(newick){
+  function TidyTree(newick){
+		var tree = patristic.parseNewick(newick);
+		var hierarchy = d3.hierarchy(tree, d => d.children);
     Object.assign(this, {
-      mode: 'square',
-      layout: 'circular',
+			layout: 'vertical',
+			type: 'tree',
+      mode: 'smooth',
+			inverted: false,
       distance: false,
+			leafLabels: false,
+			branchLabels: false,
       animation: true,
-      tree: patristic.parseNewick(newick)
+      tree,
+			hierarchy
     });
   }
 
-  Dtree.validModes = ['smooth', 'square'];
-  Dtree.validLayouts = ['circular', 'radial', 'hierarchical', 'vertical', 'horizontal', 'inverted'];
+  /**
+   * The available layouts for rendering trees.
+   * @type {Array}
+   */
+  TidyTree.validLayouts = ['horizontal', 'vertical', 'circular'];
 
-  Dtree.prototype.draw = function(selector){
+	/**
+	 * The available types for rendering branches.
+	 * @type {Array}
+	 */
+	TidyTree.validTypes = ['tree', 'dendrogram'];
+
+	/**
+   * The available modes for rendering branches.
+   * @type {Array}
+   */
+  TidyTree.validModes = ['smooth', 'square'];
+
+	var width = 960;
+	var height = 500;
+	var margin = {left: 100, top: 100, right: 50, bottom: 50}
+
+	/**
+	 * Draws a Phylogenetic on the element referred to by selector
+	 * @param  {string} selector A CSS selector
+	 * @return {TidyTree}           the TidyTree object
+	 */
+  TidyTree.prototype.draw = function(selector){
     if(!selector && !this.parent){
       console.error("No valid target for drawing given! Where should the tree go?");
     }
     if(!selector) selector = this.parent;
     if(!this.parent) this.parent = selector;
-    if(!this.outerRadius) this.outerRadius = 480;
-    if(!this.innerRadius) this.innerRadius = 310;
 
-    var innerRadius = this.innerRadius,
-        mode = this.mode,
-        layout = this.layout;
+		var tree = d3.tree();
 
-    var svg = d3.select(selector).append("svg")
-        .attr("width", "100%")
-        .attr("height", "100%");
+		var parent = d3.select(selector);
+		var svg = parent.append("svg")
+		      .attr("width", "100%")
+		      .attr("height", "100%");
 
-    var cluster = d3.cluster()
-        .size([360, this.innerRadius])
-        .separation(a => 1);
+		var g = svg.append("g").attr('transform','translate('+ margin.left +','+ margin.right +')');
 
-    var chart = svg.append("g");
-
-    var zoom = d3.zoom().on("zoom", () => chart.attr("transform", d3.event.transform));
+		var zoom = d3.zoom().on("zoom", () => g.attr("transform", d3.event.transform));
     svg.call(zoom);
 
-    svg.transition().duration(1000).call(zoom.transform, () => d3.zoomIdentity.translate(this.outerRadius, this.outerRadius));
+		// Set initial vertical Tree
+		var link = g.selectAll(".link")
+		    .data(tree(this.hierarchy).links())
+		    .enter().append("path")
+		      .attr("class", "link")
+			  .attr("fill","none")
+			  .attr("stroke","#ccc")
+		      .attr("d", smoothLinkTransformers[this.layout]);
 
-    this.hierarchy = d3.hierarchy(this.tree, d => d.children)
-        .sum(d => d.children ? 0 : 1)
-        .sort((a, b) => (a.value - b.value) || d3.ascending(a.data.length, b.data.length));
+		var node = g.selectAll(".node")
+		  .data(this.hierarchy.descendants())
+		  .enter().append("g")
+		    .attr("class", function(d) { return "node" + (d.children ? " node--internal" : " node--leaf"); });
 
-    cluster(this.hierarchy);
+		node.append("circle")
+			.attr("r", 2.5);
 
-    setRadius(this.hierarchy, this.hierarchy.data.length = 0, this.innerRadius / maxLength(this.hierarchy));
+		node.append("text")
+	   .text(function(d) { return d.data.id; })
+		 .attr('y',-10)
+		 .attr('x',-10)
+		 .attr('text-anchor','middle');
 
-    this.linkExtension = chart.append("g")
-        .attr("class", "link-extensions")
-      .selectAll("path")
-      .data(this.hierarchy.links().filter(d => !d.target.children))
-      .enter().append("path")
-        .each(function(d){ d.target.linkExtensionNode = this; });
+		this.redraw();
 
-    this.link = chart.append("g")
-        .attr("class", "links")
-      .selectAll("path")
-      .data(this.hierarchy.links())
-      .enter().append("path")
-        .each(function(d) { d.target.linkNode = this; });
-
-    chart.append("g")
-        .attr("class", "labels")
-      .selectAll("text")
-      .data(this.hierarchy.leaves())
-      .enter().append("text")
-        .attr("dy", ".31em")
-        .attr("text-anchor", d => d.x < 180 ? "start" : "end")
-        .text(d => d.data.id)
-        .on("mouseover", mouseovered(true))
-        .on("mouseout", mouseovered(false));
-
-    function moveToFront(){
-      this.parentNode.appendChild(this);
-    }
-
-    function mouseovered(active){
-      return function(d) {
-        d3.select(this).classed("label--active", active);
-        d3.select(d.linkExtensionNode).classed("link-extension--active", active).each(moveToFront);
-        do d3.select(d.linkNode).classed("link--active", active).each(moveToFront); while (d = d.parent);
-      };
-    }
-
-    // Compute the maximum cumulative length of any node in the tree.
-    function maxLength(d){
-      return d.data.length + (d.children ? d3.max(d.children, maxLength) : 0);
-    }
-
-    // Set the radius of each node by recursively summing and scaling the distance from the hierarchy.
-    function setRadius(d, y0, k){
-      d.radius = (y0 += d.data.length) * k;
-      if(d.children) d.children.forEach(d => setRadius(d, y0, k));
-    }
-
-    this.redraw();
+		return this;
   };
 
-  Dtree.prototype._setLabelTransform = function(){
-    var innerRadius = this.innerRadius;
-    var labels = d3.select(this.parent + " .labels").selectAll("text").data(this.hierarchy.leaves());
-    if(this.layout == 'circular'){
-      labels.attr("transform", function(d){
-        return "rotate(" + (d.x - 90) + ")translate(" + (innerRadius + 4) + ",0)" + (d.x < 180 ? "" : "rotate(180)");
-      });
-    } else {
-      labels.attr("transform", function(d){
-        return "translate(" + d.x + "," + d.y + ")";
-      });
-    }
-  };
+	var smoothLinkTransformers = {
+		vertical: d3.linkVertical().x(d => d.x).y(d => d.y),
+		horizontal: d3.linkHorizontal().x(d => d.y).y(d => d.x),
+		circular: d3.linkRadial().angle(d => d.x).radius(d => d.y)
+	};
 
-  Dtree.prototype.setTree = function(newick){
-    this.tree = patristic.parseNewick(newick);
-  };
+	var squareLinkTransformers = {
+		vertical: d => `M${d.source.x} ${d.source.y} H ${d.target.x} V ${d.target.y}`,
+		horizontal: d => `M${d.source.y} ${d.source.x} V ${d.target.x} H ${d.target.y}`,
+		circular: d => {
+			var startAngle = d.source.x / 180 * Math.PI,
+					startRadius = d.source.y,
+					endAngle = d.target.x / 180 * Math.PI,
+					endRadius = d.target.y;
+			var c0 = Math.cos(startAngle),
+					s0 = Math.sin(startAngle),
+					c1 = Math.cos(endAngle),
+					s1 = Math.sin(endAngle);
+			return "M" + startRadius * c0 + "," + startRadius * s0
+					+ (endAngle === startAngle ? "" : "A" + startRadius + "," + startRadius + " 0 0 " + (endAngle > startAngle ? 1 : 0) + " " + startRadius * c1 + "," + startRadius * s1)
+					+ "L" + endRadius * c1 + "," + endRadius * s1;
+		}
+	};
 
-  Dtree.prototype.redraw = function(){
-    this._setLabelTransform();
-    var innerRadius = this.innerRadius;
-    var t = d3.transition().duration(this.animation ? 750 : 0);
-    var mode = this.mode;
-    if(this.distance){
-      this.linkExtension.transition(t).attr("d", d => _linkStep(d.target.x, d.target.radius, d.target.x, innerRadius, mode));
-      this.link.transition(t).attr("d", d => _linkStep(d.source.x, d.source.radius, d.target.x, d.target.radius, mode));
-    } else {
-      this.linkExtension.transition(t).attr("d", d => _linkStep(d.target.x, d.target.y, d.target.x, innerRadius, mode));
-      this.link.transition(t).attr("d", d => _linkStep(d.source.x, d.source.y, d.target.x, d.target.y, mode));
+	function circularPoint(x, y){
+		return [(y = +y) * Math.cos(x -= Math.PI / 2), y * Math.sin(x)];
+	}
+
+	var nodeTransformers = {
+		vertical: d => "translate(" + d.x + "," + d.y + ")",
+		horizontal: d => "translate(" + d.y + "," + d.x + ")",
+		circular: function(d){
+			return "translate(" + circularPoint(d.x, d.y) + ")";
+		}
+	};
+
+	TidyTree.prototype.redraw = function(){
+		var g = d3.select(this.parent).select('svg g');
+
+		var source = this.type == 'tree' ? d3.tree() : d3.cluster();
+    source.size(this.layout === 'circular' ?
+			[2 * Math.PI, height/2] :
+			[height-margin.top-margin.bottom,width-margin.left-margin.right]
+		);
+
+		var dt = this.animation ? 800 : 0;
+
+		g.selectAll('.link')
+			.data(source(this.hierarchy).links())
+			.transition()
+			.attr("d", tree.mode === 'smooth' ?
+				smoothLinkTransformers[this.layout] :
+				squareLinkTransformers[this.layout]
+			)
+			.duration(dt);
+
+		var node = g.selectAll('.node')
+
+		node
+			.transition()
+			.attr("transform", nodeTransformers[this.layout])
+			.duration(dt);
+
+		var showLeafLabels = this.leafLabels, showBranchLabels = this.branchLabels;
+		node
+			.selectAll('text')
+			.transition()
+			.style('display', d => {
+				if((d.children && showBranchLabels) || (!d.children && showLeafLabels)) return 'block';
+				return 'none';
+			})
+			.duration(dt);
+
+		return this;
+	};
+
+  /**
+   * Update the TidyTree's underlying data structure
+   * There are two contexts in which you should call this:
+   * 	1. You wish to replace the tree with a completely different tree, given by a different newick string
+   * 	2. Your underlying tree data has changed (e.g. the tree has been re-rooted)
+   * @param  {string} newick A valid newick string
+   * @return {object}        the TidyTree object
+   */
+  TidyTree.prototype.setTree = function(newick){
+		if(newick){
+			this.tree = patristic.parseNewick(newick);
+		}
+		this.hierarchy = d3.hierarchy(this.tree, d => d.children);
+    if(this.parent){ //i.e. has already been drawn
+      this.redraw();
     }
     return this;
   };
 
-  Dtree.prototype.setDistance = function(dist){
-    this.distance = dist;
-    this.redraw();
+	/**
+	 * Set the TidyTree's layout
+	 * @param  {string} newLayout The new layout
+	 * @return {TidyTree}         The TidyTree Object
+	 */
+	TidyTree.prototype.setLayout = function(newLayout){
+    if(!TidyTree.validLayouts.includes(newLayout)){
+			console.error('Cannot set TidyTree to layout:', newLayout, '\nValid layouts are:', TidyTree.validLayouts);
+			return;
+		}
+		this.layout = newLayout;
+    if(this.parent){ //i.e. has already been drawn
+      this.redraw();
+    }
     return this;
   };
 
-  Dtree.prototype.setMode = function(newMode){
-    if(Dtree.validModes.includes(newMode)){
-      this.mode = newMode;
+	/**
+	 * Set the TidyTree's mode
+	 * @param  {string}   newMode The new mode
+	 * @return {TidyTree}         The TidyTree object
+	 */
+  TidyTree.prototype.setMode = function(newMode){
+    if(!TidyTree.validModes.includes(newMode)){
+			console.error('Cannot set TidyTree to mode:', newMode, '\nValid modes are:', TidyTree.validModes);
+			return;
     }
-    //Three of the next four lines are a hack to prevent a boatload of errors from trying to animate the construction of the circular tree with right angles.
-    var animCache = this.animation;
-    if(newMode == 'square') this.animation = false;
-    this.redraw();
-    if(newMode == 'square') this.animation = animCache;
+		this.mode = newMode;
+    if(this.parent){ //i.e. has already been drawn
+      this.redraw();
+    }
     return this;
   };
 
-  Dtree.prototype.setLayout = function(newMode){
-    if(Dtree.validLayouts.includes(newMode)){
-      this.mode = newMode;
+	/**
+   * Set the TidyTree's type
+   * @param  {boolean} newType The new type
+   * @return {TidyTree}        the TidyTree object
+   */
+  TidyTree.prototype.setType = function(newType){
+    if(!TidyTree.validTypes.includes(newType)){
+			console.error('Cannot set TidyTree to type:', newType, '\nValid types are:', TidyTree.validTypes);
+			return;
+		}
+		this.type = newType;
+    if(this.parent){ //i.e. has already been drawn
+      this.redraw();
     }
-    this.redraw();
     return this;
   };
 
-  function _linkStep(startAngle, startRadius, endAngle, endRadius, mode){
-    if(!mode) mode = 'smooth';
-    startAngle = startAngle / 180 * Math.PI;
-    endAngle = endAngle / 180 * Math.PI;
-    if(mode === 'smooth'){
-      return d3.linkRadial()({
-        source: [startAngle, startRadius],
-        target: [endAngle, endRadius]
-      });
+	/**
+	 * Set the TidyTree's inversion
+	 * @param  {boolean} inversion Should the tree be inverted?
+	 * @return {TidyTree}           the TidyTree Object
+	 */
+	TidyTree.prototype.setInverted = function(inversion){
+		if(inversion){
+			this.inverted = true;
+		} else {
+			this.inverted = false;
+		}
+    if(this.parent){ //i.e. has already been drawn
+      this.redraw();
     }
-    if(mode === 'square'){
-      var c0 = Math.cos(startAngle = startAngle - Math.PI/2),
-          s0 = Math.sin(startAngle),
-          c1 = Math.cos(endAngle = endAngle - Math.PI/2),
-          s1 = Math.sin(endAngle);
-      return "M" + startRadius * c0 + "," + startRadius * s0
-        + (endAngle === startAngle ? "" : "A" + startRadius + "," + startRadius + " 0 0 " + (endAngle > startAngle ? 1 : 0) + " " + startRadius * c1 + "," + startRadius * s1)
-        + "L" + endRadius * c1 + "," + endRadius * s1;
-    }
-  }
+    return this;
+	};
 
-  return Dtree;
+	TidyTree.prototype.setAnimate = function(animate){
+		if(animate){
+			this.animate = true;
+		} else {
+			this.animate = false;
+		}
+    return this;
+	};
+
+	/**
+	 * Set the TidyTree's distance
+	 * @param  {boolean} inversion Should the tree show its distances?
+	 * @return {TidyTree}           the TidyTree Object
+	 */
+	TidyTree.prototype.setDistance = function(distance){
+		if(distance){
+			this.distance = true;
+		} else {
+			this.distance = false;
+		}
+    if(this.parent){ //i.e. has already been drawn
+      this.redraw();
+    }
+    return this;
+	};
+
+  return TidyTree;
 }));

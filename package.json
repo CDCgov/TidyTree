@@ -1,7 +1,7 @@
 {
-  "name": "dtree3",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Yet another d3-powered Phylogenetic tree renderer.",
+  "name": "tidytree",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

@@ -2,23 +2,167 @@
 
 ### Table of Contents
 
--   [Dtree][1]
+-   [TidyTree][1]
     -   [Parameters][2]
+    -   [setTree][3]
+        -   [Parameters][4]
+    -   [setLayout][5]
+        -   [Parameters][6]
+    -   [setMode][7]
+        -   [Parameters][8]
+    -   [setType][9]
+        -   [Parameters][10]
+    -   [setInverted][11]
+        -   [Parameters][12]
+    -   [setDistance][13]
+        -   [Parameters][14]
+    -   [validLayouts][15]
+    -   [validTypes][16]
+    -   [validModes][17]
+    -   [Parameters][18]
 
-## Dtree
+## TidyTree
 
-This class function creates a Dtree object.
+This class function creates a TidyTree object.
 
 ### Parameters
 
--   `newick` **[string][3]** A valid newick string
+-   `newick` **[string][19]** A valid newick string
 
-Returns **[Dtree][4]** a Dtree object representing the newick tree
+### setTree
 
-[1]: #dtree
+Update the TidyTree's underlying data structure
+There are two contexts in which you should call this:
+	1\. You wish to replace the tree with a completely different tree, given by a different newick string
+	2\. Your underlying tree data has changed (e.g. the tree has been re-rooted)
+
+#### Parameters
+
+-   `newick` **[string][19]** A valid newick string
+
+Returns **[object][20]** the TidyTree object
+
+### setLayout
+
+Set the TidyTree's layout
+
+#### Parameters
+
+-   `newLayout` **[string][19]** The new layout
+
+Returns **[TidyTree][21]** The TidyTree Object
+
+### setMode
+
+Set the TidyTree's mode
+
+#### Parameters
+
+-   `newMode` **[string][19]** The new mode
+
+Returns **[TidyTree][21]** The TidyTree object
+
+### setType
+
+Set the TidyTree's type
+
+#### Parameters
+
+-   `newType` **[boolean][22]** The new type
+
+Returns **[TidyTree][21]** the TidyTree object
+
+### setInverted
+
+Set the TidyTree's inversion
+
+#### Parameters
+
+-   `inversion` **[boolean][22]** Should the tree be inverted?
+
+Returns **[TidyTree][21]** the TidyTree Object
+
+### setDistance
+
+Set the TidyTree's distance
+
+#### Parameters
+
+-   `distance`  
+-   `inversion` **[boolean][22]** Should the tree show its distances?
+
+Returns **[TidyTree][21]** the TidyTree Object
+
+### validLayouts
+
+The available layouts for rendering trees.
+
+Type: [Array][23]
+
+### validTypes
+
+The available types for rendering branches.
+
+Type: [Array][23]
+
+### validModes
+
+The available modes for rendering branches.
+
+Type: [Array][23]
+
+## 
+
+Draws a Phylogenetic on the element referred to by selector
+
+### Parameters
+
+-   `selector` **[string][19]** A CSS selector
+
+Returns **[TidyTree][21]** the TidyTree object
+
+[1]: #tidytree
 
 [2]: #parameters
 
-[3]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[3]: #settree
 
-[4]: #dtree
+[4]: #parameters-1
+
+[5]: #setlayout
+
+[6]: #parameters-2
+
+[7]: #setmode
+
+[8]: #parameters-3
+
+[9]: #settype
+
+[10]: #parameters-4
+
+[11]: #setinverted
+
+[12]: #parameters-5
+
+[13]: #setdistance
+
+[14]: #parameters-6
+
+[15]: #validlayouts
+
+[16]: #validtypes
+
+[17]: #validmodes
+
+[18]: #parameters-7
+
+[19]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[20]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[21]: #tidytree
+
+[22]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[23]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array

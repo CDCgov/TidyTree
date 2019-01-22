@@ -1,13 +1,13 @@
-# DTree3
+# TidyTree
 
-Yet another d3-powered Phylogenetic tree renderer.
+## What?
 
-# Why?
+TidyTree is yet another d3-powered Phylogenetic tree renderer.
 
-[MicrobeTrace](https://github.com/CDCgov/MicrobeTrace) needed a Phylogenetic Tree renderer that enabled rerooting and distance scaling.
+## Shoutouts
 
-Additionally, there were a bunch of nice-to-haves, like Unrooted and Circular views, Zooming, Colorable and Selectable nodes...
+tidytree is based on [this gist](https://gist.github.com/Andrew-Reid/c7ae41a98b8cbb38f1febf13deb9d294) ([See in action](https://bl.ocks.org/Andrew-Reid/c7ae41a98b8cbb38f1febf13deb9d294)), which "mostly just duplicates the cannonical[sic] d3.tree and d3.cluster bl.ocks by Mike Bostock."
 
-Of all the available phylogenetic tree libraries, [Phylotree](https://github.com/veg.phylotree.js) came closest, but it didn't quite cut it for us.
+## Why?
 
-This is based on a re-implementation of Jason Davies’ [Phylogenetic Tree of Life](https://www.jasondavies.com/tree-of-life/), with faded gray lines to connect the leaf nodes of the tree to their corresponding labels inspired by [a figure from *Nature*](http://www.nature.com/nature/journal/v462/n7276/fig_tab/nature08656_F1.html).
+[MicrobeTrace](https://github.com/CDCgov/MicrobeTrace) needed a Phylogenetic Tree renderer that enabled rerooting and distance scaling. Additionally, there were a bunch of nice-to-haves, like Unrooted and Circular views, Zooming, Colorable and Selectable nodes... You get the idea. Of all the available phylogenetic tree libraries, [Phylotree](https://github.com/veg.phylotree.js) came closest, but it didn't quite cut it for us.
