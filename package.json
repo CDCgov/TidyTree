@@ -5,16 +5,19 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "doc": "./node_modules/documentation/bin/documentation.js build index.js -f md -o docs/README.md",
-    "demo": "node_modules/http-server/bin/http-server"
+    "build": "babel index.js > dist/tidytree.js && babel --minified index.js > dist/tidytree.min.js",
+    "doc": "documentation build index.js -f md -o docs/README.md",
+    "demo": "http-server"
   },
-  "author": "",
+  "author": "Tony Boyles <nsp3@cdc.gov>",
   "license": "Apache-2.0",
   "dependencies": {
     "d3": "^5.7.0",
     "patristic": "^0.1.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.2.2",
     "documentation": "^9.1.1",
     "http-server": "^0.11.1"
   }

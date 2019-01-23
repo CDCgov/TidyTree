@@ -37,41 +37,66 @@
   <form id="options">
     <fieldset>
       <legend>Tree Options</legend>
-      <label for="layout">Layout</label>
-      <select id="layout">
-        <option>vertical</option>
-        <option>horizontal</option>
-        <option>circular</option>
-      </select><br />
-      <label for="mode">Mode</label>
-      <select id="mode">
-        <option>smooth</option>
-        <option>square</option>
-      </select><br />
-      <label for="type">Type</label>
-      <select id="type">
-        <option>tree</option>
-        <option>dendrogram</option>
-      </select><br />
-      <label for="inverted">Inverted</label>
+      <label for="layout">Layout
+        <select id="layout"></select>
+      </label><br />
+      <label for="mode">Mode
+        <select id="mode"></select>
+      </label><br />
+      <label for="type">Type
+        <select id="type"></select>
+      </label><br />
+      <label for="animation">Animation</label>
       <div class="wrap">
-        <input id="inverted" type="checkbox" />
+        <input id="animation" type="checkbox" checked />
       </div><br />
-      <label for="animate">Animate</label>
+      <label for="leafNodes">Leaf Nodes</label>
       <div class="wrap">
-        <input id="animate" type="checkbox" checked />
+        <input id="leafNodes" type="checkbox" checked />
+      </div><br />
+      <label for="leafLabels">Leaf Labels</label>
+      <div class="wrap">
+        <input id="leafLabels" type="checkbox" />
+      </div><br />
+      <label for="branchNodes">Branch Nodes</label>
+      <div class="wrap">
+        <input id="branchNodes" type="checkbox" />
+      </div><br />
+      <label for="branchLabels">Branch Labels</label>
+      <div class="wrap">
+        <input id="branchLabels" type="checkbox" />
+      </div><br />
+      <label for="branchDistances">Branch Distances</label>
+      <div class="wrap">
+        <input id="branchDistances" type="checkbox" />
       </div>
     </fieldset>
   </form>
 <script src="//unpkg.com/patristic@0.1.0/dist/patristic.js"></script>
-<script src="../index.js"></script>
+<script src="../dist/tidytree.js"></script>
 <script>
 var tree;
 
+['layout', 'mode', 'type'].forEach(thing => {
+  var title = 'valid' + thing[0].toUpperCase() + thing.slice(1) + 's';
+  d3.select('#'+thing).selectAll('option').data(TidyTree[title])
+    .enter().append('option')
+    .text(d => d);
+});
+
 fetch('life.nwk').then(function(response){
   response.text().then(t => {
-    tree = new TidyTree(t);
-    tree.draw('body');
+    tree = new TidyTree(t, {
+      parent: 'body',
+      layout: d3.select('#layout').node().value,
+      mode: d3.select('#mode').node().value,
+      type: d3.select('#type').node().value,
+      leafNodes: d3.select('#leafNodes').node().checked,
+      branchNodes: d3.select('#branchNodes').node().checked,
+      leafLabels: d3.select('#leafLabels').node().checked,
+      branchLabels: d3.select('#branchLabels').node().checked,
+      branchDistances: d3.select('#branchDistances').node().checked
+    });
   });
 });
 
@@ -84,6 +109,7 @@ d3.selectAll('input').on('change', function(){
   var thing = this.id[0].toUpperCase() + this.id.slice(1);
   tree['set' + thing](this.checked);
 });
+
 </script>
 </body>
 </html>

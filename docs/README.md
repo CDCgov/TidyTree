@@ -4,22 +4,29 @@
 
 -   [TidyTree][1]
     -   [Parameters][2]
-    -   [setTree][3]
+    -   [draw][3]
         -   [Parameters][4]
-    -   [setLayout][5]
+    -   [setTree][5]
         -   [Parameters][6]
-    -   [setMode][7]
+    -   [setLayout][7]
         -   [Parameters][8]
-    -   [setType][9]
+    -   [setMode][9]
         -   [Parameters][10]
-    -   [setInverted][11]
+    -   [setType][11]
         -   [Parameters][12]
-    -   [setDistance][13]
+    -   [setAnimation][13]
         -   [Parameters][14]
-    -   [validLayouts][15]
-    -   [validTypes][16]
-    -   [validModes][17]
-    -   [Parameters][18]
+    -   [setLeafLabels][15]
+        -   [Parameters][16]
+    -   [setBranchLabels][17]
+        -   [Parameters][18]
+    -   [setBranchDistances][19]
+        -   [Parameters][20]
+    -   [setDistance][21]
+        -   [Parameters][22]
+    -   [validLayouts][23]
+    -   [validTypes][24]
+    -   [validModes][25]
 
 ## TidyTree
 
@@ -27,7 +34,18 @@ This class function creates a TidyTree object.
 
 ### Parameters
 
--   `newick` **[string][19]** A valid newick string
+-   `newick` **[string][26]** A valid newick string
+-   `options` **[object][27]** A Javascript object containing options to set up the tree
+
+### draw
+
+Draws a Phylogenetic on the element referred to by selector
+
+#### Parameters
+
+-   `selector` **[string][26]** A CSS selector
+
+Returns **[TidyTree][28]** the TidyTree object
 
 ### setTree
 
@@ -38,9 +56,9 @@ There are two contexts in which you should call this:
 
 #### Parameters
 
--   `newick` **[string][19]** A valid newick string
+-   `newick` **[string][26]** A valid newick string
 
-Returns **[object][20]** the TidyTree object
+Returns **[object][27]** the TidyTree object
 
 ### setLayout
 
@@ -48,9 +66,9 @@ Set the TidyTree's layout
 
 #### Parameters
 
--   `newLayout` **[string][19]** The new layout
+-   `newLayout` **[string][26]** The new layout
 
-Returns **[TidyTree][21]** The TidyTree Object
+Returns **[TidyTree][28]** The TidyTree Object
 
 ### setMode
 
@@ -58,9 +76,9 @@ Set the TidyTree's mode
 
 #### Parameters
 
--   `newMode` **[string][19]** The new mode
+-   `newMode` **[string][26]** The new mode
 
-Returns **[TidyTree][21]** The TidyTree object
+Returns **[TidyTree][28]** The TidyTree object
 
 ### setType
 
@@ -68,19 +86,50 @@ Set the TidyTree's type
 
 #### Parameters
 
--   `newType` **[boolean][22]** The new type
+-   `newType` **[boolean][29]** The new type
 
-Returns **[TidyTree][21]** the TidyTree object
+Returns **[TidyTree][28]** the TidyTree object
 
-### setInverted
+### setAnimation
 
-Set the TidyTree's inversion
+Set the TidyTree's animation
+Note that this does not trigger a redraw.
 
 #### Parameters
 
--   `inversion` **[boolean][22]** Should the tree be inverted?
+-   `animation` **[boolean][29]** Should changes to the tree be animated?
 
-Returns **[TidyTree][21]** the TidyTree Object
+Returns **[TidyTree][28]** the TidyTree object
+
+### setLeafLabels
+
+Set the TidyTree's leafLabels
+
+#### Parameters
+
+-   `show` **[boolean][29]** Should the TidyTree show leafLabels?
+
+Returns **[TidyTree][28]** the TidyTree Object
+
+### setBranchLabels
+
+Set the TidyTree's branchLabels
+
+#### Parameters
+
+-   `show` **[boolean][29]** Should the TidyTree show branchLabels?
+
+Returns **[TidyTree][28]** the TidyTree Object
+
+### setBranchDistances
+
+Set the TidyTree's branchLabels
+
+#### Parameters
+
+-   `show` **[boolean][29]** Should the TidyTree show branchLabels?
+
+Returns **[TidyTree][28]** the TidyTree Object
 
 ### setDistance
 
@@ -88,81 +137,84 @@ Set the TidyTree's distance
 
 #### Parameters
 
--   `distance`  
--   `inversion` **[boolean][22]** Should the tree show its distances?
+-   `distance` **[boolean][29]** Should the tree show its distances?
 
-Returns **[TidyTree][21]** the TidyTree Object
+Returns **[TidyTree][28]** the TidyTree Object
 
 ### validLayouts
 
 The available layouts for rendering trees.
 
-Type: [Array][23]
+Type: [Array][30]
 
 ### validTypes
 
 The available types for rendering branches.
 
-Type: [Array][23]
+Type: [Array][30]
 
 ### validModes
 
 The available modes for rendering branches.
 
-Type: [Array][23]
-
-## 
-
-Draws a Phylogenetic on the element referred to by selector
-
-### Parameters
-
--   `selector` **[string][19]** A CSS selector
-
-Returns **[TidyTree][21]** the TidyTree object
+Type: [Array][30]
 
 [1]: #tidytree
 
 [2]: #parameters
 
-[3]: #settree
+[3]: #draw
 
 [4]: #parameters-1
 
-[5]: #setlayout
+[5]: #settree
 
 [6]: #parameters-2
 
-[7]: #setmode
+[7]: #setlayout
 
 [8]: #parameters-3
 
-[9]: #settype
+[9]: #setmode
 
 [10]: #parameters-4
 
-[11]: #setinverted
+[11]: #settype
 
 [12]: #parameters-5
 
-[13]: #setdistance
+[13]: #setanimation
 
 [14]: #parameters-6
 
-[15]: #validlayouts
+[15]: #setleaflabels
 
-[16]: #validtypes
+[16]: #parameters-7
 
-[17]: #validmodes
+[17]: #setbranchlabels
 
-[18]: #parameters-7
+[18]: #parameters-8
 
-[19]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[19]: #setbranchdistances
 
-[20]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[20]: #parameters-9
 
-[21]: #tidytree
+[21]: #setdistance
 
-[22]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[22]: #parameters-10
 
-[23]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[23]: #validlayouts
+
+[24]: #validtypes
+
+[25]: #validmodes
+
+[26]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[27]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[28]: #tidytree
+
+[29]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[30]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
