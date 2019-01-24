@@ -23,6 +23,9 @@
   select {
     width: 100px;
   }
+  #animation {
+    width: 100px;
+  }
   .node circle {
 	  fill: #fff;
 	  stroke: steelblue;
@@ -46,9 +49,9 @@
       <label for="type">Type
         <select id="type"></select>
       </label><br />
-      <label for="animation">Animation</label>
+      <label for="animation">Animation Speed</label>
       <div class="wrap">
-        <input id="animation" type="checkbox" checked />
+        <input id="animation" type="range" min="0" max="1000" value="500" step="1" />
       </div><br />
       <label for="leafNodes">Leaf Nodes</label>
       <div class="wrap">
@@ -95,7 +98,8 @@ fetch('life.nwk').then(function(response){
       branchNodes: d3.select('#branchNodes').node().checked,
       leafLabels: d3.select('#leafLabels').node().checked,
       branchLabels: d3.select('#branchLabels').node().checked,
-      branchDistances: d3.select('#branchDistances').node().checked
+      branchDistances: d3.select('#branchDistances').node().checked,
+      animation: d3.select('#animation').node().value
     });
   });
 });
@@ -103,11 +107,17 @@ fetch('life.nwk').then(function(response){
 d3.selectAll('select').on('change', function(){
   var thing = this.id[0].toUpperCase() + this.id.slice(1);
   tree['set'+thing](this.value);
+  tree.recenter();
 });
 
 d3.selectAll('input').on('change', function(){
   var thing = this.id[0].toUpperCase() + this.id.slice(1);
-  tree['set' + thing](this.checked);
+  if(this.type === 'checkbox'){
+    tree['set' + thing](this.checked);
+  }
+  if(this.type === 'range'){
+    tree['set' + thing](parseFloat(this.value));
+  }
 });
 
 </script>

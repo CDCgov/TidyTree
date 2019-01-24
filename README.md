@@ -4,6 +4,10 @@
 
 This repository was created for use by CDC programs to collaborate on public health surveillance related projects in support of the CDC Surveillance Strategy.  Github is not hosted by the CDC, but is used by CDC and its partners to share information and collaborate on software.
 
+## Demo
+
+[Try it out here.](https://aaboyles.github.io/TidyTree/demo/index.html)
+
 ## Shoutouts
 
 tidytree is based on [this gist](https://gist.github.com/Andrew-Reid/c7ae41a98b8cbb38f1febf13deb9d294) ([See in action](https://bl.ocks.org/Andrew-Reid/c7ae41a98b8cbb38f1febf13deb9d294)), which "mostly just duplicates the cannonical[sic] d3.tree and d3.cluster bl.ocks by Mike Bostock."

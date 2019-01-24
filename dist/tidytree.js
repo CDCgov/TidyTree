@@ -9,7 +9,7 @@
     root.TidyTree = factory();
   }
 })(typeof self !== 'undefined' ? self : this, function () {
-  "use strict";
+  'use strict';
   /**
     * This class function creates a TidyTree object.
     * @param {string} newick A valid newick string
@@ -19,7 +19,7 @@
   function TidyTree(newick, options) {
     if (!options) options = {};
     let tree = patristic.parseNewick(newick);
-    let hierarchy = d3.hierarchy(tree, d => d.children).sum(d => d.length);
+    let hierarchy = d3.hierarchy(tree, d => d.children);
     Object.assign(this, {
       layout: 'vertical',
       type: 'tree',
@@ -30,7 +30,7 @@
       branchNodes: false,
       branchLabels: false,
       branchDistances: false,
-      animation: true,
+      animation: 500,
       margin: [50, 50, 50, 50],
       //CSS order: top, right, bottom, left
       tree,
@@ -65,41 +65,45 @@
 
   TidyTree.prototype.draw = function (selector) {
     if (!selector && !this.parent) {
-      console.error("No valid target for drawing given! Where should the tree go?");
+      console.error('No valid target for drawing given! Where should the tree go?');
     }
 
     if (!selector) selector = this.parent;
     if (!this.parent) this.parent = selector;
     let tree = d3.tree();
-    let parent = d3.select(selector);
-    let svg = parent.append("svg").attr("width", "100%").attr("height", "100%");
-    let g = svg.append("g");
-    let zoom = d3.zoom().on("zoom", () => g.attr("transform", d3.event.transform));
-    svg.call(zoom); // Set initial tree
+    let svg = d3.select(selector).append('svg').attr('width', '100%').attr('height', '100%');
+    let g = svg.append('g');
+    this.zoom = d3.zoom().on('zoom', () => g.attr('transform', d3.event.transform));
+    svg.call(this.zoom); // Set initial tree
 
-    let link = g.selectAll(".link").data(tree(this.hierarchy).links()).enter().append("g").attr("class", "link");
-    link.append('path').attr("fill", "none").attr("stroke", "#ccc").attr("d", linkTransformers[this.mode][this.layout]);
-    link.append('text').attr('y', 2).attr('text-anchor', 'middle').style('font-size', '6px').text(d => d.source.value.toLocaleString());
-    let node = g.selectAll(".node").data(this.hierarchy.descendants()).enter().append("g").attr("class", d => "node " + (d.children ? "node--internal" : "node--leaf"));
-    node.append("circle").attr("r", 2.5);
-    node.append("text").text(d => d.data.id).style('font-size', '6px').attr('y', 2).attr('x', 5);
+    let link = g.selectAll('.link').data(tree(this.hierarchy).links()).enter().append('g').attr('class', 'link');
+    link.append('path').attr('fill', 'none').attr('stroke', '#ccc');
+    link.append('text').attr('y', 2).attr('text-anchor', 'middle').style('font-size', '6px').style('opacity', this.branchDistances ? 1 : 0).text(d => {
+      if (typeof d.source.data.length === 'undefined') return '0.000';
+      return d.source.data.length.toLocaleString();
+    });
+    let node = g.selectAll('.node').data(this.hierarchy.descendants()).enter().append('g').attr('class', d => 'node ' + (d.children ? 'node--internal' : 'node--leaf'));
+    node.append('circle').attr('r', 2.5).style('opacity', d => d.children && this.branchNodes || !d.children && this.leafNodes ? 1 : 0);
+    node.append('text').text(d => d.data.id).style('font-size', '6px').attr('y', 2).attr('x', 5).style('opacity', d => d.children && this.branchLabels || !d.children && this.leafLabels ? 1 : 0);
+    this.redraw().setLeafNodes(this.leafNodes).setBranchNodes(this.branchNodes).setLeafLabels(this.leafLabels).setBranchLabels(this.branchLabels).setBranchDistances(this.branchDistances);
+    svg.call(this.zoom.translateBy, this.margin[0], this.margin[3]);
     this.redraw();
-    svg.call(zoom.translateBy, this.margin[0], this.margin[3]);
     return this;
   };
 
   const getX = d => d.x,
-        getY = d => d.y;
+        getY = d => d.y,
+        getLength = d => d.data.length;
 
   const linkTransformers = {
     smooth: {
-      vertical: d3.linkVertical().x(getX).y(getY),
       horizontal: d3.linkHorizontal().x(getY).y(getX),
+      vertical: d3.linkVertical().x(getX).y(getY),
       circular: d3.linkRadial().angle(getX).radius(getY)
     },
     straight: {
-      vertical: d => `M${d.source.x} ${d.source.y} L ${d.target.x} ${d.target.y}`,
       horizontal: d => `M${d.source.y} ${d.source.x} L ${d.target.y} ${d.target.x}`,
+      vertical: d => `M${d.source.x} ${d.source.y} L ${d.target.x} ${d.target.y}`,
       circular: d => {
         let startAngle = d.source.x - Math.PI / 2,
             startRadius = d.source.y,
@@ -109,12 +113,12 @@
         const y0 = Math.sin(startAngle);
         const x1 = Math.cos(endAngle);
         const y1 = Math.sin(endAngle);
-        return "M" + startRadius * x0 + "," + startRadius * y0 + "L" + endRadius * x1 + "," + endRadius * y1;
+        return 'M' + startRadius * x0 + ',' + startRadius * y0 + 'L' + endRadius * x1 + ',' + endRadius * y1;
       }
     },
     square: {
-      vertical: d => `M${d.source.x} ${d.source.y} H ${d.target.x} V ${d.target.y}`,
       horizontal: d => `M${d.source.y} ${d.source.x} V ${d.target.x} H ${d.target.y}`,
+      vertical: d => `M${d.source.x} ${d.source.y} H ${d.target.x} V ${d.target.y}`,
       circular: d => {
         let startAngle = d.source.x - Math.PI / 2,
             startRadius = d.source.y,
@@ -124,17 +128,8 @@
         const y0 = Math.sin(startAngle);
         const x1 = Math.cos(endAngle);
         const y1 = Math.sin(endAngle);
-        return "M" + startRadius * x0 + "," + startRadius * y0 + (endAngle === startAngle ? "" : "A" + startRadius + "," + startRadius + " 0 0 " + (endAngle > startAngle ? 1 : 0) + " " + startRadius * x1 + "," + startRadius * y1) + "L" + endRadius * x1 + "," + endRadius * y1;
+        return 'M' + startRadius * x0 + ',' + startRadius * y0 + (endAngle === startAngle ? '' : 'A' + startRadius + ',' + startRadius + ' 0 0 ' + (endAngle > startAngle ? 1 : 0) + ' ' + startRadius * x1 + ',' + startRadius * y1) + 'L' + endRadius * x1 + ',' + endRadius * y1;
       }
-    }
-  };
-  const labelTransformers = {
-    vertical: l => `translate(${(l.source.x + l.target.x) / 2}, ${(l.source.y + l.target.y) / 2})`,
-    horizontal: l => `translate(${(l.source.y + l.target.y) / 2}, ${(l.source.x + l.target.x) / 2})`,
-    circular: l => {
-      let s = circularPoint(l.source.x, l.source.y),
-          t = circularPoint(l.target.x, l.target.y);
-      return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) / 2})`;
     }
   };
 
@@ -143,44 +138,81 @@
   }
 
   const nodeTransformers = {
-    vertical: d => `translate(${d.x},${d.y})`,
     horizontal: d => `translate(${d.y},${d.x})`,
+    vertical: d => `translate(${d.x},${d.y})`,
     circular: d => `translate(${circularPoint(d.x, d.y)})`
   };
+  var scalar = 180 / Math.PI;
+  let labelTransformers = {
+    straight: {
+      horizontal: l => `translate(${(l.source.y + l.target.y) / 2}, ${(l.source.x + l.target.x) / 2}) rotate(${Math.atan((l.target.x - l.source.x) / (l.target.y - l.source.y)) * scalar})`,
+      vertical: l => `translate(${(l.source.x + l.target.x) / 2}, ${(l.source.y + l.target.y) / 2}) rotate(${Math.atan((l.source.y - l.target.y) / (l.source.x - l.target.x)) * scalar})`,
+      circular: l => {
+        let s = circularPoint(l.source.x, l.source.y),
+            t = circularPoint(l.target.x, l.target.y);
+        return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) / 2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * 180 / Math.PI})`;
+      }
+    },
+    square: {
+      horizontal: l => `translate(${(l.source.y + l.target.y) / 2}, ${l.target.x})`,
+      vertical: l => `translate(${l.target.x}, ${(l.source.y + l.target.y) / 2}) rotate(90)`,
+      circular: l => {
+        let s = circularPoint(l.source.x, l.source.y),
+            t = circularPoint(l.target.x, l.target.y),
+            u = circularPoint(l.target.x, (l.source.y + l.target.y) / 2);
+        return `translate(${u[0]}, ${u[1]}) rotate(${l.target.x * 180 / Math.PI % 180 - 90})`;
+      }
+    }
+  };
+  labelTransformers.smooth = labelTransformers.straight;
+  /**
+   * Redraws the links and relocates the nodes accordingly
+   * @return {TidyTree} The TidyTree Object
+   */
 
   TidyTree.prototype.redraw = function () {
     let parent = d3.select(this.parent);
     let width = parseFloat(parent.style('width')) - this.margin[0] - this.margin[2];
     let height = parseFloat(parent.style('height')) - this.margin[1] - this.margin[3];
     let g = parent.select('svg g');
-    let source = this.type === 'tree' ? d3.tree() : d3.cluster();
-    source.size(this.layout === 'circular' ? [2 * Math.PI, height / 2] : [height, width]);
-    let dt = this.animation ? 800 : 0;
-    let link = g.selectAll('.link').data(source(this.hierarchy).links());
+    let source = (this.type === 'tree' ? d3.tree() : d3.cluster()).size(this.layout === 'circular' ? [2 * Math.PI, height / 2] : [height, width]).separation((a, b) => 1); //Note: You must render links prior to nodes in order to get correct placement!
+
+    let links = g.selectAll('.link').data(source(this.hierarchy).links());
+    links.selectAll('path').transition().duration(this.animation).attr('d', linkTransformers[this.mode][this.layout]);
 
     if (this.branchDistances) {
-      link.selectAll('text').transition().style('opacity', 1).attr('transform', labelTransformers[this.layout]).duration(dt);
-    } else {
-      link.selectAll('text').transition().style('opacity', 0).duration(dt);
+      links.selectAll('text').transition().duration(this.animation).attr('transform', labelTransformers[this.mode][this.layout]);
     }
 
-    link.select('path').transition().attr("d", linkTransformers[this.mode][this.layout]).duration(dt);
-    let node = g.selectAll('.node');
-    node.selectAll('circle').style('display', d => d.children && this.branchNodes || !d.children && this.leafNodes ? 'block' : 'none');
-    node.transition().attr("transform", nodeTransformers[this.layout]).duration(dt);
-    let showLeafLabels = this.leafLabels,
-        showBranchLabels = this.branchLabels;
-    let text = node.selectAll('text');
-    text.style('display', d => d.children && showBranchLabels || !d.children && showLeafLabels ? 'block' : 'none');
+    let node = g.selectAll('.node').data(this.hierarchy.descendants()).transition().duration(this.animation).attr('transform', nodeTransformers[this.layout]);
 
     if (this.layout === 'vertical') {
-      text.attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
+      node.selectAll('text').attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
     } else if (this.layout === 'horizontal') {
-      text.attr('transform', 'rotate(0)').attr('text-anchor', 'start').attr('x', 5);
+      node.selectAll('text').attr('transform', 'rotate(0)').attr('text-anchor', 'start').attr('x', 5);
     } else {
-      text.attr('transform', l => 'rotate(' + (l.x / Math.PI * 180 % 180 - 90) + ')').attr('text-anchor', l => l.x % (2 * Math.PI) > Math.PI ? 'end' : 'start').attr('x', l => l.x % (2 * Math.PI) > Math.PI ? -5 : 5);
+      node.selectAll('text').attr('transform', l => 'rotate(' + (l.x / Math.PI * 180 % 180 - 90) + ')').attr('text-anchor', l => l.x % (2 * Math.PI) > Math.PI ? 'end' : 'start').attr('x', l => l.x % (2 * Math.PI) > Math.PI ? -5 : 5);
     }
 
+    return this;
+  };
+  /**
+   * Recenters the tree in the center of the view
+   * @return {TidyTree} The TidyTree object
+   */
+
+
+  TidyTree.prototype.recenter = function () {
+    let svg = d3.select(this.parent).select('svg'),
+        x = this.margin[0],
+        y = this.margin[3];
+
+    if (this.layout === 'circular') {
+      x += parseFloat(svg.style('width')) / 2;
+      y += parseFloat(svg.style('height')) / 2;
+    }
+
+    svg.transition().duration(this.animation ? 800 : 0).call(this.zoom.transform, d3.zoomIdentity.translate(x, y));
     return this;
   };
   /**
@@ -199,12 +231,7 @@
     }
 
     this.hierarchy = d3.hierarchy(this.tree, d => d.children);
-
-    if (this.parent) {
-      //i.e. has already been drawn
-      this.redraw();
-    }
-
+    if (this.parent) return this.redraw();
     return this;
   };
   /**
@@ -221,12 +248,7 @@
     }
 
     this.layout = newLayout;
-
-    if (this.parent) {
-      //i.e. has already been drawn
-      this.redraw();
-    }
-
+    if (this.parent) return this.redraw();
     return this;
   };
   /**
@@ -243,12 +265,7 @@
     }
 
     this.mode = newMode;
-
-    if (this.parent) {
-      //i.e. has already been drawn
-      this.redraw();
-    }
-
+    if (this.parent) return this.redraw();
     return this;
   };
   /**
@@ -265,33 +282,34 @@
     }
 
     this.type = newType;
-
-    if (this.parent) {
-      //i.e. has already been drawn
-      this.redraw();
-    }
-
+    if (this.parent) return this.redraw();
     return this;
   };
   /**
    * Set the TidyTree's animation
    * Note that this does not trigger a redraw.
-   * @param  {boolean} animation Should changes to the tree be animated?
+   * @param  {number} speed The desired duration of an animation, in ms. Set to 0 to turn animations off completely.
    * @return {TidyTree}          the TidyTree object
    */
 
 
-  TidyTree.prototype.setAnimation = function (animation) {
-    this.animation = animation ? true : false;
+  TidyTree.prototype.setAnimation = function (speed) {
+    this.animation = speed;
     return this;
   };
+  /**
+   * [description]
+   * @param  {[type]} show [description]
+   * @return {[type]}      [description]
+   */
+
 
   TidyTree.prototype.setLeafNodes = function (show) {
     this.leafNodes = show ? true : false;
 
     if (this.parent) {
       //i.e. has already been drawn
-      this.redraw();
+      d3.select(this.parent).select('svg').selectAll('g.node--leaf circle').transition().duration(this.animation).style('opacity', show ? 1 : 0);
     }
 
     return this;
@@ -308,18 +326,24 @@
 
     if (this.parent) {
       //i.e. has already been drawn
-      this.redraw();
+      d3.select(this.parent).select('svg').selectAll('g.node--leaf text').transition().duration(this.animation).style('opacity', show ? 1 : 0);
     }
 
     return this;
   };
+  /**
+   * [description]
+   * @param  {[type]} show [description]
+   * @return {[type]}      [description]
+   */
+
 
   TidyTree.prototype.setBranchNodes = function (show) {
     this.branchNodes = show ? true : false;
 
     if (this.parent) {
       //i.e. has already been drawn
-      this.redraw();
+      d3.select(this.parent).select('svg').selectAll('g.node--internal circle').transition().duration(this.animation).style('opacity', show ? 1 : 0);
     }
 
     return this;
@@ -336,7 +360,7 @@
 
     if (this.parent) {
       //i.e. has already been drawn
-      this.redraw();
+      d3.select(this.parent).select('svg').selectAll('g.node--internal text').transition().duration(this.animation).style('opacity', show ? 1 : 0);
     }
 
     return this;
@@ -353,24 +377,9 @@
 
     if (this.parent) {
       //i.e. has already been drawn
-      this.redraw();
-    }
-
-    return this;
-  };
-  /**
-   * Set the TidyTree's distance
-   * @param  {boolean} distance Should the tree show its distances?
-   * @return {TidyTree}           the TidyTree Object
-   */
-
-
-  TidyTree.prototype.setDistance = function (distance) {
-    this.distance = distance ? true : false;
-
-    if (this.parent) {
-      //i.e. has already been drawn
-      this.redraw();
+      let links = d3.select(this.parent).select('svg').selectAll('.link').selectAll('text');
+      if (show) links.attr('transform', labelTransformers[this.mode][this.layout]);
+      links.transition().duration(this.animation).style('opacity', show ? 1 : 0);
     }
 
     return this;
