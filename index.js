@@ -25,6 +25,7 @@
       distance: false,
       leafNodes: true,
 			leafLabels: false,
+      leafLabelSize: 6,
       branchNodes: false,
 			branchLabels: false,
       branchDistances: false,
@@ -372,6 +373,18 @@
       d3.select(this.parent).select('svg').selectAll('g.node--leaf text')
         .transition().duration(this.animation)
         .style('opacity', show ? 1 : 0);
+    }
+    return this;
+  };
+
+
+  TidyTree.prototype.setLeafLabelSize = function(size){
+    this.leafLabelSize = size;
+    if(this.parent){ //i.e. has already been drawn
+      d3.select(this.parent).select('svg').selectAll('g.node--leaf text')
+        .transition().duration(this.animation)
+        .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2)
+        .style('font-size', size);
     }
     return this;
   };

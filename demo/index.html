@@ -23,7 +23,7 @@
   select {
     width: 100px;
   }
-  #animation {
+  [type="range"] {
     width: 100px;
   }
   .node circle {
@@ -60,6 +60,10 @@
       <label for="leafLabels">Leaf Labels</label>
       <div class="wrap">
         <input id="leafLabels" type="checkbox" />
+      </div><br />
+      <label for="leafLabelSize">Leaf Label Size</label>
+      <div class="wrap">
+        <input id="leafLabelSize" type="range" min="1" max="32" value="6" step="1" />
       </div><br />
       <label for="branchNodes">Branch Nodes</label>
       <div class="wrap">
