@@ -3,28 +3,21 @@
 <head>
   <meta charset="utf-8">
   <title>Tidy Tree</title>
-  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="//d3js.org/d3.v5.min.js"></script>
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre.min.css" />
 	<style>
-  html, body{
+  html, body, .columns{
     height: 100%;
   }
-  #options {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    text-align: right;
-    background: white;
+  #options{
+    height: 100%;
+    background-color: lightgray;
   }
-  .wrap{
-    width: 100px;
-    text-align: center;
-    display:inline-block;
+  [type="range"]{
+    width: 100%;
   }
-  select {
-    width: 100px;
-  }
-  [type="range"] {
-    width: 100px;
+  #tree {
+    height: 100%;
   }
   .node circle {
 	  fill: #fff;
@@ -36,51 +29,81 @@
 	}
 	</style>
 </head>
-<body>
-  <form id="options">
-    <fieldset>
-      <legend>Tree Options</legend>
-      <label for="layout">Layout
-        <select id="layout"></select>
-      </label><br />
-      <label for="mode">Mode
-        <select id="mode"></select>
-      </label><br />
-      <label for="type">Type
-        <select id="type"></select>
-      </label><br />
-      <label for="animation">Animation Speed</label>
-      <div class="wrap">
-        <input id="animation" type="range" min="0" max="1000" value="500" step="1" />
-      </div><br />
-      <label for="leafNodes">Leaf Nodes</label>
-      <div class="wrap">
-        <input id="leafNodes" type="checkbox" checked />
-      </div><br />
-      <label for="leafLabels">Leaf Labels</label>
-      <div class="wrap">
-        <input id="leafLabels" type="checkbox" />
-      </div><br />
-      <label for="leafLabelSize">Leaf Label Size</label>
-      <div class="wrap">
-        <input id="leafLabelSize" type="range" min="1" max="32" value="6" step="1" />
-      </div><br />
-      <label for="branchNodes">Branch Nodes</label>
-      <div class="wrap">
-        <input id="branchNodes" type="checkbox" />
-      </div><br />
-      <label for="branchLabels">Branch Labels</label>
-      <div class="wrap">
-        <input id="branchLabels" type="checkbox" />
-      </div><br />
-      <label for="branchDistances">Branch Distances</label>
-      <div class="wrap">
-        <input id="branchDistances" type="checkbox" />
+<body class="container">
+  <div class="columns">
+    <div id="options" class="column col-auto">
+      <h1 class="text-center">TidyTree</h1>
+      <div class="form-group">
+        <label>
+          Source Data
+          <input class="form-input" id="source" type="file">
+        </label>
       </div>
-    </fieldset>
-  </form>
+      <div class="form-group">
+        <label>
+          Layout
+          <select id="layout" class="form-select"></select>
+        </label>
+      </div>
+      <div class="form-group">
+        <label>
+          Mode
+          <select id="mode" class="form-select"></select>
+        </label>
+      </div>
+      <div class="form-group">
+        <label>
+          Type
+          <select id="type" class="form-select"></select>
+        </label>
+      </div>
+      <div class="form-group">
+        <label>
+          Animation Speed
+          <input id="animation" type="range" min="0" max="1000" value="500" step="1" />
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="form-switch">
+          <input id="branchNodes" type="checkbox" />
+          <i class="form-icon"></i> Branch Nodes
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="form-switch">
+          <input id="branchLabels" type="checkbox" />
+          <i class="form-icon"></i> Branch Labels
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="form-switch">
+          <input id="branchDistances" type="checkbox" />
+          <i class="form-icon"></i> Branch Distances
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="form-switch">
+          <input id="leafNodes" type="checkbox" checked>
+          <i class="form-icon"></i> Leaf Nodes
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="form-switch">
+          <input id="leafLabels" type="checkbox" />
+          <i class="form-icon"></i> Leaf Labels
+        </label>
+      </div>
+      <div class="form-group">
+        <label>
+          Leaf Label Size
+          <input id="leafLabelSize" type="range" min="1" max="32" value="6" step="1" />
+        </label>
+      </div>
+    </div>
+    <div id="tree" class="column"></div>
+  </div>
 <script src="//unpkg.com/patristic@0.1.0/dist/patristic.js"></script>
-<script src="../dist/tidytree.js"></script>
+<script src="../index.js"></script>
 <script>
 var tree;
 
@@ -94,7 +117,7 @@ var tree;
 fetch('life.nwk').then(function(response){
   response.text().then(t => {
     tree = new TidyTree(t, {
-      parent: 'body',
+      parent: '#tree',
       layout: d3.select('#layout').node().value,
       mode: d3.select('#mode').node().value,
       type: d3.select('#type').node().value,
@@ -103,9 +126,29 @@ fetch('life.nwk').then(function(response){
       leafLabels: d3.select('#leafLabels').node().checked,
       branchLabels: d3.select('#branchLabels').node().checked,
       branchDistances: d3.select('#branchDistances').node().checked,
-      animation: d3.select('#animation').node().value
+      animation: parseFloat(d3.select('#animation').node().value)
     });
   });
+});
+
+d3.select('#source').on('input', function(){
+  let reader = new FileReader();
+  reader.onload = function(){
+    d3.select('#tree').html(null);
+    tree = new TidyTree(reader.result, {
+      parent: '#tree',
+      layout: d3.select('#layout').node().value,
+      mode: d3.select('#mode').node().value,
+      type: d3.select('#type').node().value,
+      leafNodes: d3.select('#leafNodes').node().checked,
+      branchNodes: d3.select('#branchNodes').node().checked,
+      leafLabels: d3.select('#leafLabels').node().checked,
+      branchLabels: d3.select('#branchLabels').node().checked,
+      branchDistances: d3.select('#branchDistances').node().checked,
+      animation: parseFloat(d3.select('#animation').node().value)
+    });
+  };
+  reader.readAsText(d3.event.srcElement.files[0]);
 });
 
 d3.selectAll('select').on('change', function(){
