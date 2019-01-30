@@ -184,12 +184,12 @@
 		circular:   d => `translate(${circularPoint(d.x, d.y)})`
 	};
 
-  var scalar = 180 / Math.PI;
+  var radToDeg = 180 / Math.PI;
 
   let labelTransformers = {
     straight: {
-      horizontal: l => `translate(${(l.source.y + l.target.y)/2}, ${(l.source.x + l.target.x)/2}) rotate(${Math.atan((l.target.x-l.source.x)/(l.target.y-l.source.y))*scalar})`,
-      vertical:   l => `translate(${(l.source.x + l.target.x)/2}, ${(l.source.y + l.target.y)/2}) rotate(${Math.atan((l.source.y-l.target.y)/(l.source.x-l.target.x))*scalar})`,
+      horizontal: l => `translate(${(l.source.y + l.target.y)/2}, ${(l.source.x + l.target.x)/2}) rotate(${Math.atan((l.target.x-l.source.x)/(l.target.y-l.source.y))*radToDeg})`,
+      vertical:   l => `translate(${(l.source.x + l.target.x)/2}, ${(l.source.y + l.target.y)/2}) rotate(${Math.atan((l.source.y-l.target.y)/(l.source.x-l.target.x))*radToDeg})`,
       circular:   l => {
         let s = circularPoint(l.source.x, l.source.y),
             t = circularPoint(l.target.x, l.target.y);
@@ -200,9 +200,7 @@
       horizontal: l => `translate(${(l.source.y + l.target.y)/2}, ${l.target.x})`,
       vertical:   l => `translate(${l.target.x}, ${(l.source.y + l.target.y)/2}) rotate(90)`,
       circular:   l => {
-        let s = circularPoint(l.source.x, l.source.y),
-            t = circularPoint(l.target.x, l.target.y),
-            u = circularPoint(l.target.x, (l.source.y+l.target.y)/2);
+        let u = circularPoint(l.target.x, (l.source.y+l.target.y)/2);
         return `translate(${u[0]}, ${u[1]}) rotate(${l.target.x*180/Math.PI%180-90})`;
       }
     }
