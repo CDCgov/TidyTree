@@ -307,9 +307,8 @@
     let width  = parseFloat(parent.style('width'))  - this.margin[0] - this.margin[2];
     let height = parseFloat(parent.style('height')) - this.margin[1] - this.margin[3];
 
-    this.hierarchy.each(d => {
-      d.weight = (this.layout === 'horizontal' ? width : height) * d.value;
-    });
+    let scalar = (this.layout === 'horizontal' ? width : (this.layout === 'vertical' ? height : Math.min(width, height)/2));
+    this.hierarchy.each(d => d.weight = scalar * d.value);
 
 		let g = parent.select('svg g');
 
