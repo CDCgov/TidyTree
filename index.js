@@ -220,7 +220,7 @@
 		let g = parent.select('svg g');
 
 		let source = (this.type === 'tree' ? d3.tree() : d3.cluster())
-      .size(this.layout === 'circular' ? [2 * Math.PI, height/2] : [height, width])
+      .size(this.layout === 'circular' ? [2 * Math.PI, Math.min(height, width)/2] : this.layout === 'horizontal' ? [height, width] : [width, height])
       .separation((a, b) => 1);
 
     //Note: You must render links prior to nodes in order to get correct placement!
