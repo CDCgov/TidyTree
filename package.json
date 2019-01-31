@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "d3": "^5.7.0",
-    "patristic": "^0.1.0"
+    "patristic": "^0.2.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",

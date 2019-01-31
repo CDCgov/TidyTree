@@ -6,7 +6,7 @@
   <script src="//d3js.org/d3.v5.min.js"></script>
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre.min.css" />
 	<style>
-  html, body, .columns{
+  html, body, .container, .columns, #options, #tree{
     height: 100%;
     overflow: hidden;
   }
@@ -17,9 +17,6 @@
   [type="range"]{
     width: 100%;
   }
-  #tree {
-    height: 100%;
-  }
   .node circle {
 	  fill: #fff;
 	  stroke: steelblue;
@@ -28,84 +25,114 @@
 	.link {
     stroke-width: 2px;
 	}
+  #context-menu, #tooltip{
+    position: absolute;
+    display: none;
+    z-index: -1;
+  }
+  #tooltip{
+    background: lightgray;
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+  }
 	</style>
 </head>
-<body class="container">
-  <div class="columns">
-    <div id="options" class="column col-auto">
-      <h1 class="text-center">TidyTree</h1>
-      <div class="form-group">
-        <label>
-          Source Data
-          <input class="form-input" id="source" type="file">
-        </label>
+<body>
+  <div class="container">
+    <div class="columns">
+      <div id="options" class="column col-auto">
+        <h1 class="text-center">TidyTree</h1>
+        <div class="form-group">
+          <label>
+            Source Data
+            <input class="form-input" id="source" type="file">
+          </label>
+        </div>
+        <div class="form-group">
+          <label>
+            Layout
+            <select id="layout" class="form-select"></select>
+          </label>
+        </div>
+        <div class="form-group">
+          <label>
+            Mode
+            <select id="mode" class="form-select"></select>
+          </label>
+        </div>
+        <div class="form-group">
+          <label>
+            Type
+            <select id="type" class="form-select"></select>
+          </label>
+        </div>
+        <div class="form-group">
+          <label>
+            Animation Speed
+            <input id="animation" type="range" min="0" max="1000" value="500" step="1" />
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-switch">
+            <input id="branchNodes" type="checkbox" />
+            <i class="form-icon"></i> Branch Nodes
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-switch">
+            <input id="branchLabels" type="checkbox" />
+            <i class="form-icon"></i> Branch Labels
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-switch">
+            <input id="branchDistances" type="checkbox" />
+            <i class="form-icon"></i> Branch Distances
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-switch">
+            <input id="leafNodes" type="checkbox" checked>
+            <i class="form-icon"></i> Leaf Nodes
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-switch">
+            <input id="leafLabels" type="checkbox" />
+            <i class="form-icon"></i> Leaf Labels
+          </label>
+        </div>
+        <div class="form-group">
+          <label>
+            Leaf Label Size
+            <input id="leafLabelSize" type="range" min="1" max="32" value="6" step="1" />
+          </label>
+        </div>
       </div>
-      <div class="form-group">
-        <label>
-          Layout
-          <select id="layout" class="form-select"></select>
-        </label>
-      </div>
-      <div class="form-group">
-        <label>
-          Mode
-          <select id="mode" class="form-select"></select>
-        </label>
-      </div>
-      <div class="form-group">
-        <label>
-          Type
-          <select id="type" class="form-select"></select>
-        </label>
-      </div>
-      <div class="form-group">
-        <label>
-          Animation Speed
-          <input id="animation" type="range" min="0" max="1000" value="500" step="1" />
-        </label>
-      </div>
-      <div class="form-group">
-        <label class="form-switch">
-          <input id="branchNodes" type="checkbox" />
-          <i class="form-icon"></i> Branch Nodes
-        </label>
-      </div>
-      <div class="form-group">
-        <label class="form-switch">
-          <input id="branchLabels" type="checkbox" />
-          <i class="form-icon"></i> Branch Labels
-        </label>
-      </div>
-      <div class="form-group">
-        <label class="form-switch">
-          <input id="branchDistances" type="checkbox" />
-          <i class="form-icon"></i> Branch Distances
-        </label>
-      </div>
-      <div class="form-group">
-        <label class="form-switch">
-          <input id="leafNodes" type="checkbox" checked>
-          <i class="form-icon"></i> Leaf Nodes
-        </label>
-      </div>
-      <div class="form-group">
-        <label class="form-switch">
-          <input id="leafLabels" type="checkbox" />
-          <i class="form-icon"></i> Leaf Labels
-        </label>
-      </div>
-      <div class="form-group">
-        <label>
-          Leaf Label Size
-          <input id="leafLabelSize" type="range" min="1" max="32" value="6" step="1" />
-        </label>
-      </div>
+
+      <div id="tree" class="column"></div>
+
     </div>
-    <div id="tree" class="column"></div>
   </div>
-<script src="//unpkg.com/patristic@0.1.0/dist/patristic.js"></script>
-<script src="../index.js"></script>
-<script>
+
+
+  <ul id="context-menu" class="menu">
+    <li class="menu-item">
+      <a href="#" id="reroot">Set As Root</a>
+    </li>
+    <li class="menu-item">
+      <a href="#" id="remove">Remove</a>
+    </li>
+    <li class="menu-item">
+      <a href="#" id="isolate">Isolate</a>
+    </li>
+  </ul>
+
+  <div id="tooltip"></div>
+
+  <script src="//unpkg.com/patristic@0.2.2/dist/patristic.js"></script>
+  <script src="../index.js"></script>
+  <script>
 var tree;
 
 ['layout', 'mode', 'type'].forEach(thing => {
@@ -116,41 +143,33 @@ var tree;
 });
 
 fetch('life.nwk').then(function(response){
-  response.text().then(t => {
-    tree = new TidyTree(t, {
-      parent: '#tree',
-      layout: d3.select('#layout').node().value,
-      mode: d3.select('#mode').node().value,
-      type: d3.select('#type').node().value,
-      leafNodes: d3.select('#leafNodes').node().checked,
-      branchNodes: d3.select('#branchNodes').node().checked,
-      leafLabels: d3.select('#leafLabels').node().checked,
-      branchLabels: d3.select('#branchLabels').node().checked,
-      branchDistances: d3.select('#branchDistances').node().checked,
-      animation: parseFloat(d3.select('#animation').node().value)
-    });
-  });
+  response.text().then(buildTree);
 });
 
 d3.select('#source').on('input', function(){
   let reader = new FileReader();
   reader.onload = function(){
-    d3.select('#tree').html(null);
-    tree = new TidyTree(reader.result, {
-      parent: '#tree',
-      layout: d3.select('#layout').node().value,
-      mode: d3.select('#mode').node().value,
-      type: d3.select('#type').node().value,
-      leafNodes: d3.select('#leafNodes').node().checked,
-      branchNodes: d3.select('#branchNodes').node().checked,
-      leafLabels: d3.select('#leafLabels').node().checked,
-      branchLabels: d3.select('#branchLabels').node().checked,
-      branchDistances: d3.select('#branchDistances').node().checked,
-      animation: parseFloat(d3.select('#animation').node().value)
-    });
+    buildTree(reader.result);
   };
   reader.readAsText(d3.event.srcElement.files[0]);
 });
+
+function buildTree(newick){
+  tree = new TidyTree(newick, {
+    parent: '#tree',
+    layout: d3.select('#layout').node().value,
+    mode: d3.select('#mode').node().value,
+    type: d3.select('#type').node().value,
+    leafNodes: d3.select('#leafNodes').node().checked,
+    branchNodes: d3.select('#branchNodes').node().checked,
+    leafLabels: d3.select('#leafLabels').node().checked,
+    branchLabels: d3.select('#branchLabels').node().checked,
+    branchDistances: d3.select('#branchDistances').node().checked,
+    animation: parseFloat(d3.select('#animation').node().value),
+    contextMenu: contextMenu,
+    tooltip: tooltip
+  });
+}
 
 d3.selectAll('select').on('change', function(){
   var thing = this.id[0].toUpperCase() + this.id.slice(1);
@@ -166,6 +185,51 @@ d3.selectAll('input').on('change', function(){
   if(this.type === 'range'){
     tree['set' + thing](parseFloat(this.value));
   }
+});
+
+function contextMenu(d){
+  let e = d3.event;
+  e.preventDefault();
+  d3.selectAll('#tooltip')
+    .style('z-index', -1)
+    .style('display', 'none');
+  d3.select('#context-menu')
+    .style('top', e.pageY + 'px')
+    .style('left', e.pageX + 'px')
+    .style('z-index', 1000)
+    .style('display', 'block');
+  d3.select('#reroot').on('click', function(){
+    tree.setData(d.data.reroot());
+  });
+  d3.select('#remove').on('click', function(){
+    tree.setData(d.data.remove());
+  });
+  d3.select('#isolate').on('click', function(){
+    tree.setData(d.data.isolate());
+  });
+}
+
+function tooltip(d){
+  let e = d3.event;
+  e.preventDefault();
+  d3.select('#tooltip')
+    .text(d.data.id)
+    .style('top', e.pageY + 'px')
+    .style('left', (e.pageX+5) + 'px')
+    .style('z-index', 1000)
+    .style('display', 'block');
+}
+
+d3.select('body').on('click', function(){
+  d3.selectAll('#context-menu, #tooltip')
+    .style('z-index', -1)
+    .style('display', 'none');
+});
+
+d3.selectAll('.node').on('mouseexit', function(){
+  d3.select('#tooltip')
+    .style('z-index', -1)
+    .style('display', 'none');
 });
 
 </script>

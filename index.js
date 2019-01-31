@@ -14,9 +14,13 @@
    * @param {string} newick A valid newick string
    * @param {object} options A Javascript object containing options to set up the tree
    */
-  function TidyTree(newick, options){
+  function TidyTree(data, options){
+    if(data instanceof patristic.Branch){
+      this.setData(data)
+    } else {
+      this.setTree(data);
+    }
     if(!options) options = {};
-    this.setTree(newick);
     Object.assign(this, {
 			layout: 'vertical',
 			type: 'tree',
@@ -29,10 +33,28 @@
 			branchLabels: false,
       branchDistances: false,
       animation: 500,
-      margin: [50, 50, 50, 50] //CSS order: top, right, bottom, left
+      margin: [50, 50, 50, 50], //CSS order: top, right, bottom, left
+      contextMenu: d => d3.event.preventDefault(),
+      tooltip: d => null
     }, options);
     if(this.parent) this.draw();
   }
+
+  TidyTree.prototype.setData = function(data){
+    if(!data) return console.error('Invalid Data');
+    this.data = data;
+    let max = 0;
+    this.hierarchy = d3.hierarchy(this.data, d => d.children)
+      .eachBefore(d => {
+        d.value =
+          (d.parent      ? d.parent.value : 0) +
+          (d.data.length ? d.data.length  : 0)
+        if(d.value > max) max = d.value;
+      })
+      .each(d => d.value /= max);
+    if(this.parent) return this.draw();
+    return this;
+  };
 
   /**
    * Update the TidyTree's underlying data structure
@@ -44,18 +66,7 @@
    */
   TidyTree.prototype.setTree = function(newick){
 		if(!newick) return console.error("Invalid Newick String");
-    this.data = patristic.parseNewick(newick);
-    let max = 0;
-		this.hierarchy = d3.hierarchy(this.data, d => d.children)
-      .eachBefore(d => {
-        d.value =
-          (d.parent      ? d.parent.value : 0) +
-          (d.data.length ? d.data.length  : 0)
-        if(d.value > max) max = d.value;
-      })
-      .each(d => d.value /= max);
-    if(this.parent) return this.redraw(this.parent);
-    return this;
+    return this.setData(patristic.parseNewick(newick));
   };
 
   /**
@@ -83,13 +94,13 @@
 	 */
   TidyTree.prototype.draw = function(selector){
     if(!selector && !this.parent){
-      console.error('No valid target for drawing given! Where should the tree go?');
+      return console.error('No valid target for drawing given! Where should the tree go?');
     }
     if(selector) this.parent = selector;
 
 		let tree = d3.tree();
 
-		let svg = d3.select(this.parent).append('svg')
+		let svg = d3.select(this.parent).html(null).append('svg')
 		      .attr('width', '100%')
 		      .attr('height', '100%');
 
@@ -125,7 +136,10 @@
 
 		node.append('circle')
         .attr('r', 2.5)
-        .style('opacity', d => (d.children && this.branchNodes) || (!d.children && this.leafNodes) ? 1 : 0);
+        .attr('title', d => d.data.id)
+        .style('opacity', d => (d.children && this.branchNodes) || (!d.children && this.leafNodes) ? 1 : 0)
+        .on('mouseover', this.tooltip)
+        .on('contextmenu', this.contextMenu);
 
 		node.append('text')
         .text(d => d.data.id)
