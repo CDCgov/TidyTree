@@ -16,8 +16,7 @@
    */
   function TidyTree(newick, options){
     if(!options) options = {};
-		let tree = patristic.parseNewick(newick);
-		let hierarchy = d3.hierarchy(tree, d => d.children);
+    this.setTree(newick);
     Object.assign(this, {
 			layout: 'vertical',
 			type: 'tree',
@@ -30,12 +29,34 @@
 			branchLabels: false,
       branchDistances: false,
       animation: 500,
-      margin: [50, 50, 50, 50], //CSS order: top, right, bottom, left
-      tree,
-			hierarchy
+      margin: [50, 50, 50, 50] //CSS order: top, right, bottom, left
     }, options);
-    if(options.parent) this.draw();
+    if(this.parent) this.draw();
   }
+
+  /**
+   * Update the TidyTree's underlying data structure
+   * There are two contexts in which you should call this:
+   * 	1. You wish to replace the tree with a completely different tree, given by a different newick string
+   * 	2. Your underlying tree data has changed (e.g. the tree has been re-rooted)
+   * @param  {string} newick A valid newick string
+   * @return {object}        the TidyTree object
+   */
+  TidyTree.prototype.setTree = function(newick){
+		if(!newick) return console.error("Invalid Newick String");
+    this.data = patristic.parseNewick(newick);
+    let max = 0;
+		this.hierarchy = d3.hierarchy(this.data, d => d.children)
+      .eachBefore(d => {
+        d.value =
+          (d.parent      ? d.parent.value : 0) +
+          (d.data.length ? d.data.length  : 0)
+        if(d.value > max) max = d.value;
+      })
+      .each(d => d.value /= max);
+    if(this.parent) return this.redraw(this.parent);
+    return this;
+  };
 
   /**
    * The available layouts for rendering trees.
@@ -47,7 +68,7 @@
 	 * The available types for rendering branches.
 	 * @type {Array}
 	 */
-	TidyTree.validTypes = ['tree', 'dendrogram'];
+	TidyTree.validTypes = ['tree', 'weighted', 'dendrogram'];
 
 	/**
    * The available modes for rendering branches.
@@ -64,12 +85,11 @@
     if(!selector && !this.parent){
       console.error('No valid target for drawing given! Where should the tree go?');
     }
-    if(!selector) selector = this.parent;
-    if(!this.parent) this.parent = selector;
+    if(selector) this.parent = selector;
 
 		let tree = d3.tree();
 
-		let svg = d3.select(selector).append('svg')
+		let svg = d3.select(this.parent).append('svg')
 		      .attr('width', '100%')
 		      .attr('height', '100%');
 
@@ -114,13 +134,6 @@
         .attr('x', 5)
         .style('opacity', d => (d.children && this.branchLabels) || (!d.children && this.leafLabels) ? 1 : 0);
 
-    this.redraw()
-        .setLeafNodes(this.leafNodes)
-        .setBranchNodes(this.branchNodes)
-        .setLeafLabels(this.leafLabels)
-        .setBranchLabels(this.branchLabels)
-        .setBranchDistances(this.branchDistances);
-
     svg.call(this.zoom.translateBy, this.margin[0], this.margin[3]);
 
     this.redraw();
@@ -130,82 +143,159 @@
 
   const getX      = d => d.x,
         getY      = d => d.y,
-        getLength = d => d.data.length;
+        getLength = d => d.weight;
 
-  const linkTransformers = {
-    smooth: {
-      horizontal: d3.linkHorizontal().x(getY).y(getX),
-      vertical:   d3.linkVertical(  ).x(getX).y(getY),
-      circular:   d3.linkRadial().angle(getX).radius(getY)
-    },
-    straight: {
-      horizontal: d => `M${d.source.y} ${d.source.x} L ${d.target.y} ${d.target.x}`,
-      vertical:   d => `M${d.source.x} ${d.source.y} L ${d.target.x} ${d.target.y}`,
-      circular:   d => {
-        let startAngle  = d.source.x - Math.PI/2,
-            startRadius = d.source.y,
-            endAngle    = d.target.x - Math.PI/2,
-            endRadius   = d.target.y;
-        const x0 = Math.cos(startAngle);
-        const y0 = Math.sin(startAngle);
-        const x1 = Math.cos(endAngle);
-        const y1 = Math.sin(endAngle);
-        return  'M' + startRadius*x0 + ',' + startRadius*y0 +
-                'L' +   endRadius*x1 + ',' +   endRadius*y1;
+  let linkTransformers = {
+    tree: {
+      smooth: {
+        horizontal: d3.linkHorizontal().x(getY).y(getX),
+        vertical:   d3.linkVertical(  ).x(getX).y(getY),
+        circular:   d3.linkRadial().angle(getX).radius(getY)
+      },
+      straight: {
+        horizontal: d => `M${d.source.y} ${d.source.x} L ${d.target.y} ${d.target.x}`,
+        vertical:   d => `M${d.source.x} ${d.source.y} L ${d.target.x} ${d.target.y}`,
+        circular:   d => {
+          const startAngle  = d.source.x - Math.PI/2,
+                startRadius = d.source.y,
+                endAngle    = d.target.x - Math.PI/2,
+                endRadius   = d.target.y;
+          const x0 = Math.cos(startAngle),
+                y0 = Math.sin(startAngle),
+                x1 = Math.cos(endAngle),
+                y1 = Math.sin(endAngle);
+          return  'M' + startRadius*x0 + ',' + startRadius*y0 +
+                  'L' +   endRadius*x1 + ',' +   endRadius*y1;
+        }
+      },
+      square: {
+        horizontal: d => `M${d.source.y} ${d.source.x} V ${d.target.x} H ${d.target.y}`,
+        vertical:   d => `M${d.source.x} ${d.source.y} H ${d.target.x} V ${d.target.y}`,
+        circular:   d => {
+          const startAngle  = d.source.x - Math.PI/2,
+                startRadius = d.source.y,
+                endAngle    = d.target.x - Math.PI/2,
+                endRadius   = d.target.y;
+          const x0 = Math.cos(startAngle),
+                y0 = Math.sin(startAngle),
+                x1 = Math.cos(endAngle),
+                y1 = Math.sin(endAngle);
+          return  'M' + startRadius*x0 + ',' + startRadius*y0 +
+                  (endAngle === startAngle ? '' :
+                  'A' + startRadius + ',' + startRadius + ' 0 0 ' + (endAngle > startAngle ? 1 : 0) + ' ' + startRadius*x1 + ',' + startRadius*y1) +
+                  'L' + endRadius*x1 + ',' + endRadius * y1;
+        }
       }
     },
-    square: {
-      horizontal: d => `M${d.source.y} ${d.source.x} V ${d.target.x} H ${d.target.y}`,
-      vertical:   d => `M${d.source.x} ${d.source.y} H ${d.target.x} V ${d.target.y}`,
-      circular:   d => {
-        let startAngle  = d.source.x - Math.PI/2,
-            startRadius = d.source.y,
-            endAngle    = d.target.x - Math.PI/2,
-            endRadius   = d.target.y;
-        const x0 = Math.cos(startAngle);
-        const y0 = Math.sin(startAngle);
-        const x1 = Math.cos(endAngle);
-        const y1 = Math.sin(endAngle);
-        return  'M' + startRadius*x0 + ',' + startRadius*y0 +
-                      (endAngle === startAngle ? '' :
-                'A' + startRadius + ',' + startRadius + ' 0 0 ' + (endAngle > startAngle ? 1 : 0) + ' ' + startRadius*x1 + ',' + startRadius*y1) +
-                'L' + endRadius*x1 + ',' + endRadius * y1;
+    weighted: {
+      smooth: {
+        horizontal: d3.linkHorizontal().x(getLength).y(getX),
+        vertical:   d3.linkVertical(  ).x(getX).y(getLength),
+        circular:   d3.linkRadial().angle(getX).radius(getLength)
+      },
+      straight: {
+        horizontal: d => `M${d.source.weight} ${d.source.x} L ${d.target.weight} ${d.target.x}`,
+        vertical:   d => `M${d.source.x} ${d.source.weight} L ${d.target.x} ${d.target.weight}`,
+        circular:   d => {
+          const startAngle  = d.source.x - Math.PI/2,
+                startRadius = d.source.weight,
+                endAngle    = d.target.x - Math.PI/2,
+                endRadius   = d.target.weight;
+          const x0 = Math.cos(startAngle),
+                y0 = Math.sin(startAngle),
+                x1 = Math.cos(endAngle),
+                y1 = Math.sin(endAngle);
+          return  'M' + startRadius*x0 + ',' + startRadius*y0 +
+                  'L' +   endRadius*x1 + ',' +   endRadius*y1;
+        }
+      },
+      square: {
+        horizontal: d => `M${d.source.weight} ${d.source.x} V ${d.target.x} H ${d.target.weight}`,
+        vertical:   d => `M${d.source.x} ${d.source.weight} H ${d.target.x} V ${d.target.weight}`,
+        circular:   d => {
+          const startAngle  = d.source.x - Math.PI/2,
+                startRadius = d.source.weight,
+                endAngle    = d.target.x - Math.PI/2,
+                endRadius   = d.target.weight;
+          const x0 = Math.cos(startAngle),
+                y0 = Math.sin(startAngle),
+                x1 = Math.cos(endAngle),
+                y1 = Math.sin(endAngle);
+          return  'M' + startRadius*x0 + ',' + startRadius*y0 +
+                  (endAngle === startAngle ? '' :
+                  'A' + startRadius + ',' + startRadius + ' 0 0 ' + (endAngle > startAngle ? 1 : 0) + ' ' + startRadius*x1 + ',' + startRadius*y1) +
+                  'L' + endRadius*x1 + ',' + endRadius * y1;
+        }
       }
     }
 	};
+
+  linkTransformers.dendrogram = linkTransformers.tree;
 
   function circularPoint(x, y){
 		return [(y = +y) * Math.cos(x -= Math.PI / 2), y * Math.sin(x)];
 	}
 
-  const nodeTransformers = {
-    horizontal: d => `translate(${d.y},${d.x})`,
-		vertical:   d => `translate(${d.x},${d.y})`,
-		circular:   d => `translate(${circularPoint(d.x, d.y)})`
+  let nodeTransformers = {
+    tree: {
+      horizontal: d => `translate(${d.y}, ${d.x})`,
+      vertical:   d => `translate(${d.x}, ${d.y})`,
+      circular:   d => `translate(${circularPoint(d.x, d.y)})`
+    },
+    weighted: {
+      horizontal: d => `translate(${d.weight}, ${d.x})`,
+      vertical:   d => `translate(${d.x}, ${d.weight})`,
+      circular:   d => `translate(${circularPoint(d.x, d.weight)})`
+    }
 	};
+
+  nodeTransformers.dendrogram = nodeTransformers.tree;
 
   var radToDeg = 180 / Math.PI;
 
   let labelTransformers = {
-    straight: {
-      horizontal: l => `translate(${(l.source.y + l.target.y)/2}, ${(l.source.x + l.target.x)/2}) rotate(${Math.atan((l.target.x-l.source.x)/(l.target.y-l.source.y))*radToDeg})`,
-      vertical:   l => `translate(${(l.source.x + l.target.x)/2}, ${(l.source.y + l.target.y)/2}) rotate(${Math.atan((l.source.y-l.target.y)/(l.source.x-l.target.x))*radToDeg})`,
-      circular:   l => {
-        let s = circularPoint(l.source.x, l.source.y),
-            t = circularPoint(l.target.x, l.target.y);
-        return `translate(${(s[0]+t[0])/2}, ${(s[1]+t[1])/2}) rotate(${Math.atan((s[1]-t[1])/(s[0]-t[0]))*180/Math.PI})`;
+    tree: {
+      straight: {
+        horizontal: l => `translate(${(l.source.y + l.target.y)/2}, ${(l.source.x + l.target.x)/2}) rotate(${Math.atan((l.target.x-l.source.x)/(l.target.y-l.source.y))*radToDeg})`,
+        vertical:   l => `translate(${(l.source.x + l.target.x)/2}, ${(l.source.y + l.target.y)/2}) rotate(${Math.atan((l.source.y-l.target.y)/(l.source.x-l.target.x))*radToDeg})`,
+        circular:   l => {
+          let s = circularPoint(l.source.x, l.source.y),
+              t = circularPoint(l.target.x, l.target.y);
+          return `translate(${(s[0]+t[0])/2}, ${(s[1]+t[1])/2}) rotate(${Math.atan((s[1]-t[1])/(s[0]-t[0]))*radToDeg})`;
+        }
+      },
+      square: {
+        horizontal: l => `translate(${(l.source.y + l.target.y)/2}, ${l.target.x})`,
+        vertical:   l => `translate(${l.target.x}, ${(l.source.y + l.target.y)/2}) rotate(90)`,
+        circular:   l => {
+          let u = circularPoint(l.target.x, (l.source.y+l.target.y)/2);
+          return `translate(${u[0]}, ${u[1]}) rotate(${l.target.x*radToDeg%180-90})`;
+        }
       }
     },
-    square: {
-      horizontal: l => `translate(${(l.source.y + l.target.y)/2}, ${l.target.x})`,
-      vertical:   l => `translate(${l.target.x}, ${(l.source.y + l.target.y)/2}) rotate(90)`,
-      circular:   l => {
-        let u = circularPoint(l.target.x, (l.source.y+l.target.y)/2);
-        return `translate(${u[0]}, ${u[1]}) rotate(${l.target.x*180/Math.PI%180-90})`;
+    weighted: {
+      straight: {
+        horizontal: l => `translate(${(l.source.weight + l.target.weight)/2}, ${(l.source.x + l.target.x)/2}) rotate(${Math.atan((l.target.x-l.source.x)/(l.target.weight-l.source.weight))*radToDeg})`,
+        vertical:   l => `translate(${(l.source.x + l.target.x)/2}, ${(l.source.weight + l.target.weight)/2}) rotate(${Math.atan((l.source.weight-l.target.weight)/(l.source.x-l.target.x))*radToDeg})`,
+        circular:   l => {
+          let s = circularPoint(l.source.x, l.source.weight),
+              t = circularPoint(l.target.x, l.target.weight);
+          return `translate(${(s[0]+t[0])/2}, ${(s[1]+t[1])/2}) rotate(${Math.atan((s[1]-t[1])/(s[0]-t[0]))*radToDeg})`;
+        }
+      },
+      square: {
+        horizontal: l => `translate(${(l.source.weight + l.target.weight)/2}, ${l.target.x})`,
+        vertical:   l => `translate(${l.target.x}, ${(l.source.weight + l.target.weight)/2}) rotate(90)`,
+        circular:   l => {
+          let u = circularPoint(l.target.x, (l.source.weight+l.target.weight)/2);
+          return `translate(${u[0]}, ${u[1]}) rotate(${l.target.x*radToDeg%180-90})`;
+        }
       }
     }
   };
-  labelTransformers.smooth = labelTransformers.straight;
+  labelTransformers.tree.smooth = labelTransformers.tree.straight;
+  labelTransformers.weighted.smooth = labelTransformers.weighted.straight;
+  labelTransformers.dendrogram = labelTransformers.tree;
 
   /**
    * Redraws the links and relocates the nodes accordingly
@@ -216,6 +306,10 @@
 
     let width  = parseFloat(parent.style('width'))  - this.margin[0] - this.margin[2];
     let height = parseFloat(parent.style('height')) - this.margin[1] - this.margin[3];
+
+    this.hierarchy.each(d => {
+      d.weight = (this.layout === 'horizontal' ? width : height) * d.value;
+    });
 
 		let g = parent.select('svg g');
 
@@ -228,17 +322,17 @@
 
     links.selectAll('path')
       .transition().duration(this.animation)
-      .attr('d', linkTransformers[this.mode][this.layout]);
+      .attr('d', linkTransformers[this.type][this.mode][this.layout]);
 
     if(this.branchDistances){
       links.selectAll('text')
         .transition().duration(this.animation)
-        .attr('transform', labelTransformers[this.mode][this.layout]);
+        .attr('transform', labelTransformers[this.type][this.mode][this.layout]);
     }
 
 		let node = g.selectAll('.node').data(this.hierarchy.descendants())
 			.transition().duration(this.animation)
-			.attr('transform', nodeTransformers[this.layout]);
+			.attr('transform', nodeTransformers[this.type][this.layout]);
 
     if(this.layout === 'vertical'){
       node.selectAll('text').attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
@@ -269,23 +363,6 @@
     svg
       .transition().duration(this.animation ? 800 : 0)
       .call(this.zoom.transform, d3.zoomIdentity.translate(x, y));
-    return this;
-  };
-
-  /**
-   * Update the TidyTree's underlying data structure
-   * There are two contexts in which you should call this:
-   * 	1. You wish to replace the tree with a completely different tree, given by a different newick string
-   * 	2. Your underlying tree data has changed (e.g. the tree has been re-rooted)
-   * @param  {string} newick A valid newick string
-   * @return {object}        the TidyTree object
-   */
-  TidyTree.prototype.setTree = function(newick){
-		if(newick){
-			this.tree = patristic.parseNewick(newick);
-		}
-		this.hierarchy = d3.hierarchy(this.tree, d => d.children);
-    if(this.parent) return this.redraw();
     return this;
   };
 
@@ -426,7 +503,7 @@
     this.branchDistances = show ? true : false;
     if(this.parent){ //i.e. has already been drawn
       let links = d3.select(this.parent).select('svg').selectAll('.link').selectAll('text');
-      if(show) links.attr('transform', labelTransformers[this.mode][this.layout]);
+      if(show) links.attr('transform', labelTransformers[this.type][this.mode][this.layout]);
       links
         .transition().duration(this.animation)
         .style('opacity', show ? 1 : 0);
