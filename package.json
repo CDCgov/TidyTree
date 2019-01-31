@@ -1,5 +1,5 @@
 {
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "Yet another d3-powered Phylogenetic tree renderer.",
   "name": "tidytree",
   "main": "index.js",
@@ -11,6 +11,10 @@
   },
   "author": "Tony Boyles <nsp3@cdc.gov>",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aaboyles/TidyTree.git"
+  },
   "dependencies": {
     "d3": "^5.7.0",
     "patristic": "^0.1.0"

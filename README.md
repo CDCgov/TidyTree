@@ -8,6 +8,36 @@ This repository was created for use by CDC programs to collaborate on public hea
 
 [Try it out here.](https://aaboyles.github.io/TidyTree/demo/index.html)
 
+## Basic Usage
+
+```javascript
+let newick = '(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);';
+let tree = new TidyTree(newick, {parent: 'body'});
+```
+
+And Voila! Your `body` will be populated by a phylogenetic tree.
+
+## Options
+
+The default options:
+
+```javascript
+{
+  layout: 'vertical',
+  type: 'tree',
+  mode: 'smooth',
+  distance: false,
+  leafNodes: true,
+  leafLabels: false,
+  leafLabelSize: 6,
+  branchNodes: false,
+  branchLabels: false,
+  branchDistances: false,
+  animation: 500,
+  margin: [50, 50, 50, 50], //CSS order: top, right, bottom, left
+}
+```
+
 ## Shoutouts
 
 tidytree is based on [this gist](https://gist.github.com/Andrew-Reid/c7ae41a98b8cbb38f1febf13deb9d294) ([See in action](https://bl.ocks.org/Andrew-Reid/c7ae41a98b8cbb38f1febf13deb9d294)), which "mostly just duplicates the cannonical[sic] d3.tree and d3.cluster bl.ocks by Mike Bostock."
