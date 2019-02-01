@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Yet another d3-powered Phylogenetic tree renderer.",
   "name": "tidytree",
   "main": "index.js",
@@ -16,8 +16,8 @@
     "url": "https://github.com/aaboyles/TidyTree.git"
   },
   "dependencies": {
-    "d3": "^5.7.0",
-    "patristic": "^0.2.2"
+    "d3": "^5.8.0",
+    "patristic": "^0.2.3"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",

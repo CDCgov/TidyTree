@@ -471,8 +471,8 @@
     if(this.parent){ //i.e. has already been drawn
       d3.select(this.parent).select('svg').selectAll('g.node--leaf text')
         .transition().duration(this.animation)
-        .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2)
-        .style('font-size', size);
+        .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2.5)
+        .style('font-size', size+'px');
     }
     return this;
   };
@@ -507,6 +507,18 @@
     return this;
   };
 
+
+  TidyTree.prototype.setBranchLabelSize = function(size){
+    this.branchLabelSize = size;
+    if(this.parent){ //i.e. has already been drawn
+      d3.select(this.parent).select('svg').selectAll('g.node--internal text')
+        .transition().duration(this.animation)
+        .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2.5)
+        .style('font-size', size+'px');
+    }
+    return this;
+  };
+
   /**
    * Set the TidyTree's branchLabels
    * @param  {boolean} show Should the TidyTree show branchLabels?
@@ -520,6 +532,21 @@
       links
         .transition().duration(this.animation)
         .style('opacity', show ? 1 : 0);
+    }
+    return this;
+  };
+
+  /**
+   * Set the TidyTree's branchLabels
+   * @param  {boolean} show Should the TidyTree show branchLabels?
+   * @return {TidyTree}     the TidyTree Object
+   */
+  TidyTree.prototype.setBranchDistanceSize = function(size){
+    this.branchDistanceSize = size;
+    if(this.parent){ //i.e. has already been drawn
+      d3.select(this.parent).select('svg').selectAll('.link').selectAll('text')
+        .transition().duration(this.animation)
+        .style('font-size', size + 'px');
     }
     return this;
   };

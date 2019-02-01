@@ -16,9 +16,14 @@
     * @param {object} options A Javascript object containing options to set up the tree
     */
 
-  function TidyTree(newick, options) {
+  function TidyTree(data, options) {
+    if (data instanceof patristic.Branch) {
+      this.setData(data);
+    } else {
+      this.setTree(data);
+    }
+
     if (!options) options = {};
-    this.setTree(newick);
     Object.assign(this, {
       layout: 'vertical',
       type: 'tree',
@@ -31,11 +36,25 @@
       branchLabels: false,
       branchDistances: false,
       animation: 500,
-      margin: [50, 50, 50, 50] //CSS order: top, right, bottom, left
-
+      margin: [50, 50, 50, 50],
+      //CSS order: top, right, bottom, left
+      contextMenu: d => d3.event.preventDefault(),
+      tooltip: d => null
     }, options);
     if (this.parent) this.draw();
   }
+
+  TidyTree.prototype.setData = function (data) {
+    if (!data) return console.error('Invalid Data');
+    this.data = data;
+    let max = 0;
+    this.hierarchy = d3.hierarchy(this.data, d => d.children).eachBefore(d => {
+      d.value = (d.parent ? d.parent.value : 0) + (d.data.length ? d.data.length : 0);
+      if (d.value > max) max = d.value;
+    }).each(d => d.value /= max);
+    if (this.parent) return this.draw();
+    return this;
+  };
   /**
    * Update the TidyTree's underlying data structure
    * There are two contexts in which you should call this:
@@ -48,14 +67,7 @@
 
   TidyTree.prototype.setTree = function (newick) {
     if (!newick) return console.error("Invalid Newick String");
-    this.data = patristic.parseNewick(newick);
-    let max = 0;
-    this.hierarchy = d3.hierarchy(this.data, d => d.children).eachBefore(d => {
-      d.value = (d.parent ? d.parent.value : 0) + (d.data.length ? d.data.length : 0);
-      if (d.value > max) max = d.value;
-    }).each(d => d.value /= max);
-    if (this.parent) return this.redraw(this.parent);
-    return this;
+    return this.setData(patristic.parseNewick(newick));
   };
   /**
    * The available layouts for rendering trees.
@@ -84,12 +96,12 @@
 
   TidyTree.prototype.draw = function (selector) {
     if (!selector && !this.parent) {
-      console.error('No valid target for drawing given! Where should the tree go?');
+      return console.error('No valid target for drawing given! Where should the tree go?');
     }
 
     if (selector) this.parent = selector;
     let tree = d3.tree();
-    let svg = d3.select(this.parent).append('svg').attr('width', '100%').attr('height', '100%');
+    let svg = d3.select(this.parent).html(null).append('svg').attr('width', '100%').attr('height', '100%');
     let g = svg.append('g');
     this.zoom = d3.zoom().on('zoom', () => g.attr('transform', d3.event.transform));
     svg.call(this.zoom); // Set initial tree
@@ -101,7 +113,7 @@
       return d.source.data.length.toLocaleString();
     });
     let node = g.selectAll('.node').data(this.hierarchy.descendants()).enter().append('g').attr('class', d => 'node ' + (d.children ? 'node--internal' : 'node--leaf'));
-    node.append('circle').attr('r', 2.5).style('opacity', d => d.children && this.branchNodes || !d.children && this.leafNodes ? 1 : 0);
+    node.append('circle').attr('r', 2.5).attr('title', d => d.data.id).style('opacity', d => d.children && this.branchNodes || !d.children && this.leafNodes ? 1 : 0).on('mouseover', this.tooltip).on('contextmenu', this.contextMenu);
     node.append('text').text(d => d.data.id).style('font-size', '6px').attr('y', 2).attr('x', 5).style('opacity', d => d.children && this.branchLabels || !d.children && this.leafLabels ? 1 : 0);
     svg.call(this.zoom.translateBy, this.margin[0], this.margin[3]);
     this.redraw();
@@ -260,9 +272,8 @@
     let parent = d3.select(this.parent);
     let width = parseFloat(parent.style('width')) - this.margin[0] - this.margin[2];
     let height = parseFloat(parent.style('height')) - this.margin[1] - this.margin[3];
-    this.hierarchy.each(d => {
-      d.weight = (this.layout === 'horizontal' ? width : height) * d.value;
-    });
+    let scalar = this.layout === 'horizontal' ? width : this.layout === 'vertical' ? height : Math.min(width, height) / 2;
+    this.hierarchy.each(d => d.weight = scalar * d.value);
     let g = parent.select('svg g');
     let source = (this.type === 'tree' ? d3.tree() : d3.cluster()).size(this.layout === 'circular' ? [2 * Math.PI, Math.min(height, width) / 2] : this.layout === 'horizontal' ? [height, width] : [width, height]).separation((a, b) => 1); //Note: You must render links prior to nodes in order to get correct placement!
 
@@ -407,7 +418,7 @@
 
     if (this.parent) {
       //i.e. has already been drawn
-      d3.select(this.parent).select('svg').selectAll('g.node--leaf text').transition().duration(this.animation).attr(this.layout === 'horizontal' ? 'y' : 'x', size / 2).style('font-size', size);
+      d3.select(this.parent).select('svg').selectAll('g.node--leaf text').transition().duration(this.animation).attr(this.layout === 'horizontal' ? 'y' : 'x', size / 2.5).style('font-size', size + 'px');
     }
 
     return this;
@@ -446,6 +457,17 @@
 
     return this;
   };
+
+  TidyTree.prototype.setBranchLabelSize = function (size) {
+    this.branchLabelSize = size;
+
+    if (this.parent) {
+      //i.e. has already been drawn
+      d3.select(this.parent).select('svg').selectAll('g.node--internal text').transition().duration(this.animation).attr(this.layout === 'horizontal' ? 'y' : 'x', size / 2.5).style('font-size', size + 'px');
+    }
+
+    return this;
+  };
   /**
    * Set the TidyTree's branchLabels
    * @param  {boolean} show Should the TidyTree show branchLabels?
@@ -461,6 +483,23 @@
       let links = d3.select(this.parent).select('svg').selectAll('.link').selectAll('text');
       if (show) links.attr('transform', labelTransformers[this.type][this.mode][this.layout]);
       links.transition().duration(this.animation).style('opacity', show ? 1 : 0);
+    }
+
+    return this;
+  };
+  /**
+   * Set the TidyTree's branchLabels
+   * @param  {boolean} show Should the TidyTree show branchLabels?
+   * @return {TidyTree}     the TidyTree Object
+   */
+
+
+  TidyTree.prototype.setBranchDistanceSize = function (size) {
+    this.branchDistanceSize = size;
+
+    if (this.parent) {
+      //i.e. has already been drawn
+      d3.select(this.parent).select('svg').selectAll('.link').selectAll('text').transition().duration(this.animation).style('font-size', size + 'px');
     }
 
     return this;

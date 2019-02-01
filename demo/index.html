@@ -85,9 +85,21 @@
           </label>
         </div>
         <div class="form-group">
+          <label>
+            Branch Label Size
+            <input id="branchLabelSize" type="range" min="1" max="32" value="6" step="1" />
+          </label>
+        </div>
+        <div class="form-group">
           <label class="form-switch">
             <input id="branchDistances" type="checkbox" />
             <i class="form-icon"></i> Branch Distances
+          </label>
+        </div>
+        <div class="form-group">
+          <label>
+            Branch Distance Size
+            <input id="branchDistanceSize" type="range" min="1" max="32" value="6" step="1" />
           </label>
         </div>
         <div class="form-group">
@@ -199,7 +211,9 @@ function contextMenu(d){
     .style('z-index', 1000)
     .style('display', 'block');
   d3.select('#reroot').on('click', function(){
-    tree.setData(d.data.reroot());
+    var newTree = d.data.reroot();
+    newTree.fixParenthood();
+    tree.setData(newTree);
   });
   d3.select('#remove').on('click', function(){
     tree.setData(d.data.remove());
@@ -222,12 +236,6 @@ function tooltip(d){
 
 d3.select('body').on('click', function(){
   d3.selectAll('#context-menu, #tooltip')
-    .style('z-index', -1)
-    .style('display', 'none');
-});
-
-d3.selectAll('.node').on('mouseexit', function(){
-  d3.select('#tooltip')
     .style('z-index', -1)
     .style('display', 'none');
 });
