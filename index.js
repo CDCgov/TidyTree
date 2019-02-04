@@ -1,12 +1,12 @@
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
-    define([], function(){ return (root.TidyTree = factory()); });
+    define(['patristic'], function(){ return (root.TidyTree = factory(patristic)); });
   } else if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(require('patristic'));
   } else {
-    root.TidyTree = factory();
+    root.TidyTree = factory(root.patristic);
   }
-}(typeof self !== 'undefined' ? self : this, function(){
+}(typeof self !== 'undefined' ? self : this, function(patristic){
   'use strict';
 
 	/**

@@ -1,5 +1,5 @@
 {
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Yet another d3-powered Phylogenetic tree renderer.",
   "name": "tidytree",
   "main": "index.js",
@@ -13,7 +13,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aaboyles/TidyTree.git"
+    "url": "git+https://github.com/aaboyles/TidyTree.git"
   },
   "dependencies": {
     "d3": "^5.8.1",
