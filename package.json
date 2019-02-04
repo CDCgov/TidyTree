@@ -16,8 +16,8 @@
     "url": "https://github.com/aaboyles/TidyTree.git"
   },
   "dependencies": {
-    "d3": "^5.8.0",
-    "patristic": "^0.2.3"
+    "d3": "^5.8.1",
+    "patristic": "^0.2.4"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",
