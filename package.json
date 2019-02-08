@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel index.js > dist/tidytree.js && babel --minified index.js > dist/tidytree.min.js",
+    "build": "babel index.js > dist/tidytree.js && terser dist/tidytree.js --compress > dist/tidytree.min.js",
     "doc": "documentation build index.js -f md -o docs/README.md",
     "demo": "http-server"
   },
@@ -23,6 +23,7 @@
     "@babel/cli": "^7.2.3",
     "@babel/core": "^7.2.2",
     "documentation": "^9.1.1",
-    "http-server": "^0.11.1"
+    "http-server": "^0.11.1",
+    "terser": "^3.16.1"
   }
 }
