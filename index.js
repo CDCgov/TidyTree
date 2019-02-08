@@ -102,7 +102,7 @@
 	 */
   TidyTree.prototype.draw = function(selector){
     if(!selector && !this.parent){
-      return console.error('No valid target for drawing given! Where should the tree go?');
+      throw new Error('No valid target for drawing given! Where should the tree go?');
     }
     if(selector) this.parent = selector;
 
@@ -117,7 +117,6 @@
 		this.zoom = d3.zoom().on('zoom', () => g.attr('transform', d3.event.transform));
     svg.call(this.zoom);
 
-		// Set initial tree
 		g.append('g').attr('class', 'tidytree-links');
     g.append('g').attr('class', 'tidytree-nodes');
 
@@ -338,25 +337,26 @@
 		let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants());
     nodes.join(
       enter => {
-        let newNodes = enter.append('g').attr('class', d => 'tidytree-node ' + (d.children ? 'tidytree-node-internal' : 'tidytree-node-leaf'));
+        let newNodes = enter.append('g')
+          .attr('class', d => 'tidytree-node ' + (d.children ? 'tidytree-node-internal' : 'tidytree-node-leaf'))
+          .attr('transform', nodeTransformers[this.type][this.layout]);
+
         newNodes.append('circle')
           .attr('title', d => d.data.id)
           .style('opacity', d => (d.children && this.branchNodes) || (!d.children && this.leafNodes) ? 1 : 0)
           .on('mouseover', this.tooltip)
           .on('contextmenu', this.contextMenu)
-          .attr('transform', nodeTransformers[this.type][this.layout])
-          .transition().duration(this.animation)
           .attr('r', 2.5);
+
         newNodes.append('text')
           .text(d => d.data.id)
           .style('font-size', '6px')
           .attr('y', 2)
           .attr('x', 5)
-          .transition().duration(this.animation)
           .style('opacity', d => (d.children && this.branchLabels) || (!d.children && this.leafLabels) ? 1 : 0);
       },
       update => {
-        update.selectAll('circle')
+        update
           .transition().duration(this.animation)
           .attr('transform', nodeTransformers[this.type][this.layout]);
       },
