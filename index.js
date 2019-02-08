@@ -321,7 +321,7 @@
           .style('opacity', this.branchDistances ? 1 : 0);
       },
       update => {
-        update.selectAll('path')
+        update.select('path')
           .transition().duration(this.animation)
           .attr('d', linkTransformers[this.type][this.mode][this.layout]);
       },
@@ -360,10 +360,7 @@
           .transition().duration(this.animation)
           .attr('transform', nodeTransformers[this.type][this.layout]);
       },
-      exit => {
-        exit.transition().duration(this.animation).attr('opacity', 0).remove();
-        this.recenter();
-      }
+      exit => exit.transition().duration(this.animation).attr('opacity', 0).remove()
     );
 
     if(this.layout === 'vertical'){
