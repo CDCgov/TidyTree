@@ -58,6 +58,9 @@
             <div class="form-group">
               <input class="form-input" id="source" type="file">
             </div>
+            <div class="form-group text-right">
+              <button class="form-input" id="reset">Reset Tree</button>
+            </div>
           </div>
         </div>
         <div class="accordion">
@@ -209,7 +212,7 @@
   <script src="saveSvgAsPng.js"></script>
   <script src="../index.js"></script>
   <script>
-var tree;
+var tree, original;
 
 ['layout', 'mode', 'type'].forEach(thing => {
   var title = 'valid' + thing[0].toUpperCase() + thing.slice(1) + 's';
@@ -227,7 +230,8 @@ d3.select('#source').on('input', function(){
 });
 
 function buildTree(newick){
-  tree = new TidyTree(newick, {
+  if(newick) original = patristic.parseNewick(newick);
+  tree = new TidyTree(original.clone(), {
     parent: '#tree',
     layout: d3.select('#layout').node().value,
     mode: d3.select('#mode').node().value,
@@ -242,6 +246,8 @@ function buildTree(newick){
     tooltip: tooltip
   });
 }
+
+d3.select('#reset').on('click', e => buildTree());
 
 d3.selectAll('select').filter(':not(.skip)').on('change', function(){
   var thing = this.id[0].toUpperCase() + this.id.slice(1);
@@ -288,9 +294,7 @@ function contextMenu(d){
     .style('z-index', 1000)
     .style('display', 'block');
   d3.select('#reroot').on('click', function(){
-    var newTree = d.data.reroot();
-    newTree.fixParenthood();
-    tree.setData(newTree);
+    tree.setData(d.data.reroot());
   });
   d3.select('#remove').on('click', function(){
     tree.setData(d.data.remove());
