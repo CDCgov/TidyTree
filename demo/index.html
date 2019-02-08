@@ -14,15 +14,24 @@
     height: 100%;
     background-color: lightgray;
   }
+  .accordion-header{
+    background-color: darkgrey;
+  }
+  .accordion-body{
+    background-color: white;
+  }
+  .form-group{
+    margin:0.4rem;
+  }
   [type="range"]{
     width: 100%;
   }
-  .node circle {
+  .tidytree-node circle {
 	  fill: #fff;
 	  stroke: steelblue;
 	  stroke-width: 3px;
 	}
-	.link {
+	.tidytree-link {
     stroke-width: 2px;
 	}
   #context-menu, #tooltip{
@@ -42,83 +51,137 @@
     <div class="columns">
       <div id="options" class="column col-auto">
         <h1 class="text-center">TidyTree</h1>
-        <div class="form-group">
-          <label>
-            Source Data
-            <input class="form-input" id="source" type="file">
-          </label>
+        <div class="accordion">
+          <input type="radio" id="accordion-data" name="accordion-radio" hidden>
+          <label class="accordion-header" for="accordion-data">Source Data</label>
+          <div class="accordion-body">
+            <div class="form-group">
+              <input class="form-input" id="source" type="file">
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label>
-            Layout
-            <select id="layout" class="form-select"></select>
-          </label>
+        <div class="accordion">
+          <input type="radio" id="accordion-layout" name="accordion-radio" hidden>
+          <label class="accordion-header" for="accordion-layout">Layout</label>
+          <div class="accordion-body">
+            <div class="form-group">
+              <label>
+                Layout
+                <select id="layout" class="form-select"></select>
+              </label>
+            </div>
+            <div class="form-group">
+              <label>
+                Type
+                <select id="type" class="form-select"></select>
+              </label>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label>
-            Mode
-            <select id="mode" class="form-select"></select>
-          </label>
+        <div class="accordion">
+          <input type="radio" id="accordion-branches" name="accordion-radio" hidden>
+          <label class="accordion-header" for="accordion-branches">Branches</label>
+          <div class="accordion-body">
+            <div class="form-group">
+              <label>
+                Mode
+                <select id="mode" class="form-select"></select>
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-switch">
+                <input id="branchNodes" type="checkbox" />
+                <i class="form-icon"></i> Branch Nodes
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-switch">
+                <input id="branchLabels" type="checkbox" />
+                <i class="form-icon"></i> Branch Labels
+              </label>
+            </div>
+            <div class="form-group">
+              <label>
+                Branch Label Size
+                <input id="branchLabelSize" type="range" min="1" max="32" value="6" step="1" />
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-switch">
+                <input id="branchDistances" type="checkbox" />
+                <i class="form-icon"></i> Branch Distances
+              </label>
+            </div>
+            <div class="form-group">
+              <label>
+                Branch Distance Size
+                <input id="branchDistanceSize" type="range" min="1" max="32" value="6" step="1" />
+              </label>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label>
-            Type
-            <select id="type" class="form-select"></select>
-          </label>
+        <div class="accordion">
+          <input type="radio" id="accordion-leaves" name="accordion-radio" hidden>
+          <label class="accordion-header" for="accordion-leaves">Leaves</label>
+          <div class="accordion-body">
+            <div class="form-group">
+              <label class="form-switch">
+                <input id="leafNodes" type="checkbox" checked>
+                <i class="form-icon"></i> Leaf Nodes
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-switch">
+                <input id="leafLabels" type="checkbox" />
+                <i class="form-icon"></i> Leaf Labels
+              </label>
+            </div>
+            <div class="form-group">
+              <label>
+                Leaf Label Size
+                <input id="leafLabelSize" type="range" min="1" max="32" value="6" step="1" />
+              </label>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label>
-            Animation Speed
-            <input id="animation" type="range" min="0" max="1000" value="500" step="1" />
-          </label>
+        <div class="accordion">
+          <input type="radio" id="accordion-meta" name="accordion-radio" hidden>
+          <label class="accordion-header" for="accordion-meta">Meta</label>
+          <div class="accordion-body">
+            <div class="form-group">
+              <label class="form-switch">
+                <input id="tooltips" type="checkbox" class="skip" />
+                <i class="form-icon"></i> Tooltips
+              </label>
+            </div>
+            <div class="form-group">
+              <label>
+                Animation Speed
+                <input id="animation" type="range" min="0" max="1000" value="500" step="1" />
+              </label>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-switch">
-            <input id="branchNodes" type="checkbox" />
-            <i class="form-icon"></i> Branch Nodes
-          </label>
-        </div>
-        <div class="form-group">
-          <label class="form-switch">
-            <input id="branchLabels" type="checkbox" />
-            <i class="form-icon"></i> Branch Labels
-          </label>
-        </div>
-        <div class="form-group">
-          <label>
-            Branch Label Size
-            <input id="branchLabelSize" type="range" min="1" max="32" value="6" step="1" />
-          </label>
-        </div>
-        <div class="form-group">
-          <label class="form-switch">
-            <input id="branchDistances" type="checkbox" />
-            <i class="form-icon"></i> Branch Distances
-          </label>
-        </div>
-        <div class="form-group">
-          <label>
-            Branch Distance Size
-            <input id="branchDistanceSize" type="range" min="1" max="32" value="6" step="1" />
-          </label>
-        </div>
-        <div class="form-group">
-          <label class="form-switch">
-            <input id="leafNodes" type="checkbox" checked>
-            <i class="form-icon"></i> Leaf Nodes
-          </label>
-        </div>
-        <div class="form-group">
-          <label class="form-switch">
-            <input id="leafLabels" type="checkbox" />
-            <i class="form-icon"></i> Leaf Labels
-          </label>
-        </div>
-        <div class="form-group">
-          <label>
-            Leaf Label Size
-            <input id="leafLabelSize" type="range" min="1" max="32" value="6" step="1" />
-          </label>
+        <div class="accordion">
+          <input type="radio" id="accordion-export" name="accordion-radio" hidden>
+          <label class="accordion-header" for="accordion-export">Export</label>
+          <div class="accordion-body">
+            <div class="form-group">
+              <label class="form-label" for="export-filename">Filename</label>
+              <input class="form-input skip" type="text" id="export-filename" placeholder="Tidytree.nwk">
+            </div>
+            <div class="form-group">
+              <label for="export-format">Format</label>
+              <select id="export-format" class="form-select skip">
+                <option selected>nwk</option>
+                <option>png</option>
+                <option>svg</option>
+              </select>
+            </div>
+            <div class="form-group text-right">
+              <button id="export-download" class="btn btn-primary">Download</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -126,7 +189,6 @@
 
     </div>
   </div>
-
 
   <ul id="context-menu" class="menu">
     <li class="menu-item">
@@ -142,8 +204,10 @@
 
   <div id="tooltip"></div>
 
-  <script src="//unpkg.com/patristic@0.2.4/dist/patristic.js"></script>
+  <script src="//unpkg.com/patristic@0.2.5/dist/patristic.js"></script>
   <script src="../index.js"></script>
+  <script src="//unpkg.com/file-saver@2.0.0/dist/FileSaver.min.js"></script>
+  <script src="saveSvgAsPng.js"></script>
   <script>
 var tree;
 
@@ -183,19 +247,36 @@ function buildTree(newick){
   });
 }
 
-d3.selectAll('select').on('change', function(){
+d3.selectAll('select').filter(':not(.skip)').on('change', function(){
   var thing = this.id[0].toUpperCase() + this.id.slice(1);
   tree['set'+thing](this.value);
   tree.recenter();
 });
 
-d3.selectAll('input').on('change', function(){
+d3.selectAll('input').filter('[type="checkbox"]:not(.skip)').on('change', function(){
   var thing = this.id[0].toUpperCase() + this.id.slice(1);
-  if(this.type === 'checkbox'){
-    tree['set' + thing](this.checked);
-  }
-  if(this.type === 'range'){
-    tree['set' + thing](parseFloat(this.value));
+  tree['set' + thing](this.checked);
+});
+
+d3.selectAll('input').filter('[type="range"]:not(.skip)').on('input', function(){
+  var cached = tree.animation;
+  tree.setAnimation(0);
+  var thing = this.id[0].toUpperCase() + this.id.slice(1);
+  tree['set' + thing](parseFloat(this.value));
+  tree.setAnimation(cached);
+});
+
+d3.select('#export-download').on('click', function(){
+  let format = document.getElementById('export-format').value;
+  let filename = document.getElementById('export-filename').value;
+  if(format === 'nwk'){
+    saveAs(new Blob([tree.data.toNewick()], {type: "text/plain;charset=utf-8"}), filename+'.'+format);
+  } else if(format === 'png'){
+    saveSvgAsPng(d3.select('#tree svg').node(), filename+'.png', {});
+  } else {
+    prepareSvg(d3.select('#tree svg').node(), {}, function(svg){
+      saveAs(new Blob([svg], {type: 'image/svg+xml'}), filename+'.svg');
+    });
   }
 });
 
@@ -221,9 +302,13 @@ function contextMenu(d){
   d3.select('#isolate').on('click', function(){
     tree.setData(d.data.isolate());
   });
+  d3.select('#excise').on('click', function(){
+    tree.setData(d.data.excise().getRoot());
+  });
 }
 
 function tooltip(d){
+  if(!d3.select('#tooltips').node().checked) return;
   let e = d3.event;
   e.preventDefault();
   d3.select('#tooltip')
