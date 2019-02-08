@@ -204,10 +204,10 @@
 
   <div id="tooltip"></div>
 
-  <script src="//unpkg.com/patristic@0.2.5/dist/patristic.js"></script>
-  <script src="../index.js"></script>
+  <script src="//unpkg.com/patristic@0.2.7/dist/patristic.js"></script>
   <script src="//unpkg.com/file-saver@2.0.0/dist/FileSaver.min.js"></script>
   <script src="saveSvgAsPng.js"></script>
+  <script src="../index.js"></script>
   <script>
 var tree;
 
@@ -218,15 +218,11 @@ var tree;
     .text(d => d);
 });
 
-fetch('life.nwk').then(function(response){
-  response.text().then(buildTree);
-});
+fetch('life.nwk').then(response => response.text().then(buildTree));
 
 d3.select('#source').on('input', function(){
   let reader = new FileReader();
-  reader.onload = function(){
-    buildTree(reader.result);
-  };
+  reader.onload = () => buildTree(reader.result);
   reader.readAsText(d3.event.srcElement.files[0]);
 });
 
