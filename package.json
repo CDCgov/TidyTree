@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Yet another d3-powered Phylogenetic tree renderer.",
   "name": "tidytree",
   "main": "index.js",
