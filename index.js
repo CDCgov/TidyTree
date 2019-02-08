@@ -11,8 +11,8 @@
 
 	/**
    * This class function creates a TidyTree object.
-   * @param {string} newick A valid newick string
-   * @param {object} options A Javascript object containing options to set up the tree
+   * @param {String} newick A valid newick string
+   * @param {Object} options A Javascript object containing options to set up the tree
    */
   function TidyTree(data, options){
     if(data instanceof patristic.Branch){
@@ -40,6 +40,14 @@
     if(this.parent) this.draw();
   }
 
+  /**
+   * Update the TidyTree's underlying data structure
+   * There are two contexts in which you should call this:
+   * 	1. You wish to replace the tree with a completely different tree, given by a different newick string
+   * 	2. Your underlying tree data has changed (e.g. the tree has been re-rooted)
+   * @param  {Object} data A patristic.Branch object
+   * @return {Object}        the TidyTree object
+   */
   TidyTree.prototype.setData = function(data){
     if(!data) return console.error('Invalid Data');
     this.data = data;
@@ -61,8 +69,8 @@
    * There are two contexts in which you should call this:
    * 	1. You wish to replace the tree with a completely different tree, given by a different newick string
    * 	2. Your underlying tree data has changed (e.g. the tree has been re-rooted)
-   * @param  {string} newick A valid newick string
-   * @return {object}        the TidyTree object
+   * @param  {String} newick A valid newick string
+   * @return {Object}        the TidyTree object
    */
   TidyTree.prototype.setTree = function(newick){
 		if(!newick) return console.error("Invalid Newick String");
@@ -89,7 +97,7 @@
 
 	/**
 	 * Draws a Phylogenetic on the element referred to by selector
-	 * @param  {string} selector A CSS selector
+	 * @param  {String} selector A CSS selector
 	 * @return {TidyTree}           the TidyTree object
 	 */
   TidyTree.prototype.draw = function(selector){
@@ -381,7 +389,7 @@
 
 	/**
 	 * Set the TidyTree's layout
-	 * @param  {string} newLayout The new layout
+	 * @param  {String} newLayout The new layout
 	 * @return {TidyTree}         The TidyTree Object
 	 */
 	TidyTree.prototype.setLayout = function(newLayout){
@@ -396,7 +404,7 @@
 
 	/**
 	 * Set the TidyTree's mode
-	 * @param  {string}   newMode The new mode
+	 * @param  {String}   newMode The new mode
 	 * @return {TidyTree}         The TidyTree object
 	 */
   TidyTree.prototype.setMode = function(newMode){
@@ -411,7 +419,7 @@
 
 	/**
    * Set the TidyTree's type
-   * @param  {boolean} newType The new type
+   * @param  {Boolean} newType The new type
    * @return {TidyTree}        the TidyTree object
    */
   TidyTree.prototype.setType = function(newType){
@@ -452,7 +460,7 @@
 
   /**
    * Set the TidyTree's leafLabels
-   * @param  {boolean} show Should the TidyTree show leafLabels?
+   * @param  {Boolean} show Should the TidyTree show leafLabels?
    * @return {TidyTree}     the TidyTree Object
    */
   TidyTree.prototype.setLeafLabels = function(show){
@@ -494,7 +502,7 @@
 
   /**
    * Set the TidyTree's branchLabels
-   * @param  {boolean} show Should the TidyTree show branchLabels?
+   * @param  {Boolean} show Should the TidyTree show branchLabels?
    * @return {TidyTree}     the TidyTree Object
    */
   TidyTree.prototype.setBranchLabels = function(show){
@@ -521,7 +529,7 @@
 
   /**
    * Set the TidyTree's branchLabels
-   * @param  {boolean} show Should the TidyTree show branchLabels?
+   * @param  {Boolean} show Should the TidyTree show branchLabels?
    * @return {TidyTree}     the TidyTree Object
    */
   TidyTree.prototype.setBranchDistances = function(show){
@@ -538,7 +546,7 @@
 
   /**
    * Set the TidyTree's branchLabels
-   * @param  {boolean} show Should the TidyTree show branchLabels?
+   * @param  {Boolean} show Should the TidyTree show branchLabels?
    * @return {TidyTree}     the TidyTree Object
    */
   TidyTree.prototype.setBranchDistanceSize = function(size){
