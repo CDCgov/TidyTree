@@ -10,6 +10,14 @@ This repository was created for use by CDC programs to collaborate on public hea
 
 ## Basic Usage
 
+First import the library:
+
+```HTML
+<script src="https://unpkg.com/tidytree@0.2.0/dist/tidytree.min.js"></script>
+```
+
+Then stick this in an HTML `script` tag:
+
 ```javascript
 let newick = '(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);';
 let tree = new TidyTree(newick, {parent: 'body'});
@@ -17,26 +25,9 @@ let tree = new TidyTree(newick, {parent: 'body'});
 
 And Voila! Your `body` will be populated by a phylogenetic tree.
 
-## Options
+## Documentation
 
-The default options:
-
-```javascript
-{
-  layout: 'vertical',
-  type: 'tree',
-  mode: 'smooth',
-  distance: false,
-  leafNodes: true,
-  leafLabels: false,
-  leafLabelSize: 6,
-  branchNodes: false,
-  branchLabels: false,
-  branchDistances: false,
-  animation: 500,
-  margin: [50, 50, 50, 50], //CSS order: top, right, bottom, left
-}
-```
+[...is available here.](https://aaboyles.github.io/TidyTree/docs/)
 
 ## Shoutouts
 
