@@ -271,6 +271,10 @@ d3.selectAll('input').filter('[type="range"]:not(.skip)').on('input', function()
   tree.setAnimation(cached);
 });
 
+d3.select('#animation').on('input', function(){
+  tree.setAnimation(parseFloat(this.value));
+});
+
 d3.select('#export-download').on('click', function(){
   let format = document.getElementById('export-format').value;
   let filename = document.getElementById('export-filename').value;
@@ -296,18 +300,10 @@ function contextMenu(d){
     .style('left', e.pageX + 'px')
     .style('z-index', 1000)
     .style('display', 'block');
-  d3.select('#reroot').on('click', function(){
-    tree.setData(d.data.reroot());
-  });
-  d3.select('#remove').on('click', function(){
-    tree.setData(d.data.remove());
-  });
-  d3.select('#isolate').on('click', function(){
-    tree.setData(d.data.isolate());
-  });
-  d3.select('#excise').on('click', function(){
-    tree.setData(d.data.excise().getRoot());
-  });
+  d3.select('#reroot' ).on('click', e => tree.setData(d.data.reroot()));
+  d3.select('#remove' ).on('click', e => tree.setData(d.data.remove()));
+  d3.select('#isolate').on('click', e => tree.setData(d.data.isolate()));
+  d3.select('#excise' ).on('click', e => tree.setData(d.data.excise().getRoot()));
 }
 
 function tooltip(d){
