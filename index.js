@@ -233,7 +233,7 @@
 
   nodeTransformers.dendrogram = nodeTransformers.tree;
 
-  var radToDeg = 180 / Math.PI;
+  const radToDeg = 180 / Math.PI;
 
   let labelTransformers = {
     tree: {
@@ -397,8 +397,8 @@
 
 	/**
 	 * Set the TidyTree's layout
-	 * @param  {String} newLayout The new layout
-	 * @return {TidyTree}         The TidyTree Object
+	 * @param {String} newLayout The new layout
+	 * @return {TidyTree} The TidyTree Object
 	 */
 	TidyTree.prototype.setLayout = function(newLayout){
     if(!TidyTree.validLayouts.includes(newLayout)){
@@ -412,8 +412,8 @@
 
 	/**
 	 * Set the TidyTree's mode
-	 * @param  {String}   newMode The new mode
-	 * @return {TidyTree}         The TidyTree object
+	 * @param {String} newMode The new mode
+	 * @return {TidyTree} The TidyTree object
 	 */
   TidyTree.prototype.setMode = function(newMode){
     if(!TidyTree.validModes.includes(newMode)){
@@ -427,8 +427,8 @@
 
 	/**
    * Set the TidyTree's type
-   * @param  {Boolean} newType The new type
-   * @return {TidyTree}        the TidyTree object
+   * @param {Boolean} newType The new type
+   * @return {TidyTree} the TidyTree object
    */
   TidyTree.prototype.setType = function(newType){
     if(!TidyTree.validTypes.includes(newType)){
@@ -441,10 +441,11 @@
   };
 
   /**
-   * Set the TidyTree's animation
-   * Note that this does not trigger a redraw.
-   * @param  {number} speed The desired duration of an animation, in ms. Set to 0 to turn animations off completely.
-   * @return {TidyTree}          the TidyTree object
+   * Set the TidyTree's animation speed. Note that this does not trigger a
+   * redraw.
+   * @param {number} speed The desired duration of an animation, in ms. Set to 0
+   * to turn animations off completely.
+   * @return {TidyTree} The TidyTree object
    */
   TidyTree.prototype.setAnimation = function(speed){
 		this.animation = speed;
@@ -452,9 +453,9 @@
 	};
 
   /**
-   * [description]
-   * @param  {[type]} show [description]
-   * @return {[type]}      [description]
+   * Shows or Hides the Leaf Nodes
+   * @param  {Boolean} show Should leaf nodes be visible?
+   * @return {TidyTree} The TidyTree Object
    */
   TidyTree.prototype.setLeafNodes = function(show){
     this.leafNodes = show ? true : false;
@@ -467,7 +468,7 @@
   };
 
   /**
-   * Set the TidyTree's leafLabels
+   * Shows or Hides the TidyTree's Leaf Labels
    * @param  {Boolean} show Should the TidyTree show leafLabels?
    * @return {TidyTree}     the TidyTree Object
    */
@@ -481,7 +482,13 @@
     return this;
   };
 
-
+  /**
+   * Sets the size of Leaf Labels
+   * @param  {Number} size The desired size (in font pixels) of the leaf labels.
+   * Note that this is not necessarily the actual on-screen size, as labels
+   * scale with zooming over the tree.
+   * @return {TidyTree} the TidyTree Object
+   */
   TidyTree.prototype.setLeafLabelSize = function(size){
     this.leafLabelSize = size;
     if(this.parent){ //i.e. has already been drawn
@@ -494,9 +501,9 @@
   };
 
   /**
-   * [description]
-   * @param  {[type]} show [description]
-   * @return {[type]}      [description]
+   * Shows or hides the Branch Nodes
+   * @param  {Boolean} show Should Branch nodes be shown?
+   * @return {TidyTree} the TidyTree object
    */
   TidyTree.prototype.setBranchNodes = function(show){
     this.branchNodes = show ? true : false;
@@ -524,6 +531,12 @@
   };
 
 
+  /**
+   * Sets the size of the Branch Labels
+   * @param {Number} size The desired size (in font-pixels). Note that this is
+   * not necessarily the actual on-screen size, as labels scale with zooming.
+   * @return {TidyTree} The TidyTree Object
+   */
   TidyTree.prototype.setBranchLabelSize = function(size){
     this.branchLabelSize = size;
     if(this.parent){ //i.e. has already been drawn
@@ -536,9 +549,9 @@
   };
 
   /**
-   * Set the TidyTree's branchLabels
-   * @param  {Boolean} show Should the TidyTree show branchLabels?
-   * @return {TidyTree}     the TidyTree Object
+   * Shows or hides the TidyTree's branch labels
+   * @param {Boolean} show Should the TidyTree show branchLabels?
+   * @return {TidyTree} The TidyTree Object
    */
   TidyTree.prototype.setBranchDistances = function(show){
     this.branchDistances = show ? true : false;
@@ -554,8 +567,8 @@
 
   /**
    * Set the TidyTree's branchLabels
-   * @param  {Boolean} show Should the TidyTree show branchLabels?
-   * @return {TidyTree}     the TidyTree Object
+   * @param {Boolean} show Should the TidyTree show branchLabels?
+   * @return {TidyTree} The TidyTree Object
    */
   TidyTree.prototype.setBranchDistanceSize = function(size){
     this.branchDistanceSize = size;
