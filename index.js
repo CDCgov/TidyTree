@@ -25,13 +25,13 @@
 			layout: 'vertical',
 			type: 'tree',
       mode: 'smooth',
-      distance: false,
       leafNodes: true,
 			leafLabels: false,
       leafLabelSize: 6,
       branchNodes: false,
 			branchLabels: false,
       branchDistances: false,
+      ruler: true,
       animation: 500,
       margin: [50, 50, 50, 50], //CSS order: top, right, bottom, left
       contextMenu: d => d3.event.preventDefault(),
@@ -51,15 +51,16 @@
   TidyTree.prototype.setData = function(data){
     if(!data) return console.error('Invalid Data');
     this.data = data;
-    let max = 0;
+    this.range = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER];
     this.hierarchy = d3.hierarchy(this.data, d => d.children)
       .eachBefore(d => {
         d.value =
           (d.parent      ? d.parent.value : 0) +
-          (d.data.length ? d.data.length  : 0)
-        if(d.value > max) max = d.value;
+          (d.data.length ? d.data.length  : 0);
+        if(d.value < this.range[0]) this.range[0] = d.value;
+        if(d.value > this.range[1]) this.range[1] = d.value;
       })
-      .each(d => d.value /= max);
+      .each(d => d.value /= this.range[1]);
     if(this.parent) return this.redraw();
     return this;
   };
@@ -119,6 +120,7 @@
 
 		g.append('g').attr('class', 'tidytree-links');
     g.append('g').attr('class', 'tidytree-nodes');
+    g.append('g').attr('class', 'tidytree-ruler');
 
 		return this.redraw().recenter();
   };
@@ -374,6 +376,27 @@
         .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
     }
 
+    let ruler = g.select('g.tidytree-ruler');
+    if(this.ruler){
+      ruler.attr('transform', this.layout == 'horizontal' ? `translate(0,${height})` : 'translate(0,0)');
+      let axis = this.layout == 'horizontal' ? d3.axisBottom() : d3.axisRight();
+      if(this.type === 'tree'){
+        ruler.transition().duration(this.animation)
+          .attr('opacity', 1)
+          .call(axis.scale(d3.scaleLinear([this.hierarchy.depth, this.hierarchy.height], [0, scalar])));
+      } else if(this.type === 'weighted'){
+        ruler.transition().duration(this.animation)
+          .attr('opacity', 1)
+          .call(axis.scale(d3.scaleLinear(this.range, [0, scalar])));
+      } else {
+        ruler.transition().duration(this.animation)
+          .attr('opacity', 0);
+      }
+    } else {
+      ruler.transition().duration(this.animation)
+        .attr('opacity', 0);
+    }
+
 		return this;
 	};
 
@@ -576,6 +599,19 @@
       d3.select(this.parent).select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text')
         .transition().duration(this.animation)
         .style('font-size', size + 'px');
+    }
+    return this;
+  };
+
+  /**
+   * Shows or hides the TidyTree's branch labels
+   * @param {Boolean} show Should the TidyTree show branchLabels?
+   * @return {TidyTree} The TidyTree Object
+   */
+  TidyTree.prototype.setRuler = function(show){
+    this.ruler = show ? true : false;
+    if(this.parent){ //i.e. has already been drawn
+      this.redraw();
     }
     return this;
   };

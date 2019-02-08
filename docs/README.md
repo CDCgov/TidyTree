@@ -36,9 +36,11 @@
         -   [Parameters][32]
     -   [setBranchDistanceSize][33]
         -   [Parameters][34]
-    -   [validLayouts][35]
-    -   [validTypes][36]
-    -   [validModes][37]
+    -   [setRuler][35]
+        -   [Parameters][36]
+    -   [validLayouts][37]
+    -   [validTypes][38]
+    -   [validModes][39]
 
 ## TidyTree
 
@@ -47,8 +49,8 @@ This class function creates a TidyTree object.
 ### Parameters
 
 -   `data`  
--   `options` **[Object][38]** A Javascript object containing options to set up the tree
--   `newick` **[String][39]** A valid newick string
+-   `options` **[Object][40]** A Javascript object containing options to set up the tree
+-   `newick` **[String][41]** A valid newick string
 
 ### setData
 
@@ -59,9 +61,9 @@ There are two contexts in which you should call this:
 
 #### Parameters
 
--   `data` **[Object][38]** A patristic.Branch object
+-   `data` **[Object][40]** A patristic.Branch object
 
-Returns **[Object][38]** the TidyTree object
+Returns **[Object][40]** the TidyTree object
 
 ### setTree
 
@@ -72,9 +74,9 @@ There are two contexts in which you should call this:
 
 #### Parameters
 
--   `newick` **[String][39]** A valid newick string
+-   `newick` **[String][41]** A valid newick string
 
-Returns **[Object][38]** the TidyTree object
+Returns **[Object][40]** the TidyTree object
 
 ### draw
 
@@ -82,21 +84,21 @@ Draws a Phylogenetic on the element referred to by selector
 
 #### Parameters
 
--   `selector` **[String][39]** A CSS selector
+-   `selector` **[String][41]** A CSS selector
 
-Returns **[TidyTree][40]** the TidyTree object
+Returns **[TidyTree][42]** the TidyTree object
 
 ### redraw
 
 Redraws the links and relocates the nodes accordingly
 
-Returns **[TidyTree][40]** The TidyTree Object
+Returns **[TidyTree][42]** The TidyTree Object
 
 ### recenter
 
 Recenters the tree in the center of the view
 
-Returns **[TidyTree][40]** The TidyTree object
+Returns **[TidyTree][42]** The TidyTree object
 
 ### setLayout
 
@@ -104,9 +106,9 @@ Set the TidyTree's layout
 
 #### Parameters
 
--   `newLayout` **[String][39]** The new layout
+-   `newLayout` **[String][41]** The new layout
 
-Returns **[TidyTree][40]** The TidyTree Object
+Returns **[TidyTree][42]** The TidyTree Object
 
 ### setMode
 
@@ -114,9 +116,9 @@ Set the TidyTree's mode
 
 #### Parameters
 
--   `newMode` **[String][39]** The new mode
+-   `newMode` **[String][41]** The new mode
 
-Returns **[TidyTree][40]** The TidyTree object
+Returns **[TidyTree][42]** The TidyTree object
 
 ### setType
 
@@ -124,9 +126,9 @@ Set the TidyTree's type
 
 #### Parameters
 
--   `newType` **[Boolean][41]** The new type
+-   `newType` **[Boolean][43]** The new type
 
-Returns **[TidyTree][40]** the TidyTree object
+Returns **[TidyTree][42]** the TidyTree object
 
 ### setAnimation
 
@@ -135,10 +137,10 @@ redraw.
 
 #### Parameters
 
--   `speed` **[number][42]** The desired duration of an animation, in ms. Set to 0
+-   `speed` **[number][44]** The desired duration of an animation, in ms. Set to 0
     to turn animations off completely.
 
-Returns **[TidyTree][40]** The TidyTree object
+Returns **[TidyTree][42]** The TidyTree object
 
 ### setLeafNodes
 
@@ -146,9 +148,9 @@ Shows or Hides the Leaf Nodes
 
 #### Parameters
 
--   `show` **[Boolean][41]** Should leaf nodes be visible?
+-   `show` **[Boolean][43]** Should leaf nodes be visible?
 
-Returns **[TidyTree][40]** The TidyTree Object
+Returns **[TidyTree][42]** The TidyTree Object
 
 ### setLeafLabels
 
@@ -156,9 +158,9 @@ Shows or Hides the TidyTree's Leaf Labels
 
 #### Parameters
 
--   `show` **[Boolean][41]** Should the TidyTree show leafLabels?
+-   `show` **[Boolean][43]** Should the TidyTree show leafLabels?
 
-Returns **[TidyTree][40]** the TidyTree Object
+Returns **[TidyTree][42]** the TidyTree Object
 
 ### setLeafLabelSize
 
@@ -166,11 +168,11 @@ Sets the size of Leaf Labels
 
 #### Parameters
 
--   `size` **[Number][42]** The desired size (in font pixels) of the leaf labels.
+-   `size` **[Number][44]** The desired size (in font pixels) of the leaf labels.
     Note that this is not necessarily the actual on-screen size, as labels
     scale with zooming over the tree.
 
-Returns **[TidyTree][40]** the TidyTree Object
+Returns **[TidyTree][42]** the TidyTree Object
 
 ### setBranchNodes
 
@@ -178,9 +180,9 @@ Shows or hides the Branch Nodes
 
 #### Parameters
 
--   `show` **[Boolean][41]** Should Branch nodes be shown?
+-   `show` **[Boolean][43]** Should Branch nodes be shown?
 
-Returns **[TidyTree][40]** the TidyTree object
+Returns **[TidyTree][42]** the TidyTree object
 
 ### setBranchLabels
 
@@ -188,9 +190,9 @@ Set the TidyTree's branchLabels
 
 #### Parameters
 
--   `show` **[Boolean][41]** Should the TidyTree show branchLabels?
+-   `show` **[Boolean][43]** Should the TidyTree show branchLabels?
 
-Returns **[TidyTree][40]** the TidyTree Object
+Returns **[TidyTree][42]** the TidyTree Object
 
 ### setBranchLabelSize
 
@@ -198,10 +200,10 @@ Sets the size of the Branch Labels
 
 #### Parameters
 
--   `size` **[Number][42]** The desired size (in font-pixels). Note that this is
+-   `size` **[Number][44]** The desired size (in font-pixels). Note that this is
     not necessarily the actual on-screen size, as labels scale with zooming.
 
-Returns **[TidyTree][40]** The TidyTree Object
+Returns **[TidyTree][42]** The TidyTree Object
 
 ### setBranchDistances
 
@@ -209,9 +211,9 @@ Shows or hides the TidyTree's branch labels
 
 #### Parameters
 
--   `show` **[Boolean][41]** Should the TidyTree show branchLabels?
+-   `show` **[Boolean][43]** Should the TidyTree show branchLabels?
 
-Returns **[TidyTree][40]** The TidyTree Object
+Returns **[TidyTree][42]** The TidyTree Object
 
 ### setBranchDistanceSize
 
@@ -220,27 +222,37 @@ Set the TidyTree's branchLabels
 #### Parameters
 
 -   `size`  
--   `show` **[Boolean][41]** Should the TidyTree show branchLabels?
+-   `show` **[Boolean][43]** Should the TidyTree show branchLabels?
 
-Returns **[TidyTree][40]** The TidyTree Object
+Returns **[TidyTree][42]** The TidyTree Object
+
+### setRuler
+
+Shows or hides the TidyTree's branch labels
+
+#### Parameters
+
+-   `show` **[Boolean][43]** Should the TidyTree show branchLabels?
+
+Returns **[TidyTree][42]** The TidyTree Object
 
 ### validLayouts
 
 The available layouts for rendering trees.
 
-Type: [Array][43]
+Type: [Array][45]
 
 ### validTypes
 
 The available types for rendering branches.
 
-Type: [Array][43]
+Type: [Array][45]
 
 ### validModes
 
 The available modes for rendering branches.
 
-Type: [Array][43]
+Type: [Array][45]
 
 [1]: #tidytree
 
@@ -310,20 +322,24 @@ Type: [Array][43]
 
 [34]: #parameters-15
 
-[35]: #validlayouts
+[35]: #setruler
 
-[36]: #validtypes
+[36]: #parameters-16
 
-[37]: #validmodes
+[37]: #validlayouts
 
-[38]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[38]: #validtypes
 
-[39]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[39]: #validmodes
 
-[40]: #tidytree
+[40]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
-[41]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[41]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
-[42]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[42]: #tidytree
 
-[43]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[43]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[44]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[45]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array

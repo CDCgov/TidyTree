@@ -153,6 +153,12 @@
           <div class="accordion-body">
             <div class="form-group">
               <label class="form-switch">
+                <input id="ruler" type="checkbox" checked />
+                <i class="form-icon"></i> Ruler
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-switch">
                 <input id="tooltips" type="checkbox" class="skip" />
                 <i class="form-icon"></i> Tooltips
               </label>
@@ -244,6 +250,7 @@ function buildTree(newick){
     leafLabels: d3.select('#leafLabels').node().checked,
     branchLabels: d3.select('#branchLabels').node().checked,
     branchDistances: d3.select('#branchDistances').node().checked,
+    ruler: d3.select('#ruler').node().checked,
     animation: parseFloat(d3.select('#animation').node().value),
     contextMenu: contextMenu,
     tooltip: tooltip
