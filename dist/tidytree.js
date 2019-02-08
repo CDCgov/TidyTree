@@ -283,8 +283,8 @@
       let newLinks = enter.append('g').attr('class', 'tidytree-link');
       newLinks.append('path').attr('fill', 'none').attr('stroke', '#ccc').attr('d', linkTransformers[this.type][this.mode][this.layout]).transition().duration(this.animation).attr('opacity', 1);
       newLinks.append('text').attr('y', 2).attr('text-anchor', 'middle').style('font-size', '6px').text(d => {
-        if (typeof d.source.data.length === 'undefined') return '0.000';
-        return d.source.data.length.toLocaleString();
+        if (typeof d.target.data.length === 'undefined') return '0.000';
+        return d.target.data.length.toLocaleString();
       }).transition().duration(this.animation).style('opacity', this.branchDistances ? 1 : 0);
     }, update => {
       update.select('path').transition().duration(this.animation).attr('d', linkTransformers[this.type][this.mode][this.layout]);

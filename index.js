@@ -316,8 +316,8 @@
           .attr('text-anchor', 'middle')
           .style('font-size', '6px')
           .text(d => {
-            if(typeof d.source.data.length === 'undefined') return '0.000';
-            return(d.source.data.length.toLocaleString());
+            if(typeof d.target.data.length === 'undefined') return '0.000';
+            return(d.target.data.length.toLocaleString());
           })
           .transition().duration(this.animation)
           .style('opacity', this.branchDistances ? 1 : 0);
