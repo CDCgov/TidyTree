@@ -60,7 +60,7 @@
         if(d.value > max) max = d.value;
       })
       .each(d => d.value /= max);
-    if(this.parent) return this.draw();
+    if(this.parent) return this.redraw();
     return this;
   };
 
@@ -118,49 +118,10 @@
     svg.call(this.zoom);
 
 		// Set initial tree
-		let link = g.selectAll('.link')
-		    .data(tree(this.hierarchy).links())
-        .enter().append('g')
-        .attr('class', 'link');
+		g.append('g').attr('class', 'tidytree-links');
+    g.append('g').attr('class', 'tidytree-nodes');
 
-    link.append('path')
-			  .attr('fill', 'none')
-			  .attr('stroke', '#ccc');
-
-    link.append('text')
-        .attr('y', 2)
-        .attr('text-anchor', 'middle')
-        .style('font-size', '6px')
-        .style('opacity', this.branchDistances ? 1 : 0)
-        .text(d => {
-          if(typeof d.source.data.length === 'undefined') return '0.000';
-          return(d.source.data.length.toLocaleString());
-        });
-
-		let node = g.selectAll('.node')
-        .data(this.hierarchy.descendants())
-        .enter().append('g')
-        .attr('class', d => 'node ' + (d.children ? 'node--internal' : 'node--leaf'));
-
-		node.append('circle')
-        .attr('r', 2.5)
-        .attr('title', d => d.data.id)
-        .style('opacity', d => (d.children && this.branchNodes) || (!d.children && this.leafNodes) ? 1 : 0)
-        .on('mouseover', this.tooltip)
-        .on('contextmenu', this.contextMenu);
-
-		node.append('text')
-        .text(d => d.data.id)
-        .style('font-size', '6px')
-        .attr('y', 2)
-        .attr('x', 5)
-        .style('opacity', d => (d.children && this.branchLabels) || (!d.children && this.leafLabels) ? 1 : 0);
-
-    svg.call(this.zoom.translateBy, this.margin[0], this.margin[3]);
-
-    this.redraw();
-
-		return this;
+		return this.redraw().recenter();
   };
 
   const getX      = d => d.x,
@@ -339,11 +300,34 @@
       .separation((a, b) => 1);
 
     //Note: You must render links prior to nodes in order to get correct placement!
-    let links = g.selectAll('.link').data(source(this.hierarchy).links())
-
-    links.selectAll('path')
-      .transition().duration(this.animation)
-      .attr('d', linkTransformers[this.type][this.mode][this.layout]);
+    let links = g.select('g.tidytree-links').selectAll('g.tidytree-link').data(source(this.hierarchy).links());
+    links.join(
+      enter => {
+        let newLinks = enter.append('g').attr('class', 'tidytree-link');
+        newLinks.append('path')
+          .attr('fill', 'none')
+  			  .attr('stroke', '#ccc')
+          .attr('d', linkTransformers[this.type][this.mode][this.layout])
+          .transition().duration(this.animation)
+          .attr('opacity', 1);
+        newLinks.append('text')
+          .attr('y', 2)
+          .attr('text-anchor', 'middle')
+          .style('font-size', '6px')
+          .text(d => {
+            if(typeof d.source.data.length === 'undefined') return '0.000';
+            return(d.source.data.length.toLocaleString());
+          })
+          .transition().duration(this.animation)
+          .style('opacity', this.branchDistances ? 1 : 0);
+      },
+      update => {
+        update.selectAll('path')
+          .transition().duration(this.animation)
+          .attr('d', linkTransformers[this.type][this.mode][this.layout]);
+      },
+      exit => exit.transition().duration(this.animation).attr('opacity', 0).remove()
+    );
 
     if(this.branchDistances){
       links.selectAll('text')
@@ -351,16 +335,43 @@
         .attr('transform', labelTransformers[this.type][this.mode][this.layout]);
     }
 
-		let node = g.selectAll('.node').data(this.hierarchy.descendants())
-			.transition().duration(this.animation)
-			.attr('transform', nodeTransformers[this.type][this.layout]);
+		let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants());
+    nodes.join(
+      enter => {
+        let newNodes = enter.append('g').attr('class', d => 'tidytree-node ' + (d.children ? 'tidytree-node-internal' : 'tidytree-node-leaf'));
+        newNodes.append('circle')
+          .attr('title', d => d.data.id)
+          .style('opacity', d => (d.children && this.branchNodes) || (!d.children && this.leafNodes) ? 1 : 0)
+          .on('mouseover', this.tooltip)
+          .on('contextmenu', this.contextMenu)
+          .attr('transform', nodeTransformers[this.type][this.layout])
+          .transition().duration(this.animation)
+          .attr('r', 2.5);
+        newNodes.append('text')
+          .text(d => d.data.id)
+          .style('font-size', '6px')
+          .attr('y', 2)
+          .attr('x', 5)
+          .transition().duration(this.animation)
+          .style('opacity', d => (d.children && this.branchLabels) || (!d.children && this.leafLabels) ? 1 : 0);
+      },
+      update => {
+        update.selectAll('circle')
+          .transition().duration(this.animation)
+          .attr('transform', nodeTransformers[this.type][this.layout]);
+      },
+      exit => {
+        exit.transition().duration(this.animation).attr('opacity', 0).remove();
+        this.recenter();
+      }
+    );
 
     if(this.layout === 'vertical'){
-      node.selectAll('text').attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
+      nodes.selectAll('text').attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
     } else if(this.layout === 'horizontal'){
-      node.selectAll('text').attr('transform', 'rotate(0)').attr('text-anchor', 'start').attr('x', 5);
+      nodes.selectAll('text').attr('transform', 'rotate(0)').attr('text-anchor', 'start').attr('x', 5);
     } else {
-      node.selectAll('text')
+      nodes.selectAll('text')
         .attr('transform', l => 'rotate('+(l.x / Math.PI * 180 % 180 - 90)+')')
         .attr('text-anchor', l => l.x % (2*Math.PI) > Math.PI ? 'end' : 'start')
         .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
@@ -382,7 +393,7 @@
       y += parseFloat(svg.style('height'))/2;
     }
     svg
-      .transition().duration(this.animation ? 800 : 0)
+      .transition().duration(this.animation)
       .call(this.zoom.transform, d3.zoomIdentity.translate(x, y));
     return this;
   };
@@ -451,7 +462,7 @@
   TidyTree.prototype.setLeafNodes = function(show){
     this.leafNodes = show ? true : false;
     if(this.parent){ //i.e. has already been drawn
-      d3.select(this.parent).select('svg').selectAll('g.node--leaf circle')
+      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-leaf circle')
         .transition().duration(this.animation)
         .style('opacity', show ? 1 : 0);
     }
@@ -466,7 +477,7 @@
   TidyTree.prototype.setLeafLabels = function(show){
     this.leafLabels = show ? true : false;
     if(this.parent){ //i.e. has already been drawn
-      d3.select(this.parent).select('svg').selectAll('g.node--leaf text')
+      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-leaf text')
         .transition().duration(this.animation)
         .style('opacity', show ? 1 : 0);
     }
@@ -477,7 +488,7 @@
   TidyTree.prototype.setLeafLabelSize = function(size){
     this.leafLabelSize = size;
     if(this.parent){ //i.e. has already been drawn
-      d3.select(this.parent).select('svg').selectAll('g.node--leaf text')
+      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-leaf text')
         .transition().duration(this.animation)
         .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2.5)
         .style('font-size', size+'px');
@@ -493,7 +504,7 @@
   TidyTree.prototype.setBranchNodes = function(show){
     this.branchNodes = show ? true : false;
     if(this.parent){ //i.e. has already been drawn
-      d3.select(this.parent).select('svg').selectAll('g.node--internal circle')
+      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-internal circle')
         .transition().duration(this.animation)
         .style('opacity', show ? 1 : 0);
     }
@@ -508,7 +519,7 @@
   TidyTree.prototype.setBranchLabels = function(show){
     this.branchLabels = show ? true : false;
     if(this.parent){ //i.e. has already been drawn
-      d3.select(this.parent).select('svg').selectAll('g.node--internal text')
+      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-internal text')
         .transition().duration(this.animation)
         .style('opacity', show ? 1 : 0);
     }
@@ -519,7 +530,7 @@
   TidyTree.prototype.setBranchLabelSize = function(size){
     this.branchLabelSize = size;
     if(this.parent){ //i.e. has already been drawn
-      d3.select(this.parent).select('svg').selectAll('g.node--internal text')
+      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-internal text')
         .transition().duration(this.animation)
         .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2.5)
         .style('font-size', size+'px');
@@ -535,7 +546,7 @@
   TidyTree.prototype.setBranchDistances = function(show){
     this.branchDistances = show ? true : false;
     if(this.parent){ //i.e. has already been drawn
-      let links = d3.select(this.parent).select('svg').selectAll('.link').selectAll('text');
+      let links = d3.select(this.parent).select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text');
       if(show) links.attr('transform', labelTransformers[this.type][this.mode][this.layout]);
       links
         .transition().duration(this.animation)
@@ -552,7 +563,7 @@
   TidyTree.prototype.setBranchDistanceSize = function(size){
     this.branchDistanceSize = size;
     if(this.parent){ //i.e. has already been drawn
-      d3.select(this.parent).select('svg').selectAll('.link').selectAll('text')
+      d3.select(this.parent).select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text')
         .transition().duration(this.animation)
         .style('font-size', size + 'px');
     }
