@@ -6,7 +6,7 @@ This repository was created for use by CDC programs to collaborate on public hea
 
 ## Demo
 
-[Try it out here.](https://aaboyles.github.io/TidyTree/demo/index.html)
+[Try it out here.](https://CDCgov.github.io/TidyTree/demo/index.html)
 
 ## Basic Usage
 
@@ -27,7 +27,7 @@ And Voila! Your `body` will be populated by a phylogenetic tree.
 
 ## Documentation
 
-[...is available here.](https://aaboyles.github.io/TidyTree/docs/)
+[...is available here.](https://CDCgov.github.io/TidyTree/docs/)
 
 ## Shoutouts
 
@@ -35,7 +35,7 @@ tidytree is based on [this gist](https://gist.github.com/Andrew-Reid/c7ae41a98b8
 
 ## Why?
 
-[MicrobeTrace](https://github.com/CDCgov/MicrobeTrace) needed a Phylogenetic Tree renderer that enabled rerooting and distance scaling. Additionally, there were a bunch of nice-to-haves, like Unrooted and Circular views, Zooming, Colorable and Selectable nodes... You get the idea. Of all the available phylogenetic tree libraries, [Phylotree](https://github.com/veg.phylotree.js) came closest, but it didn't quite cut it for us.
+[MicrobeTrace](https://github.com/CDCgov/MicrobeTrace) needed a Phylogenetic Tree renderer that enabled rerooting and distance scaling. Additionally, there were a bunch of nice-to-haves, like Unrooted and Circular views, Zooming, Colorable and Selectable nodes... You get the idea.
 
 ## Public Domain
 This repository constitutes a work of the United States Government and is not
