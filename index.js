@@ -49,7 +49,7 @@
    * @return {Object}        the TidyTree object
    */
   TidyTree.prototype.setData = function(data){
-    if(!data) return console.error('Invalid Data');
+    if(!data) throw Error('Invalid Data');
     this.data = data;
     this.range = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER];
     this.hierarchy = d3.hierarchy(this.data, d => d.children)
@@ -74,7 +74,7 @@
    * @return {Object}        the TidyTree object
    */
   TidyTree.prototype.setTree = function(newick){
-		if(!newick) return console.error("Invalid Newick String");
+		if(!newick) throw Error("Invalid Newick String");
     return this.setData(patristic.parseNewick(newick));
   };
 
@@ -103,7 +103,7 @@
 	 */
   TidyTree.prototype.draw = function(selector){
     if(!selector && !this.parent){
-      throw new Error('No valid target for drawing given! Where should the tree go?');
+      throw Error('No valid target for drawing given! Where should the tree go?');
     }
     if(selector) this.parent = selector;
 
@@ -425,8 +425,7 @@
 	 */
 	TidyTree.prototype.setLayout = function(newLayout){
     if(!TidyTree.validLayouts.includes(newLayout)){
-			console.error('Cannot set TidyTree to layout:', newLayout, '\nValid layouts are:', TidyTree.validLayouts);
-			return;
+			throw Error('Cannot set TidyTree to layout:', newLayout, '\nValid layouts are:', TidyTree.validLayouts);
 		}
 		this.layout = newLayout;
     if(this.parent) return this.redraw();
@@ -440,8 +439,7 @@
 	 */
   TidyTree.prototype.setMode = function(newMode){
     if(!TidyTree.validModes.includes(newMode)){
-			console.error('Cannot set TidyTree to mode:', newMode, '\nValid modes are:', TidyTree.validModes);
-			return;
+			throw Error('Cannot set TidyTree to mode:', newMode, '\nValid modes are:', TidyTree.validModes);
     }
 		this.mode = newMode;
     if(this.parent) return this.redraw();
@@ -455,8 +453,7 @@
    */
   TidyTree.prototype.setType = function(newType){
     if(!TidyTree.validTypes.includes(newType)){
-			console.error('Cannot set TidyTree to type:', newType, '\nValid types are:', TidyTree.validTypes);
-			return;
+			throw Error('Cannot set TidyTree to type:', newType, '\nValid types are:', TidyTree.validTypes);
 		}
 		this.type = newType;
     if(this.parent) return this.redraw();
