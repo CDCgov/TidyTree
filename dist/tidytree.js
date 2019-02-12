@@ -16,15 +16,8 @@
     * @param {Object} options A Javascript object containing options to set up the tree
     */
 
-  function TidyTree(data, options) {
-    if (data instanceof patristic.Branch) {
-      this.setData(data);
-    } else {
-      this.setTree(data);
-    }
-
-    if (!options) options = {};
-    Object.assign(this, {
+  function TidyTree(data, options, events) {
+    let defaults = {
       layout: 'vertical',
       type: 'tree',
       mode: 'smooth',
@@ -36,12 +29,31 @@
       branchDistances: false,
       ruler: true,
       animation: 500,
-      margin: [50, 50, 50, 50],
-      //CSS order: top, right, bottom, left
-      contextMenu: d => d3.event.preventDefault(),
-      tooltip: d => null
-    }, options);
+      margin: [50, 50, 50, 50] //CSS order: top, right, bottom, left
+
+    };
+    if (!options) options = {};
+    Object.assign(this, defaults, options, {
+      events: {}
+    });
+    let defaultEvents = {
+      contextmenu: d => d3.event.preventDefault(),
+      draw: d => null,
+      hidetooltip: d => null,
+      setdata: d => null,
+      showtooltip: d => null
+    };
+    if (!events) events = {};
+    Object.assign(this.events, defaultEvents, events);
     if (this.parent) this.draw();
+
+    if (data instanceof patristic.Branch) {
+      this.setData(data);
+    } else {
+      this.setTree(data);
+    }
+
+    if (this.parent) this.recenter();
   }
   /**
    * Update the TidyTree's underlying data structure
@@ -54,7 +66,7 @@
 
 
   TidyTree.prototype.setData = function (data) {
-    if (!data) return console.error('Invalid Data');
+    if (!data) throw Error('Invalid Data');
     this.data = data;
     this.range = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER];
     this.hierarchy = d3.hierarchy(this.data, d => d.children).eachBefore(d => {
@@ -76,7 +88,7 @@
 
 
   TidyTree.prototype.setTree = function (newick) {
-    if (!newick) return console.error("Invalid Newick String");
+    if (!newick) throw Error("Invalid Newick String");
     return this.setData(patristic.parseNewick(newick));
   };
   /**
@@ -106,7 +118,7 @@
 
   TidyTree.prototype.draw = function (selector) {
     if (!selector && !this.parent) {
-      throw new Error('No valid target for drawing given! Where should the tree go?');
+      throw Error('No valid target for drawing given! Where should the tree go?');
     }
 
     if (selector) this.parent = selector;
@@ -118,7 +130,8 @@
     g.append('g').attr('class', 'tidytree-links');
     g.append('g').attr('class', 'tidytree-nodes');
     g.append('g').attr('class', 'tidytree-ruler');
-    return this.redraw().recenter();
+    if (this.events.draw) this.events.draw();
+    return this;
   };
 
   const getX = d => d.x,
@@ -294,10 +307,10 @@
       links.selectAll('text').transition().duration(this.animation).attr('transform', labelTransformers[this.type][this.mode][this.layout]);
     }
 
-    let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants());
+    let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants(), d => d.id);
     nodes.join(enter => {
       let newNodes = enter.append('g').attr('class', d => 'tidytree-node ' + (d.children ? 'tidytree-node-internal' : 'tidytree-node-leaf')).attr('transform', nodeTransformers[this.type][this.layout]);
-      newNodes.append('circle').attr('title', d => d.data.id).style('opacity', d => d.children && this.branchNodes || !d.children && this.leafNodes ? 1 : 0).on('mouseover', this.tooltip).on('contextmenu', this.contextMenu).attr('r', 2.5);
+      newNodes.append('circle').attr('title', d => d.data.id).style('opacity', d => d.children && this.branchNodes || !d.children && this.leafNodes ? 1 : 0).on('mouseenter focusin', d => this.trigger('showtooltip', d)).on('mouseout focusout', d => this.trigger('hidetooltip', d)).on('contextmenu', d => this.trigger('contextmenu', d)).attr('r', 2.5);
       newNodes.append('text').text(d => d.data.id).style('font-size', '6px').attr('y', 2).attr('x', 5).style('opacity', d => d.children && this.branchLabels || !d.children && this.leafLabels ? 1 : 0);
     }, update => {
       update.transition().duration(this.animation).attr('transform', nodeTransformers[this.type][this.layout]);
@@ -358,8 +371,7 @@
 
   TidyTree.prototype.setLayout = function (newLayout) {
     if (!TidyTree.validLayouts.includes(newLayout)) {
-      console.error('Cannot set TidyTree to layout:', newLayout, '\nValid layouts are:', TidyTree.validLayouts);
-      return;
+      throw Error('Cannot set TidyTree to layout:', newLayout, '\nValid layouts are:', TidyTree.validLayouts);
     }
 
     this.layout = newLayout;
@@ -375,8 +387,7 @@
 
   TidyTree.prototype.setMode = function (newMode) {
     if (!TidyTree.validModes.includes(newMode)) {
-      console.error('Cannot set TidyTree to mode:', newMode, '\nValid modes are:', TidyTree.validModes);
-      return;
+      throw Error('Cannot set TidyTree to mode:', newMode, '\nValid modes are:', TidyTree.validModes);
     }
 
     this.mode = newMode;
@@ -392,8 +403,7 @@
 
   TidyTree.prototype.setType = function (newType) {
     if (!TidyTree.validTypes.includes(newType)) {
-      console.error('Cannot set TidyTree to type:', newType, '\nValid types are:', TidyTree.validTypes);
-      return;
+      throw Error('Cannot set TidyTree to type:', newType, '\nValid types are:', TidyTree.validTypes);
     }
 
     this.type = newType;
@@ -570,6 +580,59 @@
     }
 
     return this;
+  };
+  /**
+   * Attaches a new event listener
+   * Please note that this is not yet functioning.
+   * @param  {String}   events   A space-delimited list of event names
+   * @param  {Function} callback The function to run when one of the `events` occurs.
+   * @return {TidyTree} The TidyTree on which this method was called.
+   */
+
+
+  TidyTree.prototype.on = function (events, callback) {
+    events.split(' ').forEach(event => this.events[event] = callback);
+    return this;
+  };
+  /**
+   * Removes event listeners
+   * @param  {String}   events   A space-delimited list of event names
+   * @return {TidyTree} The TidyTree on which this method was called.
+   */
+
+
+  TidyTree.prototype.off = function (events) {
+    let nullFn = () => null;
+
+    events.split(' ').forEach(event => this.events[event] = nullFn);
+    return this;
+  };
+  /**
+   * Forces the tree to respond as though an `event` has occurred
+   * Please note that this is not yet functioning.
+   * @param  {String} event The name of an event.
+   * @param  {Spread} args  Any arguments which should be passed to the event.
+   * @return The output of the callback run on `event`
+   */
+
+
+  TidyTree.prototype.trigger = function (event, ...args) {
+    if (!this.events[event]) throw Error(`No event named ${event} is defined.`);
+    return this.events[event](args);
+  };
+  /**
+   * Destroys the TidyTree
+   * @return {undefined}
+   */
+
+
+  TidyTree.prototype.destroy = function () {
+    if (this.parent) {
+      //i.e. has already been drawn
+      d3.select(this.parent).html(null);
+    }
+
+    delete this; //Go to work, GC!
   };
 
   return TidyTree;

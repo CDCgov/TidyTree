@@ -251,9 +251,11 @@ function buildTree(newick){
     branchLabels: d3.select('#branchLabels').node().checked,
     branchDistances: d3.select('#branchDistances').node().checked,
     ruler: d3.select('#ruler').node().checked,
-    animation: parseFloat(d3.select('#animation').node().value),
-    contextMenu: contextMenu,
-    tooltip: tooltip
+    animation: parseFloat(d3.select('#animation').node().value)
+  }, {
+    contextmenu: contextMenu,
+    showtooltip: showTooltip,
+    hidetooltip: hideTooltip
   });
 }
 
@@ -298,31 +300,36 @@ d3.select('#export-download').on('click', function(){
 
 function contextMenu(d){
   let e = d3.event;
+  if(!e) return;
   e.preventDefault();
-  d3.selectAll('#tooltip')
-    .style('z-index', -1)
-    .style('display', 'none');
+  hideTooltip();
   d3.select('#context-menu')
     .style('top', e.pageY + 'px')
     .style('left', e.pageX + 'px')
     .style('z-index', 1000)
     .style('display', 'block');
-  d3.select('#reroot' ).on('click', e => tree.setData(d.data.reroot()));
-  d3.select('#remove' ).on('click', e => tree.setData(d.data.remove()));
-  d3.select('#isolate').on('click', e => tree.setData(d.data.isolate()));
-  d3.select('#excise' ).on('click', e => tree.setData(d.data.excise().getRoot()));
+  d3.select('#reroot' ).on('click', c => tree.setData(d[0].data.reroot()));
+  d3.select('#remove' ).on('click', c => tree.setData(d[0].data.remove()));
+  d3.select('#isolate').on('click', c => tree.setData(d[0].data.isolate()));
+  d3.select('#excise' ).on('click', c => tree.setData(d[0].data.excise().getRoot()));
 }
 
-function tooltip(d){
+function showTooltip(d){
   if(!d3.select('#tooltips').node().checked) return;
   let e = d3.event;
   e.preventDefault();
   d3.select('#tooltip')
-    .text(d.data.id)
+    .text(d[0].data.id)
     .style('top', e.pageY + 'px')
     .style('left', (e.pageX+5) + 'px')
     .style('z-index', 1000)
     .style('display', 'block');
+}
+
+function hideTooltip(){
+  d3.selectAll('#tooltip')
+    .style('z-index', -1)
+    .style('display', 'none');
 }
 
 d3.select('body').on('click', function(){
