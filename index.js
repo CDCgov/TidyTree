@@ -14,7 +14,7 @@
    * @param {String} newick A valid newick string
    * @param {Object} options A Javascript object containing options to set up the tree
    */
-  function TidyTree(data, options, events){
+  function TidyTree(data, options, events, stylers){
     let defaults = {
 			layout: 'vertical',
 			type: 'tree',
@@ -30,17 +30,13 @@
       margin: [50, 50, 50, 50] //CSS order: top, right, bottom, left
     };
     if(!options) options = {};
-    Object.assign(this, defaults, options, {events: {}});
+    Object.assign(this, defaults, options, {events: {}, stylers: {}});
 
-    let defaultEvents = {
-      contextmenu: d => d3.event.preventDefault(),
-      draw: d => null,
-      hidetooltip: d => null,
-      setdata: d => null,
-      showtooltip: d => null
-    };
     if(!events) events = {};
-    Object.assign(this.events, defaultEvents, events);
+    Object.assign(this.events, events);
+
+    if(!stylers) stylers = {};
+    Object.assign(this.stylers, stylers);
 
     if(this.parent) this.draw();
     if(data instanceof patristic.Branch){
@@ -487,54 +483,6 @@
 	};
 
   /**
-   * Shows or Hides the Leaf Nodes
-   * @param  {Boolean} show Should leaf nodes be visible?
-   * @return {TidyTree} The TidyTree Object
-   */
-  TidyTree.prototype.setLeafNodes = function(show){
-    this.leafNodes = show ? true : false;
-    if(this.parent){ //i.e. has already been drawn
-      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-leaf circle')
-        .transition().duration(this.animation)
-        .style('opacity', show ? 1 : 0);
-    }
-    return this;
-  };
-
-  /**
-   * Shows or Hides the TidyTree's Leaf Labels
-   * @param  {Boolean} show Should the TidyTree show leafLabels?
-   * @return {TidyTree}     the TidyTree Object
-   */
-  TidyTree.prototype.setLeafLabels = function(show){
-    this.leafLabels = show ? true : false;
-    if(this.parent){ //i.e. has already been drawn
-      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-leaf text')
-        .transition().duration(this.animation)
-        .style('opacity', show ? 1 : 0);
-    }
-    return this;
-  };
-
-  /**
-   * Sets the size of Leaf Labels
-   * @param  {Number} size The desired size (in font pixels) of the leaf labels.
-   * Note that this is not necessarily the actual on-screen size, as labels
-   * scale with zooming over the tree.
-   * @return {TidyTree} the TidyTree Object
-   */
-  TidyTree.prototype.setLeafLabelSize = function(size){
-    this.leafLabelSize = size;
-    if(this.parent){ //i.e. has already been drawn
-      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-leaf text')
-        .transition().duration(this.animation)
-        .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2.5)
-        .style('font-size', size+'px');
-    }
-    return this;
-  };
-
-  /**
    * Shows or hides the Branch Nodes
    * @param  {Boolean} show Should Branch nodes be shown?
    * @return {TidyTree} the TidyTree object
@@ -546,6 +494,20 @@
         .transition().duration(this.animation)
         .style('opacity', show ? 1 : 0);
     }
+    return this;
+  };
+
+  /**
+   * Restyles Leaf Nodes
+   * @param  {Function} styler A function that restyles each node. `styler`
+   * receives a reference to the DOM node to be styled, and an associated data
+   * object.
+   * @return {TidyTree} the TidyTree Object
+   */
+  TidyTree.prototype.eachBranchNode = function(styler){
+    this.stylers.branchNodes = styler;
+    if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
+    d3.select(this.parent).select('svg').selectAll('g.tidytree-node-internal circle').each(function(d){ styler(this, d); });
     return this;
   };
 
@@ -564,6 +526,19 @@
     return this;
   };
 
+  /**
+   * Restyles Branch Label
+   * @param  {Function} styler A function that restyles each node. `styler`
+   * receives a reference to the DOM node to be styled, and an associated data
+   * object.
+   * @return {TidyTree} the TidyTree Object
+   */
+  TidyTree.prototype.eachBranchLabel = function(styler){
+    this.stylers.branchLabels = styler;
+    if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
+    d3.select(this.parent).select('svg').selectAll('g.tidytree-node-internal text').each(function(d, i, l){ styler(this, d); });
+    return this;
+  };
 
   /**
    * Sets the size of the Branch Labels
@@ -600,8 +575,23 @@
   };
 
   /**
-   * Set the TidyTree's branchLabels
-   * @param {Boolean} show Should the TidyTree show branchLabels?
+   * Restyles Branch Distances
+   * @param  {Function} styler A function that restyles each node. `styler`
+   * receives a reference to the DOM node to be styled, and an associated data
+   * object.
+   * @return {TidyTree} the TidyTree Object
+   */
+  TidyTree.prototype.eachBranchDistance = function(styler){
+    this.stylers.branchDistances = styler;
+    if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
+    d3.select(this.parent).select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text').each(function(d, i, l){ styler(this, d); });
+    return this;
+  };
+
+  /**
+   * Set the TidyTree's Branch Distance Sizes
+   * @param {Boolean} size The desired size (in font-pixels) of the branch
+   * distances
    * @return {TidyTree} The TidyTree Object
    */
   TidyTree.prototype.setBranchDistanceSize = function(size){
@@ -610,6 +600,82 @@
       d3.select(this.parent).select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text')
         .transition().duration(this.animation)
         .style('font-size', size + 'px');
+    }
+    return this;
+  };
+
+  /**
+   * Shows or Hides the Leaf Nodes
+   * @param  {Boolean} show Should leaf nodes be visible?
+   * @return {TidyTree} The TidyTree Object
+   */
+  TidyTree.prototype.setLeafNodes = function(show){
+    this.leafNodes = show ? true : false;
+    if(this.parent){ //i.e. has already been drawn
+      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-leaf circle')
+        .transition().duration(this.animation)
+        .style('opacity', show ? 1 : 0);
+    }
+    return this;
+  };
+
+  /**
+   * Restyles Leaf Nodes
+   * @param  {Function} styler A function that restyles each node. `styler`
+   * receives a reference to the DOM node to be styled, and an associated data
+   * object.
+   * @return {TidyTree} the TidyTree Object
+   */
+  TidyTree.prototype.eachLeafNode = function(styler){
+    this.stylers.leafNodes = styler;
+    if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
+    d3.select(this.parent).select('svg').selectAll('g.tidytree-node-leaf circle').each(function(d){ styler(this, d); });
+    return this;
+  };
+
+  /**
+   * Shows or Hides the TidyTree's Leaf Labels
+   * @param  {Boolean} show Should the TidyTree show leafLabels?
+   * @return {TidyTree}     the TidyTree Object
+   */
+  TidyTree.prototype.setLeafLabels = function(show){
+    this.leafLabels = show ? true : false;
+    if(this.parent){ //i.e. has already been drawn
+      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-leaf text')
+        .transition().duration(this.animation)
+        .style('opacity', show ? 1 : 0);
+    }
+    return this;
+  };
+
+  /**
+   * Restyles Leaf Labels
+   * @param  {Function} styler A function that restyles each node. `styler`
+   * receives a reference to the DOM node to be styled, and an associated data
+   * object.
+   * @return {TidyTree} the TidyTree Object
+   */
+  TidyTree.prototype.eachLeafLabel = function(styler){
+    this.stylers.leafLabels = styler;
+    if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
+    d3.select(this.parent).select('svg').selectAll('g.tidytree-node-leaf text').each(function(d){ styler(this, d); });
+    return this;
+  };
+
+  /**
+   * Sets the size of Leaf Labels
+   * @param  {Number} size The desired size (in font pixels) of the leaf labels.
+   * Note that this is not necessarily the actual on-screen size, as labels
+   * scale with zooming over the tree.
+   * @return {TidyTree} the TidyTree Object
+   */
+  TidyTree.prototype.setLeafLabelSize = function(size){
+    this.leafLabelSize = size;
+    if(this.parent){ //i.e. has already been drawn
+      d3.select(this.parent).select('svg').selectAll('g.tidytree-node-leaf text')
+        .transition().duration(this.animation)
+        .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2.5)
+        .style('font-size', size+'px');
     }
     return this;
   };
