@@ -1,12 +1,12 @@
-(function (root, factory) {
-  if (typeof define === 'function' && define.amd) {
-    define(['patristic'], function(){ return (root.TidyTree = factory(patristic)); });
-  } else if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('patristic'));
+(function(root, factory){
+  if(typeof define === 'function' && define.amd){
+    define(['patristic', 'd3'], function(){ return (root.TidyTree = factory(patristic, d3)); });
+  } else if(typeof module === 'object' && module.exports){
+    module.exports = factory(require('patristic'), require('d3'));
   } else {
-    root.TidyTree = factory(root.patristic);
+    root.TidyTree = factory(root.patristic, root.d3);
   }
-}(typeof self !== 'undefined' ? self : this, function(patristic){
+}(typeof self !== 'undefined' ? self : this, function(patristic, d3){
   'use strict';
 
 	/**
