@@ -314,12 +314,14 @@
     links.join(
       enter => {
         let newLinks = enter.append('g').attr('class', 'tidytree-link');
+
         newLinks.append('path')
           .attr('fill', 'none')
   			  .attr('stroke', '#ccc')
           .attr('d', linkTransformers[this.type][this.mode][this.layout])
           .transition().duration(this.animation)
           .attr('opacity', 1);
+
         newLinks.append('text')
           .attr('y', 2)
           .attr('text-anchor', 'middle')
@@ -335,15 +337,13 @@
         update.select('path')
           .transition().duration(this.animation)
           .attr('d', linkTransformers[this.type][this.mode][this.layout]);
+
+        update.select('text')
+          .transition().duration(this.animation)
+          .attr('transform', labelTransformers[this.type][this.mode][this.layout]);
       },
       exit => exit.transition().duration(this.animation).attr('opacity', 0).remove()
     );
-
-    if(this.branchDistances){
-      links.selectAll('text')
-        .transition().duration(this.animation)
-        .attr('transform', labelTransformers[this.type][this.mode][this.layout]);
-    }
 
 		let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants(), d => d.id);
     nodes.join(
