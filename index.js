@@ -349,8 +349,7 @@
     nodes.join(
       enter => {
         let newNodes = enter.append('g')
-          .attr('class', d => 'tidytree-node ' + (d.children ? 'tidytree-node-internal' : 'tidytree-node-leaf'))
-          .attr('transform', nodeTransformers[this.type][this.layout]);
+          .attr('class', d => 'tidytree-node ' + (d.children ? 'tidytree-node-internal' : 'tidytree-node-leaf'));
 
         newNodes.append('circle')
           .attr('title', d => d.data.id)
@@ -366,6 +365,10 @@
           .attr('y', 2)
           .attr('x', 5)
           .style('opacity', d => (d.children && this.branchLabels) || (!d.children && this.leafLabels) ? 1 : 0);
+
+        newNodes
+          .transition().duration(this.animation)
+          .attr('transform', nodeTransformers[this.type][this.layout]);
       },
       update => {
         update
