@@ -20,34 +20,44 @@
         -   [Parameters][16]
     -   [setAnimation][17]
         -   [Parameters][18]
-    -   [setLeafNodes][19]
+    -   [setBranchNodes][19]
         -   [Parameters][20]
-    -   [setLeafLabels][21]
+    -   [eachBranchNode][21]
         -   [Parameters][22]
-    -   [setLeafLabelSize][23]
+    -   [setBranchLabels][23]
         -   [Parameters][24]
-    -   [setBranchNodes][25]
+    -   [eachBranchLabel][25]
         -   [Parameters][26]
-    -   [setBranchLabels][27]
+    -   [setBranchLabelSize][27]
         -   [Parameters][28]
-    -   [setBranchLabelSize][29]
+    -   [setBranchDistances][29]
         -   [Parameters][30]
-    -   [setBranchDistances][31]
+    -   [eachBranchDistance][31]
         -   [Parameters][32]
     -   [setBranchDistanceSize][33]
         -   [Parameters][34]
-    -   [setRuler][35]
+    -   [setLeafNodes][35]
         -   [Parameters][36]
-    -   [on][37]
+    -   [eachLeafNode][37]
         -   [Parameters][38]
-    -   [off][39]
+    -   [setLeafLabels][39]
         -   [Parameters][40]
-    -   [trigger][41]
+    -   [eachLeafLabel][41]
         -   [Parameters][42]
-    -   [destroy][43]
-    -   [validLayouts][44]
-    -   [validTypes][45]
-    -   [validModes][46]
+    -   [setLeafLabelSize][43]
+        -   [Parameters][44]
+    -   [setRuler][45]
+        -   [Parameters][46]
+    -   [on][47]
+        -   [Parameters][48]
+    -   [off][49]
+        -   [Parameters][50]
+    -   [trigger][51]
+        -   [Parameters][52]
+    -   [destroy][53]
+    -   [validLayouts][54]
+    -   [validTypes][55]
+    -   [validModes][56]
 
 ## TidyTree
 
@@ -56,9 +66,10 @@ This class function creates a TidyTree object.
 ### Parameters
 
 -   `data`  
--   `options` **[Object][47]** A Javascript object containing options to set up the tree
+-   `options` **[Object][57]** A Javascript object containing options to set up the tree
 -   `events`  
--   `newick` **[String][48]** A valid newick string
+-   `stylers`  
+-   `newick` **[String][58]** A valid newick string
 
 ### setData
 
@@ -69,9 +80,9 @@ There are two contexts in which you should call this:
 
 #### Parameters
 
--   `data` **[Object][47]** A patristic.Branch object
+-   `data` **[Object][57]** A patristic.Branch object
 
-Returns **[Object][47]** the TidyTree object
+Returns **[Object][57]** the TidyTree object
 
 ### setTree
 
@@ -82,9 +93,9 @@ There are two contexts in which you should call this:
 
 #### Parameters
 
--   `newick` **[String][48]** A valid newick string
+-   `newick` **[String][58]** A valid newick string
 
-Returns **[Object][47]** the TidyTree object
+Returns **[Object][57]** the TidyTree object
 
 ### draw
 
@@ -92,21 +103,21 @@ Draws a Phylogenetic on the element referred to by selector
 
 #### Parameters
 
--   `selector` **[String][48]** A CSS selector
+-   `selector` **[String][58]** A CSS selector
 
-Returns **[TidyTree][49]** the TidyTree object
+Returns **[TidyTree][59]** the TidyTree object
 
 ### redraw
 
 Redraws the links and relocates the nodes accordingly
 
-Returns **[TidyTree][49]** The TidyTree Object
+Returns **[TidyTree][59]** The TidyTree Object
 
 ### recenter
 
 Recenters the tree in the center of the view
 
-Returns **[TidyTree][49]** The TidyTree object
+Returns **[TidyTree][59]** The TidyTree object
 
 ### setLayout
 
@@ -114,9 +125,9 @@ Set the TidyTree's layout
 
 #### Parameters
 
--   `newLayout` **[String][48]** The new layout
+-   `newLayout` **[String][58]** The new layout
 
-Returns **[TidyTree][49]** The TidyTree Object
+Returns **[TidyTree][59]** The TidyTree Object
 
 ### setMode
 
@@ -124,9 +135,9 @@ Set the TidyTree's mode
 
 #### Parameters
 
--   `newMode` **[String][48]** The new mode
+-   `newMode` **[String][58]** The new mode
 
-Returns **[TidyTree][49]** The TidyTree object
+Returns **[TidyTree][59]** The TidyTree object
 
 ### setType
 
@@ -134,9 +145,9 @@ Set the TidyTree's type
 
 #### Parameters
 
--   `newType` **[Boolean][50]** The new type
+-   `newType` **[Boolean][60]** The new type
 
-Returns **[TidyTree][49]** the TidyTree object
+Returns **[TidyTree][59]** the TidyTree object
 
 ### setAnimation
 
@@ -145,42 +156,10 @@ redraw.
 
 #### Parameters
 
--   `speed` **[number][51]** The desired duration of an animation, in ms. Set to 0
+-   `speed` **[number][61]** The desired duration of an animation, in ms. Set to 0
     to turn animations off completely.
 
-Returns **[TidyTree][49]** The TidyTree object
-
-### setLeafNodes
-
-Shows or Hides the Leaf Nodes
-
-#### Parameters
-
--   `show` **[Boolean][50]** Should leaf nodes be visible?
-
-Returns **[TidyTree][49]** The TidyTree Object
-
-### setLeafLabels
-
-Shows or Hides the TidyTree's Leaf Labels
-
-#### Parameters
-
--   `show` **[Boolean][50]** Should the TidyTree show leafLabels?
-
-Returns **[TidyTree][49]** the TidyTree Object
-
-### setLeafLabelSize
-
-Sets the size of Leaf Labels
-
-#### Parameters
-
--   `size` **[Number][51]** The desired size (in font pixels) of the leaf labels.
-    Note that this is not necessarily the actual on-screen size, as labels
-    scale with zooming over the tree.
-
-Returns **[TidyTree][49]** the TidyTree Object
+Returns **[TidyTree][59]** The TidyTree object
 
 ### setBranchNodes
 
@@ -188,9 +167,21 @@ Shows or hides the Branch Nodes
 
 #### Parameters
 
--   `show` **[Boolean][50]** Should Branch nodes be shown?
+-   `show` **[Boolean][60]** Should Branch nodes be shown?
 
-Returns **[TidyTree][49]** the TidyTree object
+Returns **[TidyTree][59]** the TidyTree object
+
+### eachBranchNode
+
+Restyles Leaf Nodes
+
+#### Parameters
+
+-   `styler` **[Function][62]** A function that restyles each node. `styler`
+    receives a reference to the DOM node to be styled, and an associated data
+    object.
+
+Returns **[TidyTree][59]** the TidyTree Object
 
 ### setBranchLabels
 
@@ -198,9 +189,21 @@ Set the TidyTree's branchLabels
 
 #### Parameters
 
--   `show` **[Boolean][50]** Should the TidyTree show branchLabels?
+-   `show` **[Boolean][60]** Should the TidyTree show branchLabels?
 
-Returns **[TidyTree][49]** the TidyTree Object
+Returns **[TidyTree][59]** the TidyTree Object
+
+### eachBranchLabel
+
+Restyles Branch Label
+
+#### Parameters
+
+-   `styler` **[Function][62]** A function that restyles each node. `styler`
+    receives a reference to the DOM node to be styled, and an associated data
+    object.
+
+Returns **[TidyTree][59]** the TidyTree Object
 
 ### setBranchLabelSize
 
@@ -208,10 +211,10 @@ Sets the size of the Branch Labels
 
 #### Parameters
 
--   `size` **[Number][51]** The desired size (in font-pixels). Note that this is
+-   `size` **[Number][61]** The desired size (in font-pixels). Note that this is
     not necessarily the actual on-screen size, as labels scale with zooming.
 
-Returns **[TidyTree][49]** The TidyTree Object
+Returns **[TidyTree][59]** The TidyTree Object
 
 ### setBranchDistances
 
@@ -219,20 +222,88 @@ Shows or hides the TidyTree's branch labels
 
 #### Parameters
 
--   `show` **[Boolean][50]** Should the TidyTree show branchLabels?
+-   `show` **[Boolean][60]** Should the TidyTree show branchLabels?
 
-Returns **[TidyTree][49]** The TidyTree Object
+Returns **[TidyTree][59]** The TidyTree Object
 
-### setBranchDistanceSize
+### eachBranchDistance
 
-Set the TidyTree's branchLabels
+Restyles Branch Distances
 
 #### Parameters
 
--   `size`  
--   `show` **[Boolean][50]** Should the TidyTree show branchLabels?
+-   `styler` **[Function][62]** A function that restyles each node. `styler`
+    receives a reference to the DOM node to be styled, and an associated data
+    object.
 
-Returns **[TidyTree][49]** The TidyTree Object
+Returns **[TidyTree][59]** the TidyTree Object
+
+### setBranchDistanceSize
+
+Set the TidyTree's Branch Distance Sizes
+
+#### Parameters
+
+-   `size` **[Boolean][60]** The desired size (in font-pixels) of the branch
+    distances
+
+Returns **[TidyTree][59]** The TidyTree Object
+
+### setLeafNodes
+
+Shows or Hides the Leaf Nodes
+
+#### Parameters
+
+-   `show` **[Boolean][60]** Should leaf nodes be visible?
+
+Returns **[TidyTree][59]** The TidyTree Object
+
+### eachLeafNode
+
+Restyles Leaf Nodes
+
+#### Parameters
+
+-   `styler` **[Function][62]** A function that restyles each node. `styler`
+    receives a reference to the DOM node to be styled, and an associated data
+    object.
+
+Returns **[TidyTree][59]** the TidyTree Object
+
+### setLeafLabels
+
+Shows or Hides the TidyTree's Leaf Labels
+
+#### Parameters
+
+-   `show` **[Boolean][60]** Should the TidyTree show leafLabels?
+
+Returns **[TidyTree][59]** the TidyTree Object
+
+### eachLeafLabel
+
+Restyles Leaf Labels
+
+#### Parameters
+
+-   `styler` **[Function][62]** A function that restyles each node. `styler`
+    receives a reference to the DOM node to be styled, and an associated data
+    object.
+
+Returns **[TidyTree][59]** the TidyTree Object
+
+### setLeafLabelSize
+
+Sets the size of Leaf Labels
+
+#### Parameters
+
+-   `size` **[Number][61]** The desired size (in font pixels) of the leaf labels.
+    Note that this is not necessarily the actual on-screen size, as labels
+    scale with zooming over the tree.
+
+Returns **[TidyTree][59]** the TidyTree Object
 
 ### setRuler
 
@@ -240,9 +311,9 @@ Shows or hides the TidyTree's branch labels
 
 #### Parameters
 
--   `show` **[Boolean][50]** Should the TidyTree show branchLabels?
+-   `show` **[Boolean][60]** Should the TidyTree show branchLabels?
 
-Returns **[TidyTree][49]** The TidyTree Object
+Returns **[TidyTree][59]** The TidyTree Object
 
 ### on
 
@@ -251,10 +322,10 @@ Please note that this is not yet functioning.
 
 #### Parameters
 
--   `events` **[String][48]** A space-delimited list of event names
--   `callback` **[Function][52]** The function to run when one of the `events` occurs.
+-   `events` **[String][58]** A space-delimited list of event names
+-   `callback` **[Function][62]** The function to run when one of the `events` occurs.
 
-Returns **[TidyTree][49]** The TidyTree on which this method was called.
+Returns **[TidyTree][59]** The TidyTree on which this method was called.
 
 ### off
 
@@ -262,9 +333,9 @@ Removes event listeners
 
 #### Parameters
 
--   `events` **[String][48]** A space-delimited list of event names
+-   `events` **[String][58]** A space-delimited list of event names
 
-Returns **[TidyTree][49]** The TidyTree on which this method was called.
+Returns **[TidyTree][59]** The TidyTree on which this method was called.
 
 ### trigger
 
@@ -273,7 +344,7 @@ Please note that this is not yet functioning.
 
 #### Parameters
 
--   `event` **[String][48]** The name of an event.
+-   `event` **[String][58]** The name of an event.
 -   `args` **Spread** Any arguments which should be passed to the event.
 
 Returns **any** The output of the callback run on `event`
@@ -282,25 +353,25 @@ Returns **any** The output of the callback run on `event`
 
 Destroys the TidyTree
 
-Returns **[undefined][53]** 
+Returns **[undefined][63]** 
 
 ### validLayouts
 
 The available layouts for rendering trees.
 
-Type: [Array][54]
+Type: [Array][64]
 
 ### validTypes
 
 The available types for rendering branches.
 
-Type: [Array][54]
+Type: [Array][64]
 
 ### validModes
 
 The available modes for rendering branches.
 
-Type: [Array][54]
+Type: [Array][64]
 
 [1]: #tidytree
 
@@ -338,31 +409,31 @@ Type: [Array][54]
 
 [18]: #parameters-7
 
-[19]: #setleafnodes
+[19]: #setbranchnodes
 
 [20]: #parameters-8
 
-[21]: #setleaflabels
+[21]: #eachbranchnode
 
 [22]: #parameters-9
 
-[23]: #setleaflabelsize
+[23]: #setbranchlabels
 
 [24]: #parameters-10
 
-[25]: #setbranchnodes
+[25]: #eachbranchlabel
 
 [26]: #parameters-11
 
-[27]: #setbranchlabels
+[27]: #setbranchlabelsize
 
 [28]: #parameters-12
 
-[29]: #setbranchlabelsize
+[29]: #setbranchdistances
 
 [30]: #parameters-13
 
-[31]: #setbranchdistances
+[31]: #eachbranchdistance
 
 [32]: #parameters-14
 
@@ -370,42 +441,62 @@ Type: [Array][54]
 
 [34]: #parameters-15
 
-[35]: #setruler
+[35]: #setleafnodes
 
 [36]: #parameters-16
 
-[37]: #on
+[37]: #eachleafnode
 
 [38]: #parameters-17
 
-[39]: #off
+[39]: #setleaflabels
 
 [40]: #parameters-18
 
-[41]: #trigger
+[41]: #eachleaflabel
 
 [42]: #parameters-19
 
-[43]: #destroy
+[43]: #setleaflabelsize
 
-[44]: #validlayouts
+[44]: #parameters-20
 
-[45]: #validtypes
+[45]: #setruler
 
-[46]: #validmodes
+[46]: #parameters-21
 
-[47]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[47]: #on
 
-[48]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[48]: #parameters-22
 
-[49]: #tidytree
+[49]: #off
 
-[50]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[50]: #parameters-23
 
-[51]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[51]: #trigger
 
-[52]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+[52]: #parameters-24
 
-[53]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/undefined
+[53]: #destroy
 
-[54]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[54]: #validlayouts
+
+[55]: #validtypes
+
+[56]: #validmodes
+
+[57]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[58]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[59]: #tidytree
+
+[60]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[61]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[62]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+
+[63]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/undefined
+
+[64]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
