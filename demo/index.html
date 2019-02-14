@@ -216,10 +216,9 @@
 
   <div id="tooltip"></div>
 
-  <script src="//unpkg.com/patristic@0.2.7/dist/patristic.js"></script>
   <script src="//unpkg.com/file-saver@2.0.0/dist/FileSaver.min.js"></script>
   <script src="saveSvgAsPng.js"></script>
-  <script src="../index.js"></script>
+  <script src="../dist/tidytree.js"></script>
   <script>
 var tree, original;
 
@@ -239,8 +238,7 @@ d3.select('#source').on('input', function(){
 });
 
 function buildTree(newick){
-  if(newick) original = patristic.parseNewick(newick);
-  tree = new TidyTree(original.clone(), {
+  tree = new TidyTree(newick ? newick : tree.data.clone(), {
     parent: '#tree',
     layout: d3.select('#layout').node().value,
     mode: d3.select('#mode').node().value,

@@ -2,12 +2,15 @@
   "version": "0.2.4",
   "description": "Yet another d3-powered Phylogenetic tree renderer.",
   "name": "tidytree",
-  "main": "index.js",
+  "main": "dist/tidytree.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel index.js > dist/tidytree.js && terser dist/tidytree.js --compress > dist/tidytree.min.js",
-    "doc": "documentation build index.js -f md -o docs/README.md",
-    "demo": "http-server"
+    "build": "rollup -c",
+    "demo": "http-server",
+    "dev": "npm run demo & npm run watch",
+    "doc": "documentation build main.js -f md -o docs/README.md",
+    "minify": "terser dist/tidytree.js --compress > dist/tidytree.min.js",
+    "test": "jest",
+    "watch": "rollup -c --watch"
   },
   "author": "Tony Boyles <nsp3@cdc.gov>",
   "license": "Apache-2.0",
@@ -17,13 +20,14 @@
   },
   "dependencies": {
     "d3": "^5.9.1",
-    "patristic": "^0.2.8"
+    "patristic": "^0.2.10"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",
     "@babel/core": "^7.2.2",
     "documentation": "^9.1.1",
     "http-server": "^0.11.1",
+    "rollup-plugin-node-resolve": "^4.0.0",
     "terser": "^3.16.1"
   }
 }
