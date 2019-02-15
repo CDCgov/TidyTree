@@ -1231,12 +1231,22 @@ var TidyTree = (function () {
           .on('contextmenu', d => this.trigger('contextmenu', d))
           .attr('r', 2.5);
 
-        newNodes.append('text')
+        let nodeLabels = newNodes.append('text')
           .text(d => d.data.id)
           .style('font-size', '6px')
           .attr('y', 2)
-          .attr('x', 5)
           .style('opacity', d => (d.children && this.branchLabels) || (!d.children && this.leafLabels) ? 1 : 0);
+
+        if(this.layout === 'vertical'){
+          nodeLabels.attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
+        } else if(this.layout === 'horizontal'){
+          nodeLabels.attr('transform', 'rotate(0)').attr('text-anchor', 'start').attr('x', 5);
+        } else {
+          nodeLabels
+            .attr('transform', l => 'rotate('+(l.x / Math.PI * 180 % 180 - 90)+')')
+            .attr('text-anchor', l => l.x % (2*Math.PI) > Math.PI ? 'end' : 'start')
+            .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
+        }
 
         newNodes
           .transition().duration(this.animation)
@@ -1246,20 +1256,21 @@ var TidyTree = (function () {
         update
           .transition().duration(this.animation)
           .attr('transform', nodeTransformers[this.type][this.layout]);
+
+        let nodeLabels = update.select('text');
+        if(this.layout === 'vertical'){
+          nodeLabels.attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
+        } else if(this.layout === 'horizontal'){
+          nodeLabels.attr('transform', 'rotate(0)').attr('text-anchor', 'start').attr('x', 5);
+        } else {
+          nodeLabels
+            .attr('transform', l => 'rotate('+(l.x / Math.PI * 180 % 180 - 90)+')')
+            .attr('text-anchor', l => l.x % (2*Math.PI) > Math.PI ? 'end' : 'start')
+            .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
+        }
       },
       exit => exit.transition().duration(this.animation).attr('opacity', 0).remove()
     );
-
-    if(this.layout === 'vertical'){
-      nodes.selectAll('text').attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
-    } else if(this.layout === 'horizontal'){
-      nodes.selectAll('text').attr('transform', 'rotate(0)').attr('text-anchor', 'start').attr('x', 5);
-    } else {
-      nodes.selectAll('text')
-        .attr('transform', l => 'rotate('+(l.x / Math.PI * 180 % 180 - 90)+')')
-        .attr('text-anchor', l => l.x % (2*Math.PI) > Math.PI ? 'end' : 'start')
-        .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
-    }
 
     let ruler = g.select('g.tidytree-ruler');
     if(this.ruler){
