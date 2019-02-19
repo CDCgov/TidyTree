@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "d3": "^5.9.1",
-    "patristic": "^0.2.10"
+    "patristic": "^0.3.0"
   },
   "devDependencies": {
     "documentation": "^9.1.1",
