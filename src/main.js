@@ -339,7 +339,7 @@ TidyTree.prototype.redraw = function(){
     exit => exit.transition().duration(this.animation).attr('opacity', 0).remove()
   );
 
-	let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants(), d => d.id);
+	let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants(), d => d.data.id);
   nodes.join(
     enter => {
       let newNodes = enter.append('g')
