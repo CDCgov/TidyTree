@@ -4,13 +4,13 @@
   "name": "tidytree",
   "main": "dist/tidytree.js",
   "scripts": {
+    "all": "npm run build && npm run minify && npm run doc",
     "build": "rollup -c",
     "bump": "npm version patch",
     "demo": "npx serve",
     "dev": "npm run demo & npm run watch",
     "doc": "documentation build src/main.js -f md -o docs/README.md",
     "minify": "terser dist/tidytree.js --compress > dist/tidytree.min.js",
-    "prepublish": "npm run build && npm run minify && npm run doc && git commit -a",
     "version": "npm version patch",
     "watch": "rollup -c --watch"
   },

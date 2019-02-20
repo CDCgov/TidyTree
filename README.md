@@ -13,7 +13,7 @@ This repository was created for use by CDC programs to collaborate on public hea
 First import the library:
 
 ```HTML
-<script src="https://unpkg.com/tidytree@0.2.0/dist/tidytree.min.js"></script>
+<script src="https://unpkg.com/tidytree@0.2.8/dist/tidytree.min.js"></script>
 ```
 
 Then stick this in an HTML `script` tag:
