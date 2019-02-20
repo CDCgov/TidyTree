@@ -112,13 +112,16 @@ TidyTree.prototype.draw = function(selector){
 	      .attr('height', '100%');
 
 	let g = svg.append('g');
+  let rulerWrapper = svg.append('g').attr('class', 'tidytree-ruler');
 
-	this.zoom = d3.zoom().on('zoom', () => g.attr('transform', d3.event.transform));
+	this.zoom = d3.zoom().on('zoom', () => {
+    g.attr('transform', d3.event.transform);
+    updateRuler.call(this, d3.event.transform);
+  });
   svg.call(this.zoom);
 
 	g.append('g').attr('class', 'tidytree-links');
   g.append('g').attr('class', 'tidytree-nodes');
-  g.append('g').attr('class', 'tidytree-ruler');
 
   if(this.events.draw) this.events.draw();
 
@@ -288,16 +291,16 @@ labelTransformers.dendrogram = labelTransformers.tree;
 TidyTree.prototype.redraw = function(){
   let parent = this.parent;
 
-  let width  = parseFloat(parent.style('width'))  - this.margin[0] - this.margin[2];
-  let height = parseFloat(parent.style('height')) - this.margin[1] - this.margin[3];
+  this.width  = parseFloat(parent.style('width'))  - this.margin[0] - this.margin[2];
+  this.height = parseFloat(parent.style('height')) - this.margin[1] - this.margin[3];
 
-  let scalar = (this.layout === 'horizontal' ? width : (this.layout === 'vertical' ? height : Math.min(width, height)/2));
-  this.hierarchy.each(d => d.weight = scalar * d.value);
+  this.scalar = (this.layout === 'horizontal' ? this.width : (this.layout === 'vertical' ? this.height : Math.min(this.width, this.height)/2));
+  this.hierarchy.each(d => d.weight = this.scalar * d.value);
 
 	let g = parent.select('svg g');
 
 	let source = (this.type === 'tree' ? d3.tree() : d3.cluster())
-    .size(this.layout === 'circular' ? [2 * Math.PI, Math.min(height, width)/2] : this.layout === 'horizontal' ? [height, width] : [width, height])
+    .size(this.layout === 'circular' ? [2 * Math.PI, Math.min(this.height, this.width)/2] : this.layout === 'horizontal' ? [this.height, this.width] : [this.width, this.height])
     .separation((a, b) => 1);
 
   //Note: You must render links prior to nodes in order to get correct placement!
@@ -391,29 +394,32 @@ TidyTree.prototype.redraw = function(){
     exit => exit.transition().duration(this.animation).attr('opacity', 0).remove()
   );
 
-  let ruler = g.select('g.tidytree-ruler');
-  if(this.ruler){
-    ruler.attr('transform', this.layout == 'horizontal' ? `translate(0,${height})` : 'translate(0,0)');
-    let axis = this.layout == 'horizontal' ? d3.axisBottom() : d3.axisRight();
-    if(this.type === 'tree'){
-      ruler.transition().duration(this.animation)
-        .attr('opacity', 1)
-        .call(axis.scale(d3.scaleLinear([this.hierarchy.depth, this.hierarchy.height], [0, scalar])));
-    } else if(this.type === 'weighted'){
-      ruler.transition().duration(this.animation)
-        .attr('opacity', 1)
-        .call(axis.scale(d3.scaleLinear(this.range, [0, scalar])));
-    } else {
-      ruler.transition().duration(this.animation)
-        .attr('opacity', 0);
-    }
-  } else {
-    ruler.transition().duration(this.animation)
-      .attr('opacity', 0);
-  }
+  updateRuler.call(this);
 
 	return this;
 };
+
+function updateRuler(transform){
+  if(!transform) transform = {k: 1};
+  let ruler = this.parent.select('g.tidytree-ruler');
+  if(this.ruler){
+    ruler.attr('transform', this.layout == 'horizontal' ? `translate(${this.margin[3]},${this.height+this.margin[0]})` : `translate(${this.margin[0]},${this.margin[3]})`);
+    let axis = this.layout == 'horizontal' ? d3.axisTop() : d3.axisLeft();
+    if(this.type === 'tree' && this.layout !== 'circular'){
+      ruler
+        .attr('opacity', 1)
+        .call(axis.scale(d3.scaleLinear([0, this.hierarchy.height/transform.k], [0, this.scalar])));
+    } else if(this.type === 'weighted' && this.layout !== 'circular'){
+      ruler
+        .attr('opacity', 1)
+        .call(axis.scale(d3.scaleLinear([this.range[0], this.range[1]/transform.k], [0, this.scalar])));
+    } else {
+      ruler.attr('opacity', 0);
+    }
+  } else {
+    ruler.attr('opacity', 0);
+  }
+}
 
 /**
  * Recenters the tree in the center of the view
