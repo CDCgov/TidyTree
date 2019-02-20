@@ -206,6 +206,12 @@
     <li class="menu-item">
       <a href="#" id="rotate">Rotate</a>
     </li>
+    <li class="menu-item">
+      <a href="#" id="flip">Flip</a>
+    </li>
+    <li class="menu-item">
+      <a href="#" id="sort">Sort</a>
+    </li>
     <li class="menu-item"><hr /></li>
     <li class="menu-item">
       <a href="#" id="remove">Remove</a>
@@ -312,6 +318,8 @@ function contextMenu(d){
     .style('display', 'block');
   d3.select('#reroot' ).on('click', c => tree.setData(d[0].data.reroot()));
   d3.select('#rotate' ).on('click', c => tree.setData(d[0].data.rotate().getRoot()));
+  d3.select('#flip'   ).on('click', c => tree.setData(d[0].data.rotate(true).getRoot()));
+  d3.select('#sort'   ).on('click', c => tree.setData(d[0].data.sort()));
   d3.select('#remove' ).on('click', c => tree.setData(d[0].data.remove()));
   d3.select('#isolate').on('click', c => tree.setData(d[0].data.isolate()));
   d3.select('#excise' ).on('click', c => tree.setData(d[0].data.excise().getRoot()));
