@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rollup -c",
     "bump": "npm version patch",
-    "demo": "http-server",
+    "demo": "npx serve",
     "dev": "npm run demo & npm run watch",
     "doc": "documentation build src/main.js -f md -o docs/README.md",
     "minify": "terser dist/tidytree.js --compress > dist/tidytree.min.js",
@@ -26,7 +26,6 @@
   },
   "devDependencies": {
     "documentation": "^9.1.1",
-    "http-server": "^0.11.1",
     "rollup-plugin-node-resolve": "^4.0.0",
     "terser": "^3.16.1"
   }
