@@ -4,11 +4,15 @@
 
 This repository was created for use by CDC programs to collaborate on public health surveillance related projects in support of the CDC Surveillance Strategy.  Github is not hosted by the CDC, but is used by CDC and its partners to share information and collaborate on software.
 
-## Demo
+TidyTree is both [a full-featured web application](https://CDCgov.github.io/TidyTree/demo/index.html) for users, along with the underlying library for developers.
 
-[Try it out here.](https://CDCgov.github.io/TidyTree/demo/index.html)
+## Launch the Application
 
-## Basic Usage
+[Launch TidyTree](https://CDCgov.github.io/TidyTree/demo/index.html)
+
+It's designed to replicate much of the functionality of [FigTree](http://tree.bio.ed.ac.uk/software/figtree/), though it's by no means a perfect replacement. It does, however, run entirely in-browser.
+
+## Developer Quick Start
 
 First import the library:
 
@@ -23,9 +27,9 @@ let newick = '(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);';
 let tree = new TidyTree(newick, {parent: 'body'});
 ```
 
-And Voila! Your `body` will be populated by a phylogenetic tree.
+[And Voila!](https://codepen.io/AABoyles/pen/PVvOOx) Your `body` will be populated by a phylogenetic tree.
 
-## Documentation
+## Developer Documentation
 
 [...is available here.](https://CDCgov.github.io/TidyTree/docs/)
 
@@ -36,6 +40,8 @@ tidytree is based on [this gist](https://gist.github.com/Andrew-Reid/c7ae41a98b8
 ## Why?
 
 [MicrobeTrace](https://github.com/CDCgov/MicrobeTrace) needed a Phylogenetic Tree renderer that enabled rerooting and distance scaling. Additionally, there were a bunch of nice-to-haves, like Unrooted and Circular views, Zooming, Colorable and Selectable nodes... You get the idea.
+
+As for the viewer, well, we needed a platform to rapidly prototype features for the library. The product of that is a single-page web application that leverages literally all of the features of the library. If you're a dork like me, you can see this in the coding of the [index.html file](https://github.com/CDCgov/TidyTree/blob/master/demo/index.html). Notice how all of the select widgets are programmatically populated--that's so we could implement new features (e.g. layouts) without having to update the Demo HTML. After that, all we had to do was keep the UI clean.
 
 ## Public Domain
 This repository constitutes a work of the United States Government and is not
