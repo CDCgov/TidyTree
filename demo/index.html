@@ -26,10 +26,18 @@
   [type="range"]{
     width: 100%;
   }
+  #toggle-options{
+    position: absolute;
+    top: calc(50% - 10px);
+    left: 357px;
+    background: lightgray;
+    border-radius: 0 5px 5px 0;
+    padding: 5px;
+  }
   .tidytree-node circle {
-	  fill: #fff;
-	  stroke: steelblue;
-	  stroke-width: 3px;
+	  fill: steelblue;
+	  stroke: #fff;
+	  stroke-width: 1px;
 	}
 	.tidytree-link {
     stroke-width: 2px;
@@ -193,6 +201,7 @@
           </div>
         </div>
       </div>
+      <div id="toggle-options"><</div>
 
       <div id="tree" class="column"></div>
 
@@ -303,6 +312,21 @@ d3.select('#export-download').on('click', function(){
     prepareSvg(d3.select('#tree svg').node(), {}, function(svg){
       saveAs(new Blob([svg], {type: 'image/svg+xml'}), filename+'.svg');
     });
+  }
+});
+
+d3.select("#toggle-options").on('click', function(){
+  var that = d3.select(this);
+  if(that.text() === "<"){
+    d3.select('#options').transition().duration(400).style('width', '0px');
+    that.text('>')
+      .transition().duration(400).style('left', '15px')
+      .end().then(() => tree.redraw());
+  } else {
+    d3.select('#options').transition().duration(400).style('width', '376px');
+    that.text('<')
+      .transition().duration(400).style('left', '376px')
+      .end().then(() => tree.redraw());
   }
 });
 
