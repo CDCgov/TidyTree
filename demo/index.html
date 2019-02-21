@@ -34,6 +34,9 @@
     border-radius: 0 5px 5px 0;
     padding: 5px;
   }
+  #tree{
+    padding: 0;
+  }
   .tidytree-node circle {
 	  fill: steelblue;
 	  stroke: #fff;
@@ -163,6 +166,12 @@
               <label class="form-switch">
                 <input id="ruler" type="checkbox" checked />
                 <i class="form-icon"></i> Ruler
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="">
+                <input type="color" id="background" class="skip" value="#ffffff" />
+                Background
               </label>
             </div>
             <div class="form-group">
@@ -299,6 +308,10 @@ d3.selectAll('input').filter('[type="range"]:not(.skip)').on('input', function()
 
 d3.select('#animation').on('input', function(){
   tree.setAnimation(parseFloat(this.value));
+});
+
+d3.select('#background').on('input', function(){
+  d3.select('#tree svg').style('background-color', this.value);
 });
 
 d3.select('#export-download').on('click', function(){
