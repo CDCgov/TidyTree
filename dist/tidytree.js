@@ -1471,11 +1471,18 @@ var TidyTree = (function () {
           .style('opacity', d => (d.children && this.branchLabels) || (!d.children && this.leafLabels) ? 1 : 0);
 
         if(this.layout === 'vertical'){
-          nodeLabels.attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
+          nodeLabels
+            .attr('text-anchor', 'start').attr('x', 5)
+            .transition().duration(this.animation)
+            .attr('transform', 'rotate(90)');
         } else if(this.layout === 'horizontal'){
-          nodeLabels.attr('transform', 'rotate(0)').attr('text-anchor', 'start').attr('x', 5);
+          nodeLabels
+            .attr('text-anchor', 'start').attr('x', 5)
+            .transition().duration(this.animation)
+            .attr('transform', 'rotate(0)');
         } else {
           nodeLabels
+            .transition().duration(this.animation)
             .attr('transform', l => 'rotate('+(l.x / Math.PI * 180 % 180 - 90)+')')
             .attr('text-anchor', l => l.x % (2*Math.PI) > Math.PI ? 'end' : 'start')
             .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
@@ -1492,11 +1499,18 @@ var TidyTree = (function () {
 
         let nodeLabels = update.select('text');
         if(this.layout === 'vertical'){
-          nodeLabels.attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
+          nodeLabels
+            .attr('text-anchor', 'start').attr('x', 5)
+            .transition().duration(this.animation)
+            .attr('transform', 'rotate(90)');
         } else if(this.layout === 'horizontal'){
-          nodeLabels.attr('transform', 'rotate(0)').attr('text-anchor', 'start').attr('x', 5);
+          nodeLabels
+            .attr('text-anchor', 'start').attr('x', 5)
+            .transition().duration(this.animation)
+            .attr('transform', 'rotate(0)');
         } else {
           nodeLabels
+            .transition().duration(this.animation)
             .attr('transform', l => 'rotate('+(l.x / Math.PI * 180 % 180 - 90)+')')
             .attr('text-anchor', l => l.x % (2*Math.PI) > Math.PI ? 'end' : 'start')
             .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
@@ -1593,14 +1607,14 @@ var TidyTree = (function () {
   };
 
   /**
-   * Set the TidyTree's animation speed. Note that this does not trigger a
+   * Set the TidyTree's animation time. Note that this does not trigger a
    * redraw.
-   * @param {number} speed The desired duration of an animation, in ms. Set to 0
+   * @param {number} time The desired duration of an animation, in ms. Set to 0
    * to turn animations off completely.
    * @return {TidyTree} The TidyTree object
    */
-  TidyTree.prototype.setAnimation = function(speed){
-  	this.animation = speed;
+  TidyTree.prototype.setAnimation = function(time){
+  	this.animation = time;
     return this;
   };
 
@@ -1661,23 +1675,6 @@ var TidyTree = (function () {
   };
 
   /**
-   * Sets the size of the Branch Labels
-   * @param {Number} size The desired size (in font-pixels). Note that this is
-   * not necessarily the actual on-screen size, as labels scale with zooming.
-   * @return {TidyTree} The TidyTree Object
-   */
-  TidyTree.prototype.setBranchLabelSize = function(size){
-    this.branchLabelSize = size;
-    if(this.parent){ //i.e. has already been drawn
-      this.parent.select('svg').selectAll('g.tidytree-node-internal text')
-        .transition().duration(this.animation)
-        .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2.5)
-        .style('font-size', size+'px');
-    }
-    return this;
-  };
-
-  /**
    * Shows or hides the TidyTree's branch labels
    * @param {Boolean} show Should the TidyTree show branchLabels?
    * @return {TidyTree} The TidyTree Object
@@ -1704,22 +1701,6 @@ var TidyTree = (function () {
   TidyTree.prototype.eachBranchDistance = function(styler){
     if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
     this.parent.select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text').each(function(d, i, l){ styler(this, d); });
-    return this;
-  };
-
-  /**
-   * Set the TidyTree's Branch Distance Sizes
-   * @param {Boolean} size The desired size (in font-pixels) of the branch
-   * distances
-   * @return {TidyTree} The TidyTree Object
-   */
-  TidyTree.prototype.setBranchDistanceSize = function(size){
-    this.branchDistanceSize = size;
-    if(this.parent){ //i.e. has already been drawn
-      this.parent.select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text')
-        .transition().duration(this.animation)
-        .style('font-size', size + 'px');
-    }
     return this;
   };
 
@@ -1780,24 +1761,6 @@ var TidyTree = (function () {
   };
 
   /**
-   * Sets the size of Leaf Labels
-   * @param  {Number} size The desired size (in font pixels) of the leaf labels.
-   * Note that this is not necessarily the actual on-screen size, as labels
-   * scale with zooming over the tree.
-   * @return {TidyTree} the TidyTree Object
-   */
-  TidyTree.prototype.setLeafLabelSize = function(size){
-    this.leafLabelSize = size;
-    if(this.parent){ //i.e. has already been drawn
-      this.parent.select('svg').selectAll('g.tidytree-node-leaf text')
-        .transition().duration(this.animation)
-        .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2.5)
-        .style('font-size', size+'px');
-    }
-    return this;
-  };
-
-  /**
    * Shows or hides the TidyTree's branch labels
    * @param {Boolean} show Should the TidyTree show branchLabels?
    * @return {TidyTree} The TidyTree Object
@@ -1805,9 +1768,33 @@ var TidyTree = (function () {
   TidyTree.prototype.setRuler = function(show){
     this.ruler = show ? true : false;
     if(this.parent){ //i.e. has already been drawn
-      this.redraw();
+      if(show){
+        this.parent.select('g.tidytree-ruler')
+        .transition().duration(this.animation)
+        .attr('opacity', 1);
+      } else {
+        this.parent.select('g.tidytree-ruler')
+        .transition().duration(this.animation)
+        .attr('opacity', 0);
+      }
     }
     return this;
+  };
+
+  /**
+   * Searches the tree, returns Search Results
+   * @param  {Function} test A function which takes a Branch and returns a Truthy
+   * or Falsy value.
+   * @return {Array} The array of
+   */
+  TidyTree.prototype.search = function(test){
+    if(!query) return;
+    let results = [];
+    this.parent.select('svg g.tidytree-nodes').selectAll('g.tidytree-node').each(d => {
+      if(test(d)) results.push(d);
+    });
+    if(this.events.search.length) this.events.search.forEach(c => c(results));
+    return results;
   };
 
   /**

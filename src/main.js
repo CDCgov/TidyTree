@@ -5,7 +5,7 @@ import 'patristic';
  * @param {String} newick A valid newick string
  * @param {Object} options A Javascript object containing options to set up the tree
  */
-export default function TidyTree(data, options, events, stylers){
+export default function TidyTree(data, options, events){
   let defaults = {
 		layout: 'vertical',
 		type: 'tree',
@@ -21,13 +21,16 @@ export default function TidyTree(data, options, events, stylers){
     margin: [50, 50, 50, 50] //CSS order: top, right, bottom, left
   };
   if(!options) options = {};
-  Object.assign(this, defaults, options, {events: {}, stylers: {}});
+  Object.assign(this, defaults, options, {events: {
+    draw: [],
+    showtooltip: [],
+    hidetooltip: [],
+    contextmenu: [],
+    search: [],
+    select: []
+  }});
 
-  if(!events) events = {};
-  Object.assign(this.events, events);
-
-  if(!stylers) stylers = {};
-  Object.assign(this.stylers, stylers);
+  Object.keys(events).forEach(e => this.events[e].push(events[e]));
 
   if(this.parent) this.draw(this.parent);
   if(data instanceof patristic.Branch){
@@ -123,7 +126,7 @@ TidyTree.prototype.draw = function(selector){
 	g.append('g').attr('class', 'tidytree-links');
   g.append('g').attr('class', 'tidytree-nodes');
 
-  if(this.events.draw) this.events.draw();
+  if(this.events.draw.length) this.events.draw.forEach(c => c());
 
 	return this;
 };
@@ -360,11 +363,18 @@ TidyTree.prototype.redraw = function(){
         .style('opacity', d => (d.children && this.branchLabels) || (!d.children && this.leafLabels) ? 1 : 0);
 
       if(this.layout === 'vertical'){
-        nodeLabels.attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
+        nodeLabels
+          .attr('text-anchor', 'start').attr('x', 5)
+          .transition().duration(this.animation)
+          .attr('transform', 'rotate(90)');
       } else if(this.layout === 'horizontal'){
-        nodeLabels.attr('transform', 'rotate(0)').attr('text-anchor', 'start').attr('x', 5);
+        nodeLabels
+          .attr('text-anchor', 'start').attr('x', 5)
+          .transition().duration(this.animation)
+          .attr('transform', 'rotate(0)');
       } else {
         nodeLabels
+          .transition().duration(this.animation)
           .attr('transform', l => 'rotate('+(l.x / Math.PI * 180 % 180 - 90)+')')
           .attr('text-anchor', l => l.x % (2*Math.PI) > Math.PI ? 'end' : 'start')
           .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
@@ -381,11 +391,18 @@ TidyTree.prototype.redraw = function(){
 
       let nodeLabels = update.select('text');
       if(this.layout === 'vertical'){
-        nodeLabels.attr('transform', 'rotate(90)').attr('text-anchor', 'start').attr('x', 5);
+        nodeLabels
+          .attr('text-anchor', 'start').attr('x', 5)
+          .transition().duration(this.animation)
+          .attr('transform', 'rotate(90)');
       } else if(this.layout === 'horizontal'){
-        nodeLabels.attr('transform', 'rotate(0)').attr('text-anchor', 'start').attr('x', 5);
+        nodeLabels
+          .attr('text-anchor', 'start').attr('x', 5)
+          .transition().duration(this.animation)
+          .attr('transform', 'rotate(0)');
       } else {
         nodeLabels
+          .transition().duration(this.animation)
           .attr('transform', l => 'rotate('+(l.x / Math.PI * 180 % 180 - 90)+')')
           .attr('text-anchor', l => l.x % (2*Math.PI) > Math.PI ? 'end' : 'start')
           .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
@@ -482,14 +499,14 @@ TidyTree.prototype.setType = function(newType){
 };
 
 /**
- * Set the TidyTree's animation speed. Note that this does not trigger a
+ * Set the TidyTree's animation time. Note that this does not trigger a
  * redraw.
- * @param {number} speed The desired duration of an animation, in ms. Set to 0
+ * @param {number} time The desired duration of an animation, in ms. Set to 0
  * to turn animations off completely.
  * @return {TidyTree} The TidyTree object
  */
-TidyTree.prototype.setAnimation = function(speed){
-	this.animation = speed;
+TidyTree.prototype.setAnimation = function(time){
+	this.animation = time;
   return this;
 };
 
@@ -516,7 +533,6 @@ TidyTree.prototype.setBranchNodes = function(show){
  * @return {TidyTree} the TidyTree Object
  */
 TidyTree.prototype.eachBranchNode = function(styler){
-  this.stylers.branchNodes = styler;
   if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
   this.parent.select('svg').selectAll('g.tidytree-node-internal circle').each(function(d){ styler(this, d); });
   return this;
@@ -545,26 +561,8 @@ TidyTree.prototype.setBranchLabels = function(show){
  * @return {TidyTree} the TidyTree Object
  */
 TidyTree.prototype.eachBranchLabel = function(styler){
-  this.stylers.branchLabels = styler;
   if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
   this.parent.select('svg').selectAll('g.tidytree-node-internal text').each(function(d, i, l){ styler(this, d); });
-  return this;
-};
-
-/**
- * Sets the size of the Branch Labels
- * @param {Number} size The desired size (in font-pixels). Note that this is
- * not necessarily the actual on-screen size, as labels scale with zooming.
- * @return {TidyTree} The TidyTree Object
- */
-TidyTree.prototype.setBranchLabelSize = function(size){
-  this.branchLabelSize = size;
-  if(this.parent){ //i.e. has already been drawn
-    this.parent.select('svg').selectAll('g.tidytree-node-internal text')
-      .transition().duration(this.animation)
-      .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2.5)
-      .style('font-size', size+'px');
-  }
   return this;
 };
 
@@ -593,25 +591,8 @@ TidyTree.prototype.setBranchDistances = function(show){
  * @return {TidyTree} the TidyTree Object
  */
 TidyTree.prototype.eachBranchDistance = function(styler){
-  this.stylers.branchDistances = styler;
   if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
   this.parent.select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text').each(function(d, i, l){ styler(this, d); });
-  return this;
-};
-
-/**
- * Set the TidyTree's Branch Distance Sizes
- * @param {Boolean} size The desired size (in font-pixels) of the branch
- * distances
- * @return {TidyTree} The TidyTree Object
- */
-TidyTree.prototype.setBranchDistanceSize = function(size){
-  this.branchDistanceSize = size;
-  if(this.parent){ //i.e. has already been drawn
-    this.parent.select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text')
-      .transition().duration(this.animation)
-      .style('font-size', size + 'px');
-  }
   return this;
 };
 
@@ -638,7 +619,6 @@ TidyTree.prototype.setLeafNodes = function(show){
  * @return {TidyTree} the TidyTree Object
  */
 TidyTree.prototype.eachLeafNode = function(styler){
-  this.stylers.leafNodes = styler;
   if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
   this.parent.select('svg').selectAll('g.tidytree-node-leaf circle').each(function(d){ styler(this, d); });
   return this;
@@ -667,27 +647,8 @@ TidyTree.prototype.setLeafLabels = function(show){
  * @return {TidyTree} the TidyTree Object
  */
 TidyTree.prototype.eachLeafLabel = function(styler){
-  this.stylers.leafLabels = styler;
   if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
   this.parent.select('svg').selectAll('g.tidytree-node-leaf text').each(function(d){ styler(this, d); });
-  return this;
-};
-
-/**
- * Sets the size of Leaf Labels
- * @param  {Number} size The desired size (in font pixels) of the leaf labels.
- * Note that this is not necessarily the actual on-screen size, as labels
- * scale with zooming over the tree.
- * @return {TidyTree} the TidyTree Object
- */
-TidyTree.prototype.setLeafLabelSize = function(size){
-  this.leafLabelSize = size;
-  if(this.parent){ //i.e. has already been drawn
-    this.parent.select('svg').selectAll('g.tidytree-node-leaf text')
-      .transition().duration(this.animation)
-      .attr(this.layout === 'horizontal' ? 'y' : 'x', size/2.5)
-      .style('font-size', size+'px');
-  }
   return this;
 };
 
@@ -699,9 +660,33 @@ TidyTree.prototype.setLeafLabelSize = function(size){
 TidyTree.prototype.setRuler = function(show){
   this.ruler = show ? true : false;
   if(this.parent){ //i.e. has already been drawn
-    this.redraw();
+    if(show){
+      this.parent.select('g.tidytree-ruler')
+      .transition().duration(this.animation)
+      .attr('opacity', 1);
+    } else {
+      this.parent.select('g.tidytree-ruler')
+      .transition().duration(this.animation)
+      .attr('opacity', 0);
+    }
   }
   return this;
+};
+
+/**
+ * Searches the tree, returns Search Results
+ * @param  {Function} test A function which takes a Branch and returns a Truthy
+ * or Falsy value.
+ * @return {Array} The array of
+ */
+TidyTree.prototype.search = function(test){
+  if(!query) return;
+  let results = [];
+  this.parent.select('svg g.tidytree-nodes').selectAll('g.tidytree-node').each(d => {
+    if(test(d)) results.push(d);
+  });
+  if(this.events.search.length) this.events.search.forEach(c => c(results));
+  return results;
 };
 
 /**
@@ -712,18 +697,17 @@ TidyTree.prototype.setRuler = function(show){
  * @return {TidyTree} The TidyTree on which this method was called.
  */
 TidyTree.prototype.on = function(events, callback){
-  events.split(' ').forEach(event => this.events[event] = callback);
+  events.split(' ').forEach(event => this.events[event].push(callback));
   return this;
 };
 
 /**
- * Removes event listeners
+ * Removes all event listeners from the given events
  * @param  {String}   events   A space-delimited list of event names
  * @return {TidyTree} The TidyTree on which this method was called.
  */
 TidyTree.prototype.off = function(events){
-  let nullFn = () => null;
-  events.split(' ').forEach(event => this.events[event] = nullFn);
+  events.split(' ').forEach(event => this.events[event] = []);
   return this;
 };
 
@@ -735,8 +719,8 @@ TidyTree.prototype.off = function(events){
  * @return The output of the callback run on `event`
  */
 TidyTree.prototype.trigger = function(event, ...args){
-  if(!this.events[event]) throw Error(`No event named ${event} is defined.`);
-  return this.events[event](args);
+  if(!this.events[event].length) throw Error(`No event named ${event} is defined.`);
+  return this.events[event].forEach(c => c(args));
 };
 
 /**

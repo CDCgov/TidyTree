@@ -45,6 +45,20 @@
 	.tidytree-link {
     stroke-width: 2px;
 	}
+  #search-wrapper {
+    position: absolute;
+    top: -50px;
+    right: 100px;
+    padding: 5px;
+    background: lightgray;
+    border: 1px solid darkgray;
+    border-radius: 5px;
+  }
+  #search-close{
+    background: white;
+    border: 1px solid darkgray;
+    padding: 2px 6px;
+  }
   #context-menu, #tooltip{
     position: absolute;
     display: none;
@@ -109,6 +123,12 @@
               </label>
             </div>
             <div class="form-group">
+              <label>
+                Branch Node Size
+                <input id="branchNodeSize" class="skip" type="range" min="0.5" max="10" value="2.5" step="0.5" />
+              </label>
+            </div>
+            <div class="form-group">
               <label class="form-switch">
                 <input id="branchLabels" type="checkbox" />
                 <i class="form-icon"></i> Branch Labels
@@ -117,7 +137,7 @@
             <div class="form-group">
               <label>
                 Branch Label Size
-                <input id="branchLabelSize" type="range" min="1" max="32" value="6" step="1" />
+                <input id="branchLabelSize" class="skip" type="range" min="1" max="32" value="6" step="1" />
               </label>
             </div>
             <div class="form-group">
@@ -129,7 +149,7 @@
             <div class="form-group">
               <label>
                 Branch Distance Size
-                <input id="branchDistanceSize" type="range" min="1" max="32" value="6" step="1" />
+                <input id="branchDistanceSize" class="skip" type="range" min="1" max="32" value="6" step="1" />
               </label>
             </div>
           </div>
@@ -145,6 +165,12 @@
               </label>
             </div>
             <div class="form-group">
+              <label>
+                Leaf Node Size
+                <input id="leafNodeSize" class="skip" type="range" min="0.5" max="10" value="2.5" step="0.5" />
+              </label>
+            </div>
+            <div class="form-group">
               <label class="form-switch">
                 <input id="leafLabels" type="checkbox" />
                 <i class="form-icon"></i> Leaf Labels
@@ -153,7 +179,7 @@
             <div class="form-group">
               <label>
                 Leaf Label Size
-                <input id="leafLabelSize" type="range" min="1" max="32" value="6" step="1" />
+                <input id="leafLabelSize" class="skip" type="range" min="1" max="32" value="6" step="1" />
               </label>
             </div>
           </div>
@@ -182,8 +208,8 @@
             </div>
             <div class="form-group">
               <label>
-                Animation Speed
-                <input id="animation" type="range" min="0" max="1000" value="500" step="1" />
+                Animation Time
+                <input id="animation" type="range" min="0" max="2000" value="2000" step="10" />
               </label>
             </div>
           </div>
@@ -215,6 +241,11 @@
       <div id="tree" class="column"></div>
 
     </div>
+  </div>
+
+  <div id="search-wrapper" class="ui input">
+    <input type="text" id="search" placeholder="Search...">
+    <button id="search-close" class="ui button">✖</button>
   </div>
 
   <ul id="context-menu" class="menu">
@@ -306,6 +337,36 @@ d3.selectAll('input').filter('[type="range"]:not(.skip)').on('input', function()
   tree.setAnimation(cached);
 });
 
+d3.select('#branchNodeSize').on('input', function(){
+  tree.eachBranchNode((node, data) => {
+    d3.select(node).attr('r', this.value);
+  });
+});
+
+d3.select('#branchLabelSize').on('input', function(){
+  tree.eachBranchLabel((label, data) => {
+    d3.select(label).style('font-size', this.value+'px');
+  });
+});
+
+d3.select('#branchDistanceSize').on('input', function(){
+  tree.eachBranchDistance((label, data) => {
+    d3.select(label).style('font-size', this.value+'px');
+  });
+});
+
+d3.select('#leafNodeSize').on('input', function(){
+  tree.eachLeafNode((node, data) => {
+    d3.select(node).attr('r', this.value);
+  });
+});
+
+d3.select('#leafLabelSize').on('input', function(){
+  tree.eachLeafLabel((label, data) => {
+    d3.select(label).style('font-size', this.value+'px');
+  });
+});
+
 d3.select('#animation').on('input', function(){
   tree.setAnimation(parseFloat(this.value));
 });
@@ -341,6 +402,21 @@ d3.select("#toggle-options").on('click', function(){
       .transition().duration(400).style('left', '376px')
       .end().then(() => tree.redraw());
   }
+});
+
+window.addEventListener("keydown", function(e) {
+  if (e.keyCode === 114 || (e.ctrlKey && e.keyCode === 70)) {
+    e.preventDefault();
+    d3.select('#search-wrapper').transition().duration(300).style('top', '5px');
+  }
+  if(e.keyCode === 27){
+    e.preventDefault();
+    d3.select('#search-wrapper').transition().duration(300).style('top', '-50px');
+  }
+});
+
+d3.select('#search-close').on('click', () => {
+  d3.select('#search-wrapper').transition().duration(300).style('top', '-50px');
 });
 
 function contextMenu(d){
