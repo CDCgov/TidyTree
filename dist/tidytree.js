@@ -1113,7 +1113,7 @@ var TidyTree = (function () {
    * @param {String} newick A valid newick string
    * @param {Object} options A Javascript object containing options to set up the tree
    */
-  function TidyTree(data, options, events, stylers){
+  function TidyTree(data, options, events){
     let defaults = {
   		layout: 'vertical',
   		type: 'tree',
@@ -1129,13 +1129,16 @@ var TidyTree = (function () {
       margin: [50, 50, 50, 50] //CSS order: top, right, bottom, left
     };
     if(!options) options = {};
-    Object.assign(this, defaults, options, {events: {}, stylers: {}});
+    Object.assign(this, defaults, options, {events: {
+      draw: [],
+      showtooltip: [],
+      hidetooltip: [],
+      contextmenu: [],
+      search: [],
+      select: []
+    }});
 
-    if(!events) events = {};
-    Object.assign(this.events, events);
-
-    if(!stylers) stylers = {};
-    Object.assign(this.stylers, stylers);
+    Object.keys(events).forEach(e => this.events[e].push(events[e]));
 
     if(this.parent) this.draw(this.parent);
     if(data instanceof patristic.Branch){
@@ -1231,7 +1234,7 @@ var TidyTree = (function () {
   	g.append('g').attr('class', 'tidytree-links');
     g.append('g').attr('class', 'tidytree-nodes');
 
-    if(this.events.draw) this.events.draw();
+    if(this.events.draw.length) this.events.draw.forEach(c => c());
 
   	return this;
   };
@@ -1624,7 +1627,6 @@ var TidyTree = (function () {
    * @return {TidyTree} the TidyTree Object
    */
   TidyTree.prototype.eachBranchNode = function(styler){
-    this.stylers.branchNodes = styler;
     if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
     this.parent.select('svg').selectAll('g.tidytree-node-internal circle').each(function(d){ styler(this, d); });
     return this;
@@ -1653,7 +1655,6 @@ var TidyTree = (function () {
    * @return {TidyTree} the TidyTree Object
    */
   TidyTree.prototype.eachBranchLabel = function(styler){
-    this.stylers.branchLabels = styler;
     if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
     this.parent.select('svg').selectAll('g.tidytree-node-internal text').each(function(d, i, l){ styler(this, d); });
     return this;
@@ -1701,7 +1702,6 @@ var TidyTree = (function () {
    * @return {TidyTree} the TidyTree Object
    */
   TidyTree.prototype.eachBranchDistance = function(styler){
-    this.stylers.branchDistances = styler;
     if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
     this.parent.select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text').each(function(d, i, l){ styler(this, d); });
     return this;
@@ -1746,7 +1746,6 @@ var TidyTree = (function () {
    * @return {TidyTree} the TidyTree Object
    */
   TidyTree.prototype.eachLeafNode = function(styler){
-    this.stylers.leafNodes = styler;
     if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
     this.parent.select('svg').selectAll('g.tidytree-node-leaf circle').each(function(d){ styler(this, d); });
     return this;
@@ -1775,7 +1774,6 @@ var TidyTree = (function () {
    * @return {TidyTree} the TidyTree Object
    */
   TidyTree.prototype.eachLeafLabel = function(styler){
-    this.stylers.leafLabels = styler;
     if(!this.parent) throw Error('Tree has not been rendered yet! Can\'t style Nodes that don\'t exist!');
     this.parent.select('svg').selectAll('g.tidytree-node-leaf text').each(function(d){ styler(this, d); });
     return this;
@@ -1820,18 +1818,17 @@ var TidyTree = (function () {
    * @return {TidyTree} The TidyTree on which this method was called.
    */
   TidyTree.prototype.on = function(events, callback){
-    events.split(' ').forEach(event => this.events[event] = callback);
+    events.split(' ').forEach(event => this.events[event].push(callback));
     return this;
   };
 
   /**
-   * Removes event listeners
+   * Removes all event listeners from the given events
    * @param  {String}   events   A space-delimited list of event names
    * @return {TidyTree} The TidyTree on which this method was called.
    */
   TidyTree.prototype.off = function(events){
-    let nullFn = () => null;
-    events.split(' ').forEach(event => this.events[event] = nullFn);
+    events.split(' ').forEach(event => this.events[event] = []);
     return this;
   };
 
@@ -1843,8 +1840,8 @@ var TidyTree = (function () {
    * @return The output of the callback run on `event`
    */
   TidyTree.prototype.trigger = function(event, ...args){
-    if(!this.events[event]) throw Error(`No event named ${event} is defined.`);
-    return this.events[event](args);
+    if(!this.events[event].length) throw Error(`No event named ${event} is defined.`);
+    return this.events[event].forEach(c => c(args));
   };
 
   /**
