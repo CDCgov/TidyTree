@@ -298,20 +298,14 @@ var TidyTree = (function () {
      * @return {(Branch|undefined)}    The descendant Branch, or undefined if it doesn't exist
      */
     Branch.prototype.getDescendant = function(id){
-      let descendant;
+      if(this.id === id) return this;
       if(this.children){
         for(let i = 0; i < this.children.length; i++){
           let child = this.children[i];
-          if(child.id === id){
-            descendant = child;
-            break;
-          }
-          if(child.children){
-            descendant = child.getDescendant(id);
-          }
+          descendant = child.getDescendant(id);
+          if(descendant) return descendant;
         }
       }
-      return descendant;
     };
 
     /**

@@ -1,5 +1,5 @@
 {
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Yet another d3-powered Phylogenetic tree renderer.",
   "name": "tidytree",
   "main": "dist/tidytree.js",
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "d3": "^5.9.1",
-    "patristic": "^0.3.3"
+    "patristic": "^0.3.4"
   },
   "devDependencies": {
     "documentation": "^9.1.1",
