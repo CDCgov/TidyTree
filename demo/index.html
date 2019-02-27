@@ -408,11 +408,22 @@ window.addEventListener("keydown", function(e) {
   if (e.keyCode === 114 || (e.ctrlKey && e.keyCode === 70)) {
     e.preventDefault();
     d3.select('#search-wrapper').transition().duration(300).style('top', '5px');
+    d3.select('#search').node().focus();
   }
   if(e.keyCode === 27){
     e.preventDefault();
     d3.select('#search-wrapper').transition().duration(300).style('top', '-50px');
   }
+});
+
+d3.select('#search').on('input', () => {
+  if(!d3.event.target.value.length) return tree.parent.selectAll('circle').style('fill', 'steelblue');
+  tree
+    .search(d => !d.data.id.includes(d3.event.target.value))
+    .selectAll('circle').style('fill', 'steelblue');
+  tree
+    .search(d => d.data.id.includes(d3.event.target.value))
+    .selectAll('circle').style('fill', 'red');
 });
 
 d3.select('#search-close').on('click', () => {

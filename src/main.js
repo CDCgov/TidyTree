@@ -682,14 +682,14 @@ TidyTree.prototype.setRuler = function(show){
  * Searches the tree, returns Search Results
  * @param  {Function} test A function which takes a Branch and returns a Truthy
  * or Falsy value.
- * @return {Array} The array of
+ * @return {Array} The array of results
  */
 TidyTree.prototype.search = function(test){
-  if(!query) return;
-  let results = [];
-  this.parent.select('svg g.tidytree-nodes').selectAll('g.tidytree-node').each(d => {
-    if(test(d)) results.push(d);
-  });
+  if(!test) return;
+  let results = this.parent
+    .select('svg g.tidytree-nodes')
+    .selectAll('g.tidytree-node')
+    .filter(test);
   if(this.events.search.length) this.events.search.forEach(c => c(results));
   return results;
 };
@@ -718,14 +718,16 @@ TidyTree.prototype.off = function(events){
 
 /**
  * Forces the tree to respond as though an `event` has occurred
- * Please note that this is not yet functioning.
- * @param  {String} event The name of an event.
- * @param  {Spread} args  Any arguments which should be passed to the event.
+ * @param  {String} events space-delimited list of names of events to trigger.
+ * @param  {Spread} args Any arguments which should be passed to the event
+ * handler(s).
  * @return The output of the callback run on `event`
  */
-TidyTree.prototype.trigger = function(event, ...args){
-  if(!this.events[event].length) throw Error(`No event named ${event} is defined.`);
-  return this.events[event].forEach(c => c(args));
+TidyTree.prototype.trigger = function(events, ...args){
+  return events.split(' ').map(event => {
+    if(!this.events[event].length) throw Error(`No event named ${event} is defined.`);
+    return this.events[event].map(handler => handler(args));
+  });
 };
 
 /**

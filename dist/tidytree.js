@@ -13,15 +13,15 @@ var TidyTree = (function () {
      * @example
      * console.log(patristic.version);
      */
-    const version = "0.3.3";
+    const version = "0.3.5";
 
     /**
-     * A class for representing branches in trees.
+     * A class for representing Branches in trees.
      * It's written predominantly for phylogenetic trees (hence the
      * [Newick parser](#parseNewick),
      * [neighbor-joining implementation](#parseMatrix), etc.), but could
      * conceivably be useful for representing other types of trees as well.
-     * @param       {Object} data An object containing data you wish to assign to
+     * @param {Object} [data] An object containing data you wish to assign to
      * this Branch object. In particular, intended to overwrite the default
      * attributes of a Branch, namely `id`, `parent`, `length`, and `children`.
      * @constructor
@@ -38,7 +38,7 @@ var TidyTree = (function () {
 
     /**
      * Adds a new child to this Branch
-     * @param  {(Branch|Object)} data The new Branch, or data to attach to it.
+     * @param  {(Branch|Object)} [data={}] The new Branch, or data to attach to it.
      * @return {Branch} The (possibly new) child Branch
      */
     Branch.prototype.addChild = function(data){
@@ -59,11 +59,12 @@ var TidyTree = (function () {
     /**
      * Adds a new parent to this Branch. This is a bit esoteric and generally not
      * recommended.
-     * @param  {(Branch|Object)} data     A Branch object, or the data to attach to one
-     * @param  {Array} siblings An array of Branches to be the children of the new parent branch (i.e. siblings of this Branch)
-     * @return {Branch}          The Branch on which this was called
+     * @param  {(Branch|Object)} [data={}] A Branch object, or the data to attach to one
+     * @param  {Array} [siblings=[]] An array of Branches to be the children of the new parent Branch (i.e. siblings of this Branch)
+     * @return {Branch} The Branch on which this was called
      */
     Branch.prototype.addParent = function(data, siblings){
+      if(!siblings) siblings = [];
       let c;
       if(data instanceof Branch){
         c = data;
@@ -118,7 +119,7 @@ var TidyTree = (function () {
 
     /**
      * Returns an array pf descendants, starting with this Branch.
-     * d3-hierarchy compatibility method.
+     * [d3-hierarchy compatibility method.](https://github.com/d3/d3-hierarchy#node_descendants)
      * @type {Array} An Array of Branches, starting with this one.
      */
     Branch.prototype.descendants = function(){
@@ -128,10 +129,11 @@ var TidyTree = (function () {
     /**
      * Returns the depth of a given child, relative to the Branch on which it is
      * called.
-     * @param  {(Branch|String)} descendant A descendant Branch (or `id` string thereof)
-     * @return {Number} The sum of the all branches between the Branch on which it
-     * is called and child. Return an error if `descendant` is not a descendant of
-     * this Branch.
+     * @param  {(Branch|String)} descendant A descendant Branch (or `id` string
+     * thereof)
+     * @return {Number} The sum of the lengths of all Branches between the Branch on
+     * which it is called and `descendant`. Throws an error if `descendant` is not a
+     * descendant of this Branch.
      */
     Branch.prototype.depthOf = function(descendant){
       let distance = 0;
@@ -150,7 +152,7 @@ var TidyTree = (function () {
      * Computes the patristic distance between `cousin` and the Branch on which
      * this method is called.
      * @param  {Branch} cousin The Branch to which you wish to compute distance
-     * @return {number} The patristic distance between `cousin` and the branch on
+     * @return {number} The patristic distance between `cousin` and the Branch on
      * this method is called.
      */
     Branch.prototype.distanceTo = function(cousin){
@@ -159,8 +161,8 @@ var TidyTree = (function () {
     };
 
     /**
-     * Visits each Branch descended from the branch on which it is called in
-     * BFS-order and returns the Branch on which it was called.
+     * Visits each Branch descended from the Branch on which it is called in
+     * [Breadth First Search order]() and returns the Branch on which it was called.
      * @param  {Function} callback The function to be run on each Branch
      * @return {Branch} The Branch on which it was called.
      */
@@ -178,7 +180,9 @@ var TidyTree = (function () {
     };
 
     /**
-     * https://en.wikipedia.org/wiki/Tree_traversal#Post-order
+     * Visits each Branch descended from the Branch on which it is called in
+     * [post-traversal order](https://en.wikipedia.org/wiki/Tree_traversal#Post-order)
+     * and returns the Branch on which it was called.
      * @param  {Function} callback Function to run on each Branch
      * @return {Branch} The Branch on which it was called
      */
@@ -189,7 +193,9 @@ var TidyTree = (function () {
     };
 
     /**
-    * https://en.wikipedia.org/wiki/Tree_traversal#Pre-order
+     * Visits each Branch descended from the Branch on which it is called in
+     * [pre-traversal order](https://en.wikipedia.org/wiki/Tree_traversal#Pre-order)
+     * and returns the Branch on which it was called.
      * @param  {Function} callback [description]
      * @return {[type]}            [description]
      */
@@ -200,7 +206,8 @@ var TidyTree = (function () {
     };
 
     /**
-     * This is mostly a helper-function to Branch.each*
+     * Runs a function on each child of the Branch on which it is called.
+     * This is mostly a helper-function to the other Branch.each* methods.
      * @param  {Function} callback The function to run on each child.
      * @return {Branch} The Branch on which it was called.
      */
@@ -210,12 +217,12 @@ var TidyTree = (function () {
     };
 
     /**
-     * Excises the Branch on which it is called and updates its parent and children
+     * Excises the Branch on which it is called and updates its parent and children.
      * @return {Branch} The parent of the excised Branch.
      */
     Branch.prototype.excise = function(){
       if(this.isRoot() && this.children.length > 1){
-        throw new Error('Cannot excise a root branch with multiple children.');
+        throw new Error('Cannot excise a root Branch with multiple children.');
       }
       this.children.forEach(child => {
         child.length += this.length;
@@ -228,16 +235,16 @@ var TidyTree = (function () {
 
     /**
      * Sets the distance values (height and depth) for each Branch
-     * @return {[type]} [description]
+     * @return {Branch} The Branch on which it is called.
      */
     Branch.prototype.fixDistances = function(){
       let maxdepth = 0, root = this.getRoot();
       root.depth = 0;
       this
-        .eachBefore(function(branch){
-          if(branch.isRoot()) return;
-          branch.depth = branch.parent.depth + 1;
-          if(branch.depth > maxdepth) maxdepth = branch.depth;
+        .eachBefore(d => {
+          if(d.isRoot()) return;
+          d.depth = d.parent.depth + 1;
+          if(d.depth > maxdepth) maxdepth = d.depth;
         })
         .eachAfter(d => {
           d.height = maxdepth - d.depth;
@@ -249,10 +256,11 @@ var TidyTree = (function () {
     /**
      * Repairs incorrect links by recurively confirming that children reference
      * their parents, and correcting those references if they do not.
+     *
      * If you need to call this, something has messed up the state of your tree
-     * and you should be concerned about that. Just FYI. ¯\_(ツ)_/¯
+     * and you should be concerned about that. Just FYI. ¯\\_(ツ)_/¯
      * @param  {Boolean} nonrecursive Should this just fix the children of the
-     * branch on which it is called, or all descendants?
+     * Branch on which it is called, or all descendants?
      * @return {Branch} The Branch on which it was called.
      */
     Branch.prototype.fixParenthood = function(nonrecursive){
@@ -267,7 +275,9 @@ var TidyTree = (function () {
     };
 
     /**
-     * Returns an Array of all the ancestors of a given Branch
+     * Returns an Array of all the ancestors of the Branch on which it is called.
+     * Note that this does not include itself. For all ancestors and itself, see
+     * [Branch.ancestors](#ancestors)
      * @return {Array} Every Ancestor of the Branch on which it was called.
      */
     Branch.prototype.getAncestors = function(){
@@ -281,10 +291,10 @@ var TidyTree = (function () {
     };
 
     /**
-     * Given an id, returns the child with that id (or undefined if no such child
-     * is present).
-     * @param  {String} childID the id of the child to return.
-     * @return {(Branch|undefined)} The desired child branch, or undefined if the
+     * Given an `childID`, returns the child with that id (or `undefined` if no such
+     * child is present).
+     * @param  {String} childID the ID of the child to return.
+     * @return {(Branch|undefined)} The desired child Branch, or `undefined` if the
      * child doesn't exist.
      */
     Branch.prototype.getChild = function(childID){
@@ -293,16 +303,18 @@ var TidyTree = (function () {
     };
 
     /**
-     * Given an id string, returns the descendant Branch with that ID, or undefined if it doesn't exist.
+     * Given an id string, returns the descendant Branch with that ID, or
+     * `undefined` if it doesn't exist.
      * @param  {String} id The id string of the Branch to find
-     * @return {(Branch|undefined)}    The descendant Branch, or undefined if it doesn't exist
+     * @return {(Branch|undefined)} The descendant Branch, or `undefined` if it
+     * doesn't exist
      */
     Branch.prototype.getDescendant = function(id){
       if(this.id === id) return this;
-      if(this.children){
-        for(let i = 0; i < this.children.length; i++){
-          let child = this.children[i];
-          descendant = child.getDescendant(id);
+      let children = this.children, n = children.length;
+      if(children){
+        for(let i = 0; i < n; i++){
+          let descendant = children[i].getDescendant(id);
           if(descendant) return descendant;
         }
       }
@@ -310,7 +322,7 @@ var TidyTree = (function () {
 
     /**
      * Returns an array of all Branches which are descendants of this Branch
-     * @param {falsy} [nonterminus] Is this not the branch on which the user called
+     * @param {falsy} [nonterminus] Is this not the Branch on which the user called
      * the function? This is used internally and should be ignored.
      * @return {Array} An array of all Branches descended from this Branch
      */
@@ -325,8 +337,9 @@ var TidyTree = (function () {
     };
 
     /**
-     * alias of getLeaves
-     * @type {Function}
+     * Returns an array of all leaves which are descendants of this Branch.
+     * Alias of [getLeaves](#getLeaves) for people whose strong suit isn't spelling.
+     * @return {Array} An array of all leaves descended from this Branch
      */
     Branch.prototype.getLeafs = function(){
       return this.getLeaves();
@@ -334,6 +347,7 @@ var TidyTree = (function () {
 
     /**
      * Returns an array of all leaves which are descendants of this Branch
+     * See also: [getLeafs](#getLeafs)
      * @return {Array} An array of all leaves descended from this Branch
      */
     Branch.prototype.getLeaves = function(){
@@ -366,9 +380,9 @@ var TidyTree = (function () {
     };
 
     /**
-     * Traverses the tree upward until it finds the root branch, and returns the
+     * Traverses the tree upward until it finds the root Branch, and returns the
      * root.
-     * @return {Branch} The root branch of the tree
+     * @return {Branch} The root Branch of the tree
      */
     Branch.prototype.getRoot = function(){
       let branch = this;
@@ -378,12 +392,15 @@ var TidyTree = (function () {
 
     /**
      * Determines if a given Branch (or ID) is a child of this Branch
-     * @param  {(Branch|String)} child The branch (or the id thereof) to check for
+     * @param  {(Branch|String)} child The Branch (or the id thereof) to check for
      * @return {Boolean}
      */
     Branch.prototype.hasChild = function(child){
-      if(child instanceof Branch) return this.children.includes(child);
-      if(typeof child === 'string') return this.children.some(c => c.id === child);
+      if(child instanceof Branch){
+        return this.children.includes(child);
+      } else if(typeof child === 'string'){
+        return this.children.some(c => c.id === child);
+      }
       throw Error(`Unknown type of child (${typeof child}) passed to Branch.hasChild!`);
     };
 
@@ -413,7 +430,7 @@ var TidyTree = (function () {
     Branch.prototype.hasLeaf = function(leaf){
       let leaves = this.getleaves();
       if(leaf instanceof Branch){
-        return leaves.some(d => d === leaf);
+        return leaves.includes(leaf);
       } else if(typeof leaf === 'string'){
         return leaves.some(d => d.id === leaf);
       }
@@ -423,7 +440,7 @@ var TidyTree = (function () {
     /**
      * Swaps a child with its parent. This method is probably only useful as an
      * internal component of [Branch.reroot](#reroot).
-     * @return {Branch} The branch object on which it was called.
+     * @return {Branch} The Branch object on which it was called.
      */
     Branch.prototype.invert = function(){
       let oldParent = this.parent;
@@ -437,10 +454,10 @@ var TidyTree = (function () {
     };
 
     /**
-     * Returns whether the branch on which it is called is a child of a given parent
+     * Returns whether the Branch on which it is called is a child of a given parent
      * (or parent ID).
      * @param  {(Branch|String)} parent A Branch (or ID thereof) to test for
-     * paternity of this branch.
+     * paternity of this Branch.
      * @return {Boolean} True is `parent` is the parent of this Branch, false
      * otherwise.
      */
@@ -451,7 +468,7 @@ var TidyTree = (function () {
     };
 
     /**
-     * Tests whether this and each descendant branch holds correct links to both
+     * Tests whether this and each descendant Branch holds correct links to both
      * its parent and its children.
      * @return {Boolean} True if consistent, otherwise false
      */
@@ -469,8 +486,8 @@ var TidyTree = (function () {
     /**
      * Returns whether a given Branch is an ancestor of the Branch on which this
      * method is called. Uses recursive tree-climbing.
-     * @param  {[type]} ancestor [description]
-     * @return {[type]}          [description]
+     * @param  {Branch} ancestor The Branch to check for ancestorhood
+     * @return {Boolean} If this Branch is descended from `ancestor`
      */
     Branch.prototype.isDescendantOf = function(ancestor){
       if(!ancestor || !this.parent) return false;
@@ -495,7 +512,7 @@ var TidyTree = (function () {
      * Isolates a Branch and its subtree (i.e. removes everything above it, making
      * it the root Branch). Similar to [Branch.remove](#remove), only it returns
      * the Branch on which it is called.
-     * @return {Branch} The branch object on which it was called.
+     * @return {Branch} The Branch object on which it was called.
      */
     Branch.prototype.isolate = function(){
       let index = this.parent.children.indexOf(this);
@@ -514,8 +531,19 @@ var TidyTree = (function () {
     };
 
     /**
-     * Alias of Branch.getLeaves.
-     * d3-hierarchy compatibility method.
+     * Returns the array of leaf nodes in traversal order; leaves are nodes with no
+     * children. Alias of [Branch.getLeaves](#getLeaves) `cuz spelling is hard.
+     * @type {Array} An Array of Branches which are descended from this Branch and
+     * have no children.
+     */
+    Branch.prototype.leafs = function(){
+      return this.getLeaves();
+    };
+
+    /**
+     * Returns the array of leaf nodes in traversal order; leaves are nodes with no
+     * children. Alias of [Branch.getLeaves](#getLeaves).
+     * [d3-hierarchy compatibility method.](https://github.com/d3/d3-hierarchy#node_leaves)
      * @type {Array} An Array of Branches which are descended from this Branch and
      * have no children.
      */
@@ -524,8 +552,10 @@ var TidyTree = (function () {
     };
 
     /**
-     * Returns an Array of links, objects containing references to a source (parent)
-     * and a target (child)
+     * Returns an Array of links, which are plain javascript objects containing a
+     * `source` attribute (which is a reference to the parent Branch) and a `target`
+     * attribute (which is a reference to the child Branch).
+     * [d3-hierarchy compatibility method](https://github.com/d3/d3-hierarchy#node_links)
      * @return {Array} An array of plain Javascript objects
      */
     Branch.prototype.links = function(){
@@ -563,7 +593,7 @@ var TidyTree = (function () {
 
     /**
      * Gets the path from this Branch to `target`. If this Branch and `target` are
-     * the same, returns an array containing only that branch.
+     * the same, returns an array containing only the Branch on which it is called.
      * @param  {Branch} target A Branch object
      * @return {Array} An ordered Array of Branches following the path between this
      * Branch and `target`
@@ -599,11 +629,12 @@ var TidyTree = (function () {
 
     /**
      * Reroots a tree on this Branch. Use with caution, this returns the new root,
-     * which should typically supplant the existing root branch object, but does
+     * which should typically supplant the existing root Branch object, but does
      * not replace that root automatically.
      * @example
      * tree = tree.children[0].children[0].reroot();
-     * @return {Branch} The new root branch, which is either the Branch on which this was called or its parent
+     * @return {Branch} The new root Branch, which is either the Branch on which
+     * this was called or its parent
      */
     Branch.prototype.reroot = function(){
       if(this.isRoot()) return this;
@@ -620,9 +651,9 @@ var TidyTree = (function () {
     };
 
     /**
-     * Reverses the order of children of a Branch
+     * Reverses the order of children (or descendants, if `recursive` of a Branch.
      * @param {Boolean} recursive Whether or not to rotate all descendants, or just
-     * children. Non-recursive appears as though two branches have been swapped.
+     * children. Non-recursive appears as though Branches have been swapped.
      * Recursive appears as though the entire subtree has been flipped over.
      * @return {Branch} The Branch on which this was called.
      */
@@ -639,7 +670,7 @@ var TidyTree = (function () {
     /**
      * Set the length of a Branch
      * @param  {number} length The new length to assign to the Branch
-     * @return {Branch}       The Branch object on which this was called
+     * @return {Branch} The Branch object on which this was called
      */
     Branch.prototype.setLength = function(length){
       this.length = length;
@@ -649,7 +680,7 @@ var TidyTree = (function () {
     /**
      * Sets the parent of the Branch on which it is called.
      * @param  {Branch} parent The Branch to set as parent
-     * @return {Branch}        The Branch on which this method was called.
+     * @return {Branch} The Branch on which this method was called.
      */
     Branch.prototype.setParent = function(parent){
       if(!parent instanceof Branch && parent !== null) throw Error('Cannot set parent to non-Branch object!');
@@ -658,22 +689,20 @@ var TidyTree = (function () {
     };
 
     /**
-     * Sorts the Tree
-     * @param  {Function} comparator A Function taking two branches and returning a
-     * numberic value. For details, see [MDN Array.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#Description)
+     * Sorts the Tree from the branch on which it is called downward.
+     * @param  {Function} [comparator] A Function taking two Branches and returning
+     * a numberic value. For details, see [MDN Array.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#Description)
      * @return {Branch} The Branch on which it was called
      */
     Branch.prototype.sort = function(comparator){
       if(!comparator) comparator = (a, b) => a.value - b.value;
-      return this.eachBefore(branch => {
-        branch.children.sort(comparator);
-      });
+      return this.eachBefore(d => d.children.sort(comparator));
     };
 
     /**
-     * Determines whether this branch is likelier to be a source of `cousin`, or
+     * Determines whether this Branch is likelier to be a source of `cousin`, or
      * if `cousin` is a source of this Branch.
-     * @param  {Branch} cousin The other branch to test
+     * @param  {Branch} cousin The other Branch to test
      * @return {Boolean} True if this might be the source of cousin, otherwise
      * false.
      */
@@ -683,7 +712,7 @@ var TidyTree = (function () {
     };
 
     /**
-     * Computes the value of each branch according to some valuator function
+     * Computes the value of each Branch according to some valuator function
      * @param  {Function} value A Function taking a Branch and returning a
      * (numeric?) value.
      * @return {Branch} The Branch on which it was called.
@@ -694,9 +723,9 @@ var TidyTree = (function () {
     };
 
     /**
-     * Determines whether this branch is likelier to be a target of `cousin`, or
+     * Determines whether this Branch is likelier to be a target of `cousin`, or
      * if `cousin` is a target of this Branch.
-     * @param  {Branch} cousin The other branch to test
+     * @param  {Branch} cousin The other Branch to test
      * @return {Boolean} True if this might be the target of cousin, otherwise
      * false.
      */
@@ -789,10 +818,10 @@ var TidyTree = (function () {
      * Returns a simple Javascript object version of this Branch and its
      * descendants. This is useful in cases where you want to serialize the tree
      * (e.g. `JSON.stringify(tree)`) but can't because the tree contains circular
-     * references (for simplicity, elegance, and performance reasons, each branch
+     * references (for simplicity, elegance, and performance reasons, each Branch
      * tracks both its children and its parent).
      * @return {Object} A serializable bare Javascript Object representing this
-     * branch and its descendants.
+     * Branch and its descendants.
      */
     Branch.prototype.toObject = function(){
       var output = {
@@ -807,14 +836,14 @@ var TidyTree = (function () {
      * Parses a hierarchical JSON string (or Object) as a Branch object.
      * @param  {(String|Object)} json A json string (or Javascript Object)
      * representing hierarchical data.
-     * @param  {String} [idLabel=id]     The key used in the objects of `json` to
+     * @param  {String} [idLabel="id"] The key used in the objects of `json` to
      * indicate their identifiers.
-     * @param  {String} [lengthLabel=length] The key used in the objects of `json`
+     * @param  {String} [lengthLabel='length'] The key used in the objects of `json`
      * to indicate their length.
-     * @param  {String} [childrenLabel=children] The key used in the objects of
+     * @param  {String} [childrenLabel=`children`] The key used in the objects of
      * `json` to indicate their children.
-     * @return {Branch}               The Branch representing the root of the
-     * hierarchy represented by the input JSON
+     * @return {Branch} The Branch representing the root of the hierarchy
+     * represented by `json`.
      */
     function parseJSON(json, idLabel, lengthLabel, childrenLabel){
       if(!idLabel) idLabel = 'id';
@@ -840,7 +869,7 @@ var TidyTree = (function () {
      * @param  {Array} matrix An array of `n` arrays of length `n`
      * @param  {Array} labels An array of `n` strings, each corresponding to the
      * values in `matrix`.
-     * @return {Branch} A Branch object representing the root branch of the tree
+     * @return {Branch} A Branch object representing the root Branch of the tree
      * inferred by neighbor joining on `matrix`.
      */
     function parseMatrix(matrix, labels){
@@ -1055,7 +1084,7 @@ var TidyTree = (function () {
       * This is adapted Jason Davies' [newick.js](https://github.com/jasondavies/newick.js/blob/master/src/newick.js),
       * which is released for modification under [the MIT License](https://opensource.org/licenses/MIT).
       * @param  {string} newick A Newick String
-      * @return {Branch}        A Branch representing the root of the output
+      * @return {Branch} A Branch representing the root of the output tree
       */
     function parseNewick(newick){
       let ancestors = [],
@@ -1066,12 +1095,12 @@ var TidyTree = (function () {
         let token = tokens[t];
         let c;
         switch(token){
-          case "(": // new branchset
+          case "(": // new Branchset
             c = tree.addChild();
             ancestors.push(tree);
             tree = c;
             break;
-          case ",": // another branch
+          case ",": // another Branch
             c = ancestors[ancestors.length-1].addChild();
             tree = c;
             break;
@@ -1414,10 +1443,11 @@ var TidyTree = (function () {
       enter => {
         let newLinks = enter.append('g').attr('class', 'tidytree-link');
 
+        let lt = linkTransformers[this.type][this.mode][this.layout];
         newLinks.append('path')
           .attr('fill', 'none')
   			  .attr('stroke', '#ccc')
-          .attr('d', linkTransformers[this.type][this.mode][this.layout])
+          .attr('d', lt)
           .transition().duration(this.animation)
           .attr('opacity', 1);
 
@@ -1433,13 +1463,15 @@ var TidyTree = (function () {
           .style('opacity', this.branchDistances ? 1 : 0);
       },
       update => {
+        let lt = linkTransformers[this.type][this.mode][this.layout];
         update.select('path')
           .transition().duration(this.animation)
-          .attr('d', linkTransformers[this.type][this.mode][this.layout]);
+          .attr('d', lt);
 
+        let labelTransformer = labelTransformers[this.type][this.mode][this.layout];
         update.select('text')
           .transition().duration(this.animation)
-          .attr('transform', labelTransformers[this.type][this.mode][this.layout]);
+          .attr('transform', labelTransformer);
       },
       exit => exit.transition().duration(this.animation).attr('opacity', 0).remove()
     );
@@ -1456,6 +1488,7 @@ var TidyTree = (function () {
           .on('mouseenter focusin', d => this.trigger('showtooltip', d))
           .on('mouseout focusout', d => this.trigger('hidetooltip', d))
           .on('contextmenu', d => this.trigger('contextmenu', d))
+          .on('click', d => this.trigger('select', d))
           .attr('r', 2.5);
 
         let nodeLabels = newNodes.append('text')
@@ -1482,14 +1515,16 @@ var TidyTree = (function () {
             .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
         }
 
+        let nt = nodeTransformers[this.type][this.layout];
         newNodes
           .transition().duration(this.animation)
-          .attr('transform', nodeTransformers[this.type][this.layout]);
+          .attr('transform', nt);
       },
       update => {
+        let nt = nodeTransformers[this.type][this.layout];
         update
           .transition().duration(this.animation)
-          .attr('transform', nodeTransformers[this.type][this.layout]);
+          .attr('transform', nt);
 
         let nodeLabels = update.select('text');
         if(this.layout === 'vertical'){
@@ -1779,14 +1814,14 @@ var TidyTree = (function () {
    * Searches the tree, returns Search Results
    * @param  {Function} test A function which takes a Branch and returns a Truthy
    * or Falsy value.
-   * @return {Array} The array of
+   * @return {Array} The array of results
    */
   TidyTree.prototype.search = function(test){
-    if(!query) return;
-    let results = [];
-    this.parent.select('svg g.tidytree-nodes').selectAll('g.tidytree-node').each(d => {
-      if(test(d)) results.push(d);
-    });
+    if(!test) return;
+    let results = this.parent
+      .select('svg g.tidytree-nodes')
+      .selectAll('g.tidytree-node')
+      .filter(test);
     if(this.events.search.length) this.events.search.forEach(c => c(results));
     return results;
   };
@@ -1815,14 +1850,16 @@ var TidyTree = (function () {
 
   /**
    * Forces the tree to respond as though an `event` has occurred
-   * Please note that this is not yet functioning.
-   * @param  {String} event The name of an event.
-   * @param  {Spread} args  Any arguments which should be passed to the event.
+   * @param  {String} events space-delimited list of names of events to trigger.
+   * @param  {Spread} args Any arguments which should be passed to the event
+   * handler(s).
    * @return The output of the callback run on `event`
    */
-  TidyTree.prototype.trigger = function(event, ...args){
-    if(!this.events[event].length) throw Error(`No event named ${event} is defined.`);
-    return this.events[event].forEach(c => c(args));
+  TidyTree.prototype.trigger = function(events, ...args){
+    return events.split(' ').map(event => {
+      if(!this.events[event].length) throw Error(`No event named ${event} is defined.`);
+      return this.events[event].map(handler => handler(args));
+    });
   };
 
   /**
