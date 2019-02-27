@@ -312,10 +312,11 @@ TidyTree.prototype.redraw = function(){
     enter => {
       let newLinks = enter.append('g').attr('class', 'tidytree-link');
 
+      let lt = linkTransformers[this.type][this.mode][this.layout];
       newLinks.append('path')
         .attr('fill', 'none')
 			  .attr('stroke', '#ccc')
-        .attr('d', linkTransformers[this.type][this.mode][this.layout])
+        .attr('d', lt)
         .transition().duration(this.animation)
         .attr('opacity', 1);
 
@@ -331,13 +332,15 @@ TidyTree.prototype.redraw = function(){
         .style('opacity', this.branchDistances ? 1 : 0);
     },
     update => {
+      let lt = linkTransformers[this.type][this.mode][this.layout];
       update.select('path')
         .transition().duration(this.animation)
-        .attr('d', linkTransformers[this.type][this.mode][this.layout]);
+        .attr('d', lt);
 
+      let labelTransformer = labelTransformers[this.type][this.mode][this.layout];
       update.select('text')
         .transition().duration(this.animation)
-        .attr('transform', labelTransformers[this.type][this.mode][this.layout]);
+        .attr('transform', labelTransformer);
     },
     exit => exit.transition().duration(this.animation).attr('opacity', 0).remove()
   );
@@ -380,14 +383,16 @@ TidyTree.prototype.redraw = function(){
           .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
       }
 
+      let nt = nodeTransformers[this.type][this.layout];
       newNodes
         .transition().duration(this.animation)
-        .attr('transform', nodeTransformers[this.type][this.layout]);
+        .attr('transform', nt);
     },
     update => {
+      let nt = nodeTransformers[this.type][this.layout];
       update
         .transition().duration(this.animation)
-        .attr('transform', nodeTransformers[this.type][this.layout]);
+        .attr('transform', nt);
 
       let nodeLabels = update.select('text');
       if(this.layout === 'vertical'){
