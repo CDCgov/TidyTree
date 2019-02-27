@@ -1,6 +1,6 @@
 {
   "version": "0.2.10",
-  "description": "Yet another d3-powered Phylogenetic tree renderer.",
+  "description": "Phylogenetic trees, powered by d3",
   "name": "tidytree",
   "main": "dist/tidytree.js",
   "scripts": {

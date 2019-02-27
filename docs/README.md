@@ -285,7 +285,7 @@ Searches the tree, returns Search Results
 -   `test` **[Function][58]** A function which takes a Branch and returns a Truthy
     or Falsy value.
 
-Returns **[Array][59]** The array of
+Returns **[Array][59]** The array of results
 
 ### on
 
@@ -312,12 +312,12 @@ Returns **[TidyTree][55]** The TidyTree on which this method was called.
 ### trigger
 
 Forces the tree to respond as though an `event` has occurred
-Please note that this is not yet functioning.
 
 #### Parameters
 
--   `event` **[String][54]** The name of an event.
--   `args` **Spread** Any arguments which should be passed to the event.
+-   `events` **[String][54]** space-delimited list of names of events to trigger.
+-   `args` **Spread** Any arguments which should be passed to the event
+    handler(s).
 
 Returns **any** The output of the callback run on `event`
 
