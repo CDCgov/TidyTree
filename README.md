@@ -17,7 +17,7 @@ It's designed to replicate much of the functionality of [FigTree](http://tree.bi
 First import the library:
 
 ```HTML
-<script src="https://unpkg.com/tidytree@0.2.8/dist/tidytree.min.js"></script>
+<script src="https://unpkg.com/tidytree@0.2.11/dist/tidytree.min.js"></script>
 ```
 
 Then stick this in an HTML `script` tag:
