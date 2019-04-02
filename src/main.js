@@ -12,7 +12,6 @@ export default function TidyTree(data, options, events){
     mode: 'smooth',
     leafNodes: true,
 		leafLabels: false,
-    leafLabelSize: 6,
     branchNodes: false,
 		branchLabels: false,
     branchDistances: false,
@@ -115,7 +114,10 @@ TidyTree.prototype.draw = function(selector){
 	      .attr('height', '100%');
 
 	let g = svg.append('g');
-  let rulerWrapper = svg.append('g').attr('class', 'tidytree-ruler');
+  svg.append('g').attr('class', 'tidytree-ruler')
+    .append('rect')
+      .attr('y', -5)
+      .attr('fill', 'white');
 
 	this.zoom = d3.zoom().on('zoom', () => {
     g.attr('transform', d3.event.transform);
@@ -294,8 +296,8 @@ labelTransformers.dendrogram = labelTransformers.tree;
 TidyTree.prototype.redraw = function(){
   let parent = this.parent;
 
-  this.width  = parseFloat(parent.style('width'))  - this.margin[0] - this.margin[2];
-  this.height = parseFloat(parent.style('height')) - this.margin[1] - this.margin[3];
+  this.width  = parseFloat(parent.style('width'))  - this.margin[1] - this.margin[3];
+  this.height = parseFloat(parent.style('height')) - this.margin[0] - this.margin[2] - 25;
 
   this.scalar = (this.layout === 'horizontal' ? this.width : (this.layout === 'vertical' ? this.height : Math.min(this.width, this.height)/2));
   this.hierarchy.each(d => d.weight = this.scalar * d.value);
@@ -424,9 +426,20 @@ TidyTree.prototype.redraw = function(){
 function updateRuler(transform){
   if(!transform) transform = {k: 1};
   let ruler = this.parent.select('g.tidytree-ruler');
+  let bg = ruler.select('rect');
   if(this.ruler){
-    ruler.attr('transform', this.layout == 'horizontal' ? `translate(${this.margin[3]},${this.height+this.margin[0]})` : `translate(${this.margin[0]},${this.margin[3]})`);
-    let axis = this.layout == 'horizontal' ? d3.axisTop() : d3.axisLeft();
+    if(this.layout == 'horizontal'){
+      ruler.attr('transform', `translate(${this.margin[3]},${this.height+this.margin[0]+10})`);
+      bg.attr('width', 'calc(100% - ' + (this.margin[1] + this.margin[3] - 15) + 'px)')
+        .attr('height', '25px')
+        .attr('x', -5);
+    } else {
+      ruler.attr('transform', `translate(${this.margin[3]-10},${this.margin[0]})`);
+      bg.attr('height', 'calc(100% - ' + (this.margin[0] + this.margin[2] - 15) + 'px)')
+        .attr('width', '25px')
+        .attr('x', -25);
+    }
+    let axis = this.layout == 'horizontal' ? d3.axisBottom() : d3.axisLeft();
     if(this.type === 'tree' && this.layout !== 'circular'){
       ruler
         .attr('opacity', 1)
