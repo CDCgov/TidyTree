@@ -21,12 +21,12 @@
     "url": "git+https://github.com/aaboyles/TidyTree.git"
   },
   "dependencies": {
-    "d3": "^5.9.1",
+    "d3": "^5.9.2",
     "patristic": "^0.3.5"
   },
   "devDependencies": {
-    "documentation": "^9.2.1",
-    "rollup-plugin-node-resolve": "^4.0.0",
-    "terser": "^3.16.1"
+    "documentation": "^9.3.1",
+    "rollup-plugin-node-resolve": "^4.0.1",
+    "terser": "^3.17.0"
   }
 }
