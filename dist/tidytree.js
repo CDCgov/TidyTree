@@ -1146,6 +1146,7 @@ var TidyTree = (function () {
       branchNodes: false,
   		branchLabels: false,
       branchDistances: false,
+      rotation: 0,
       ruler: true,
       animation: 500,
       margin: [50, 50, 50, 50] //CSS order: top, right, bottom, left
@@ -1236,23 +1237,28 @@ var TidyTree = (function () {
     if(!selector && !this.parent){
       throw Error('No valid target for drawing given! Where should the tree go?');
     }
-    this.parent = d3.select(selector ? selector : this.parent);
+    let parent = this.parent = d3.select(selector ? selector : this.parent);
+
+    this.width  = parseFloat(parent.style('width'))  - this.margin[1] - this.margin[3];
+    this.height = parseFloat(parent.style('height')) - this.margin[0] - this.margin[2] - 25;
 
   	let tree = d3.tree();
 
-  	let svg = this.parent.html(null).append('svg')
+  	let svg = parent.html(null).append('svg')
   	      .attr('width', '100%')
   	      .attr('height', '100%');
 
   	let g = svg.append('g');
+
     svg.append('g').attr('class', 'tidytree-ruler')
       .append('rect')
         .attr('y', -5)
         .attr('fill', 'white');
 
   	this.zoom = d3.zoom().on('zoom', () => {
-      g.attr('transform', d3.event.transform);
-      updateRuler.call(this, d3.event.transform);
+      let transform = this.transform = d3.event.transform;
+      g.attr('transform', `translate(${transform.x},${transform.y}) scale(${transform.k}) rotate(${this.rotation},${this.layout === 'circular' ? 0 : this.width/2},${this.layout === 'circular' ? 0 : this.height/2})` );
+      updateRuler.call(this, transform);
     });
     svg.call(this.zoom);
 
@@ -1644,6 +1650,17 @@ var TidyTree = (function () {
   	}
   	this.type = newType;
     if(this.parent) return this.redraw();
+    return this;
+  };
+
+  /**
+   * Set the TidyTree's rotation
+   * @param {Number} degrees The new number of degrees by which to rotate the tree
+   * @return {TidyTree} the TidyTree object
+   */
+  TidyTree.prototype.setRotation = function(degrees){
+  	this.rotation = degrees;
+    if(this.parent) this.parent.select('svg g').attr('transform', `translate(${this.transform.x},${this.transform.y}) scale(${this.transform.k}) rotate(${this.rotation},${this.layout === 'circular' ? 0 : this.width/2},${this.layout === 'circular' ? 0 : this.height/2})` );
     return this;
   };
 
