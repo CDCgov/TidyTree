@@ -331,6 +331,7 @@ TidyTree.prototype.redraw = function(){
         .transition().duration(this.animation)
         .attr('opacity', 1);
 
+      let labelTransformer = labelTransformers[this.type][this.mode][this.layout];
       newLinks.append('text')
         .attr('y', 2)
         .attr('text-anchor', 'middle')
@@ -340,7 +341,7 @@ TidyTree.prototype.redraw = function(){
           return(d.target.data.length.toLocaleString());
         })
         .transition().duration(this.animation)
-        .style('opacity', this.branchDistances ? 1 : 0);
+        .attr('transform', labelTransformer);
     },
     update => {
       let lt = linkTransformers[this.type][this.mode][this.layout];
