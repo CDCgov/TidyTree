@@ -15,6 +15,8 @@ export default function TidyTree(data, options, events){
     branchNodes: false,
 		branchLabels: false,
     branchDistances: false,
+    hStretch: 1,
+    vStretch: 1,
     rotation: 0,
     ruler: true,
     animation: 500,
@@ -302,8 +304,8 @@ labelTransformers.dendrogram = labelTransformers.tree;
 TidyTree.prototype.redraw = function(){
   let parent = this.parent;
 
-  this.width  = parseFloat(parent.style('width'))  - this.margin[1] - this.margin[3];
-  this.height = parseFloat(parent.style('height')) - this.margin[0] - this.margin[2] - 25;
+  this.width  = (parseFloat(parent.style('width'))  - this.margin[1] - this.margin[3]     ) * this.hStretch;
+  this.height = (parseFloat(parent.style('height')) - this.margin[0] - this.margin[2] - 25) * this.vStretch;
 
   this.scalar = (this.layout === 'horizontal' ? this.width : (this.layout === 'vertical' ? this.height : Math.min(this.width, this.height)/2));
   this.hierarchy.each(d => d.weight = this.scalar * d.value);
@@ -311,8 +313,9 @@ TidyTree.prototype.redraw = function(){
 	let g = parent.select('svg g');
 
 	let source = (this.type === 'tree' ? d3.tree() : d3.cluster())
-    .size(this.layout === 'circular' ? [2 * Math.PI, Math.min(this.height, this.width)/2] : this.layout === 'horizontal' ? [this.height, this.width] : [this.width, this.height])
-    .separation((a, b) => 1);
+    .size(this.layout === 'circular' ? [2 * Math.PI, Math.min(this.height, this.width)/2] : this.layout === 'horizontal' ? [this.height, this.width] : [this.width, this.height]);
+
+  if(this.layout === 'circular') source.separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
 
   //Note: You must render links prior to nodes in order to get correct placement!
   let links = g.select('g.tidytree-links').selectAll('g.tidytree-link').data(source(this.hierarchy).links());
@@ -530,6 +533,28 @@ TidyTree.prototype.setType = function(newType){
 TidyTree.prototype.setRotation = function(degrees){
 	this.rotation = degrees;
   if(this.parent) this.parent.select('svg g').attr('transform', `translate(${this.transform.x},${this.transform.y}) scale(${this.transform.k}) rotate(${this.rotation},${this.layout === 'circular' ? 0 : this.width/2},${this.layout === 'circular' ? 0 : this.height/2})` );
+  return this;
+};
+
+/**
+ * Set the TidyTree's Horizontal Stretch
+ * @param {Number} proportion The new proportion by which to stretch the tree
+ * @return {TidyTree} the TidyTree object
+ */
+TidyTree.prototype.setHStretch = function(proportion){
+	this.hStretch = parseFloat(proportion);
+  if(this.parent) return this.redraw();
+  return this;
+};
+
+/**
+ * Set the TidyTree's Vertical Stretch
+ * @param {Number} proportion The new proportion by which to stretch the tree
+ * @return {TidyTree} the TidyTree object
+ */
+TidyTree.prototype.setVStretch = function(proportion){
+	this.vStretch = parseFloat(proportion);
+  if(this.parent) return this.redraw();
   return this;
 };
 
