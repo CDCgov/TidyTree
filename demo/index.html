@@ -160,7 +160,7 @@
             </div>
             <div class="form-group">
               <label class="form-switch">
-                <input id="branchDistances" type="checkbox" />
+                <input id="branchDistances" type="checkbox" checked />
                 <i class="form-icon"></i> Branch Distances
               </label>
             </div>
@@ -190,7 +190,7 @@
             </div>
             <div class="form-group">
               <label class="form-switch">
-                <input id="leafLabels" type="checkbox" />
+                <input id="leafLabels" type="checkbox" checked />
                 <i class="form-icon"></i> Leaf Labels
               </label>
             </div>
@@ -461,7 +461,7 @@ function contextMenu(d){
   d3.select('#reroot' ).on('click', c => tree.setData(d[0].data.reroot()));
   d3.select('#rotate' ).on('click', c => tree.setData(d[0].data.rotate().getRoot()));
   d3.select('#flip'   ).on('click', c => tree.setData(d[0].data.rotate(true).getRoot()));
-  d3.select('#sort'   ).on('click', c => tree.setData(d[0].data.sort()));
+  d3.select('#sort'   ).on('click', c => tree.setData(d[0].data.sort().getRoot()));
   d3.select('#remove' ).on('click', c => tree.setData(d[0].data.remove()));
   d3.select('#isolate').on('click', c => tree.setData(d[0].data.isolate()));
   d3.select('#excise' ).on('click', c => tree.setData(d[0].data.excise().getRoot()));
