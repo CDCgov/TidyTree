@@ -318,7 +318,7 @@ TidyTree.prototype.redraw = function(){
   if(this.layout === 'circular') source.separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
 
   //Note: You must render links prior to nodes in order to get correct placement!
-  let links = g.select('g.tidytree-links').selectAll('g.tidytree-link').data(source(this.hierarchy).links());
+  let links = g.select('g.tidytree-links').selectAll('g.tidytree-link').data(source(this.hierarchy).links(), k => k.source.data._guid+k.target.data._guid);
   links.join(
     enter => {
       let newLinks = enter.append('g').attr('class', 'tidytree-link');
@@ -363,12 +363,21 @@ TidyTree.prototype.redraw = function(){
       let labelTransformer = labelTransformers[this.type][this.mode][this.layout];
       let labels = update.select('text');
       if(!this.animation > 0){
-        labels.attr('transform', labelTransformer)
+        labels
+          .text(d => {
+            if(typeof d.target.data.length === 'undefined') return '0.000';
+            return(d.target.data.length.toLocaleString());
+          })
+          .attr('transform', labelTransformer)
       } else {
         labels
           .transition().duration(this.animation/2)
           .attr('opacity', 0).end().then(() => {
             labels
+              .text(d => {
+                if(typeof d.target.data.length === 'undefined') return '0.000';
+                return(d.target.data.length.toLocaleString());
+              })
               .attr('transform', labelTransformer)
               .transition().duration(this.animation/2)
               .attr('opacity', 1);
@@ -378,7 +387,7 @@ TidyTree.prototype.redraw = function(){
     exit => exit.transition().duration(this.animation).attr('opacity', 0).remove()
   );
 
-	let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants(), d => d.data.id);
+	let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants(), d => d.data._guid);
   nodes.join(
     enter => {
       let nt = nodeTransformers[this.type][this.layout];

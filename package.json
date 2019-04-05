@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "d3": "^5.9.2",
-    "patristic": "^0.3.5"
+    "patristic": "^0.3.6"
   },
   "devDependencies": {
     "documentation": "^9.3.1",

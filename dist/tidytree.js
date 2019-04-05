@@ -13,7 +13,7 @@ var TidyTree = (function () {
      * @example
      * console.log(patristic.version);
      */
-    const version = "0.3.5";
+    const version = "0.3.6";
 
     /**
      * A class for representing Branches in trees.
@@ -28,12 +28,21 @@ var TidyTree = (function () {
      */
     function Branch(data){
       Object.assign(this, {
+        _guid: guid(),
         id: '',
         parent: null,
         length: 0,
         value: 1,
         children: []
       }, data);
+    }
+
+    function guid(a){
+      if(a){
+        return (a^Math.random()*16>>a/4).toString(16);
+      } else {
+        return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,guid);
+      }
     }
 
     /**
@@ -1121,11 +1130,11 @@ var TidyTree = (function () {
       return tree.fixDistances();
     }
 
-    exports.version = version;
     exports.Branch = Branch;
     exports.parseJSON = parseJSON;
     exports.parseMatrix = parseMatrix;
     exports.parseNewick = parseNewick;
+    exports.version = version;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 
@@ -1449,7 +1458,7 @@ var TidyTree = (function () {
     if(this.layout === 'circular') source.separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
 
     //Note: You must render links prior to nodes in order to get correct placement!
-    let links = g.select('g.tidytree-links').selectAll('g.tidytree-link').data(source(this.hierarchy).links());
+    let links = g.select('g.tidytree-links').selectAll('g.tidytree-link').data(source(this.hierarchy).links(), k => k.source.data._guid+k.target.data._guid);
     links.join(
       enter => {
         let newLinks = enter.append('g').attr('class', 'tidytree-link');
@@ -1494,12 +1503,21 @@ var TidyTree = (function () {
         let labelTransformer = labelTransformers[this.type][this.mode][this.layout];
         let labels = update.select('text');
         if(!this.animation > 0){
-          labels.attr('transform', labelTransformer);
+          labels
+            .text(d => {
+              if(typeof d.target.data.length === 'undefined') return '0.000';
+              return(d.target.data.length.toLocaleString());
+            })
+            .attr('transform', labelTransformer);
         } else {
           labels
             .transition().duration(this.animation/2)
             .attr('opacity', 0).end().then(() => {
               labels
+                .text(d => {
+                  if(typeof d.target.data.length === 'undefined') return '0.000';
+                  return(d.target.data.length.toLocaleString());
+                })
                 .attr('transform', labelTransformer)
                 .transition().duration(this.animation/2)
                 .attr('opacity', 1);
@@ -1509,7 +1527,7 @@ var TidyTree = (function () {
       exit => exit.transition().duration(this.animation).attr('opacity', 0).remove()
     );
 
-  	let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants(), d => d.data.id);
+  	let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants(), d => d.data._guid);
     nodes.join(
       enter => {
         let nt = nodeTransformers[this.type][this.layout];
