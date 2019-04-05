@@ -340,19 +340,40 @@ TidyTree.prototype.redraw = function(){
           if(typeof d.target.data.length === 'undefined') return '0.000';
           return(d.target.data.length.toLocaleString());
         })
+        .attr('transform', labelTransformer)
         .transition().duration(this.animation)
-        .attr('transform', labelTransformer);
+        .attr('opacity', 1);
     },
     update => {
-      let lt = linkTransformers[this.type][this.mode][this.layout];
-      update.select('path')
-        .transition().duration(this.animation)
-        .attr('d', lt);
+      let linkTransformer = linkTransformers[this.type][this.mode][this.layout];
+      let paths = update.select('path');
+      if(!this.animation > 0){
+        paths.attr('d', linkTransformer);
+      } else {
+        paths
+          .transition().duration(this.animation/2)
+          .attr('opacity', 0).end().then(() => {
+            paths
+            .attr('d', linkTransformer)
+            .transition().duration(this.animation/2)
+            .attr('opacity', 1);
+          });
+      }
 
       let labelTransformer = labelTransformers[this.type][this.mode][this.layout];
-      update.select('text')
-        .transition().duration(this.animation)
-        .attr('transform', labelTransformer);
+      let labels = update.select('text');
+      if(!this.animation > 0){
+        labels.attr('transform', labelTransformer)
+      } else {
+        labels
+          .transition().duration(this.animation/2)
+          .attr('opacity', 0).end().then(() => {
+            labels
+              .attr('transform', labelTransformer)
+              .transition().duration(this.animation/2)
+              .attr('opacity', 1);
+          });
+      }
     },
     exit => exit.transition().duration(this.animation).attr('opacity', 0).remove()
   );
@@ -360,8 +381,10 @@ TidyTree.prototype.redraw = function(){
 	let nodes = g.select('g.tidytree-nodes').selectAll('g.tidytree-node').data(this.hierarchy.descendants(), d => d.data.id);
   nodes.join(
     enter => {
+      let nt = nodeTransformers[this.type][this.layout];
       let newNodes = enter.append('g')
-        .attr('class', d => 'tidytree-node ' + (d.children ? 'tidytree-node-internal' : 'tidytree-node-leaf'));
+        .attr('class', d => 'tidytree-node ' + (d.children ? 'tidytree-node-internal' : 'tidytree-node-leaf'))
+        .attr('transform', nt);
 
       newNodes.append('circle')
         .attr('title', d => d.data.id)
@@ -395,10 +418,9 @@ TidyTree.prototype.redraw = function(){
           .attr('x', l => l.x % (2*Math.PI) > Math.PI ? -5 : 5);
       }
 
-      let nt = nodeTransformers[this.type][this.layout];
       newNodes
         .transition().duration(this.animation)
-        .attr('transform', nt);
+        .attr('opacity', 1);
     },
     update => {
       let nt = nodeTransformers[this.type][this.layout];
@@ -459,10 +481,14 @@ function updateRuler(transform){
         .attr('opacity', 1)
         .call(axis.scale(d3.scaleLinear([this.range[0], this.range[1]/transform.k], [0, this.scalar])));
     } else {
-      ruler.attr('opacity', 0);
+      ruler
+        .transition().duration(this.animation)
+        .attr('opacity', 0);
     }
   } else {
-    ruler.attr('opacity', 0);
+    ruler
+      .transition().duration(this.animation)
+      .attr('opacity', 0);
   }
 }
 
@@ -544,7 +570,12 @@ TidyTree.prototype.setRotation = function(degrees){
  */
 TidyTree.prototype.setHStretch = function(proportion){
 	this.hStretch = parseFloat(proportion);
-  if(this.parent) return this.redraw();
+  if(this.parent){
+    let animCache = this.animation;
+    this.setAnimation(0);
+    this.redraw();
+    this.setAnimation(animCache);
+  }
   return this;
 };
 
@@ -555,7 +586,12 @@ TidyTree.prototype.setHStretch = function(proportion){
  */
 TidyTree.prototype.setVStretch = function(proportion){
 	this.vStretch = parseFloat(proportion);
-  if(this.parent) return this.redraw();
+  if(this.parent){
+    let animCache = this.animation;
+    this.setAnimation(0);
+    this.redraw();
+    this.setAnimation(animCache);
+  }
   return this;
 };
 
