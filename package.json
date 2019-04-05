@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "documentation": "^9.3.1",
-    "rollup-plugin-node-resolve": "^4.0.1",
+    "rollup-plugin-node-resolve": "^4.1.0",
     "terser": "^3.17.0"
   }
 }
