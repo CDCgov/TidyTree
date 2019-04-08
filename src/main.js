@@ -368,7 +368,7 @@ TidyTree.prototype.redraw = function(){
             if(typeof d.target.data.length === 'undefined') return '0.000';
             return(d.target.data.length.toLocaleString());
           })
-          .attr('transform', labelTransformer)
+          .attr('transform', labelTransformer);
       } else {
         labels
           .transition().duration(this.animation/2)
