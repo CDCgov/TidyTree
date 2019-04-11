@@ -1,5 +1,5 @@
 {
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Phylogenetic trees, powered by d3",
   "name": "tidytree",
   "main": "dist/tidytree.js",
@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "documentation": "^9.3.1",
-    "rollup-plugin-node-resolve": "^4.2.1",
+    "rollup-plugin-node-resolve": "^4.2.3",
     "terser": "^3.17.0"
   }
 }
