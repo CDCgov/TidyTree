@@ -1541,6 +1541,7 @@ var TidyTree = (function () {
           .on('mouseenter focusin', d => this.trigger('showtooltip', d))
           .on('mouseout focusout', d => this.trigger('hidetooltip', d))
           .on('contextmenu', d => this.trigger('contextmenu', d))
+          .on('click', d => this.trigger('select', d))
           .attr('r', 2.5);
 
         let nodeLabels = newNodes.append('text')
