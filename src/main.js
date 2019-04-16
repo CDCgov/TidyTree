@@ -467,16 +467,17 @@ TidyTree.prototype.redraw = function(){
 
 function updateRuler(transform){
   if(!transform) transform = {k: 1};
+  let height = (parseFloat(this.parent.style('height')) - this.margin[2] - 15);
   let ruler = this.parent.select('g.tidytree-ruler');
   let bg = ruler.select('rect');
   if(this.ruler){
     if(this.layout == 'horizontal'){
-      ruler.attr('transform', `translate(${this.margin[3]},${this.height+this.margin[0]+10})`);
+      ruler.attr('transform', `translate(${this.margin[3]}, ${height})`);
       bg.attr('width', 'calc(100% - ' + (this.margin[1] + this.margin[3] - 15) + 'px)')
         .attr('height', '25px')
         .attr('x', -5);
     } else {
-      ruler.attr('transform', `translate(${this.margin[3]-10},${this.margin[0]})`);
+      ruler.attr('transform', `translate(${this.margin[3]-10}, ${this.margin[0]})`);
       bg.attr('height', 'calc(100% - ' + (this.margin[0] + this.margin[2] - 15) + 'px)')
         .attr('width', '25px')
         .attr('x', -25);
