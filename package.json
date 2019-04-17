@@ -1,5 +1,5 @@
 {
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Phylogenetic trees, powered by d3",
   "name": "tidytree",
   "main": "dist/tidytree.js",
