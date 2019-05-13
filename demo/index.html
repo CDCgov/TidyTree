@@ -1,12 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="description" content="TidyTree is a client-side renderer for Phylogenetic Trees, based on the TidyTree Javascript Library." />
+  <meta name="author" content="humans.txt" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="msapplication-TileColor" content="#2b5797" />
   <title>Tidy Tree</title>
-  <script src="//d3js.org/d3.v5.min.js"></script>
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.8/spectre.min.css" />
+  <link rel="canonical" href="https://cdcgov.github.io/TidyTree/demo/" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+  <link rel="manifest" href="site.webmanifest" />
+  <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons" />
+  <link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous" />
 	<style>
-  html, body, .container, .columns, #options, #tree{
+  html, body, #tree{
     height: 100%;
     overflow: hidden;
   }
@@ -72,198 +83,246 @@
 	</style>
 </head>
 <body>
-  <div class="container">
-    <div class="columns">
-      <div id="options" class="column col-auto">
-        <h1 class="text-center">TidyTree</h1>
-        <div class="accordion">
-          <input type="radio" id="accordion-data" name="accordion-radio" hidden>
-          <label class="accordion-header" for="accordion-data">Source Data</label>
-          <div class="accordion-body">
-            <div class="form-group">
-              <input class="form-input" id="source" type="file">
-            </div>
-            <div class="form-group text-right">
-              <button class="form-input" id="reset">Reset Tree</button>
+  <div class="bmd-layout-container bmd-drawer-f-l bmd-drawer-in">
+    <header class="bmd-layout-header">
+      <div class="navbar navbar-light bg-faded">
+        <button class="navbar-toggler" type="button" data-toggle="drawer" data-target="#dw-s1">
+          <span class="sr-only">Toggle drawer</span>
+          <i class="material-icons">menu</i>
+        </button>
+        <form class="form-inline my-2 my-lg-0">
+          <input id="search" class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+        </form>
+      </div>
+    </header>
+
+    <div id="dw-s1" class="bmd-layout-drawer bg-faded">
+      <header>
+        <a class="navbar-brand">TidyTree</a>
+      </header>
+
+      <div id="accordion">
+        <div class="card">
+          <div class="card-header" id="headingSourceData">
+            <h5 class="mb-0">
+              <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSourceData" aria-expanded="false" aria-controls="collapseSourceData">
+                Source Data
+              </button>
+            </h5>
+          </div>
+          <div id="collapseSourceData" class="collapse" aria-labelledby="headingSourceData" data-parent="#accordion">
+            <div class="card-body">
+              <div class="form-group">
+                <label for="source" class="btn btn-primary">Load Newick Tree</label>
+                <input type="file" id="source" class="d-none">
+              </div>
+              <div class="form-group">
+                <button id="reset" class="btn btn-danger">Reset Tree</button>
+              </div>
             </div>
           </div>
         </div>
-        <div class="accordion">
-          <input type="radio" id="accordion-layout" name="accordion-radio" hidden>
-          <label class="accordion-header" for="accordion-layout">Layout</label>
-          <div class="accordion-body">
-            <div class="form-group">
-              <label>
+
+        <div class="card">
+          <div class="card-header" id="headingLayout">
+            <h5 class="mb-0">
+              <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseLayout" aria-expanded="false" aria-controls="collapseLayout">
                 Layout
-                <select id="layout" class="form-select"></select>
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                Horizontal Stretch
+              </button>
+            </h5>
+          </div>
+          <div id="collapseLayout" class="collapse" aria-labelledby="headingLayout" data-parent="#accordion">
+            <div class="card-body">
+              <div class="form-group">
+                <label for="layout">Layout</label>
+                <select id="layout" class="custom-select"></select>
+              </div>
+              <div class="form-group">
+                <label for="hStretch">Horizontal Stretch</label>
                 <input type="range" min="0.1" max="3.0" value="1" step="0.1" id="hStretch"></input>
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                Vertical Stretch
+              </div>
+              <div class="form-group">
+                <label for="vStretch">Vertical Stretch</label>
                 <input type="range" min="0.1" max="3.0" value="1" step="0.1" id="vStretch"></input>
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                Rotation
+              </div>
+              <div class="form-group">
+                <label for="rotation">Rotation</label>
                 <input type="range" min="0" max="360" value="0" id="rotation"></input>
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                Type
-                <select id="type" class="form-select"></select>
-              </label>
+              </div>
+              <div class="form-group">
+                <label for="type">Type</label>
+                <select id="type" class="custom-select"></select>
+              </div>
             </div>
           </div>
         </div>
-        <div class="accordion">
-          <input type="radio" id="accordion-branches" name="accordion-radio" hidden>
-          <label class="accordion-header" for="accordion-branches">Branches</label>
-          <div class="accordion-body">
-            <div class="form-group">
-              <label>
-                Mode
-                <select id="mode" class="form-select"></select>
-              </label>
-            </div>
-            <div class="form-group">
-              <label class="form-switch">
-                <input id="branchNodes" type="checkbox" />
-                <i class="form-icon"></i> Branch Nodes
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                Branch Node Size
-                <input id="branchNodeSize" class="skip" type="range" min="0.5" max="10" value="2.5" step="0.5" />
-              </label>
-            </div>
-            <div class="form-group">
-              <label class="form-switch">
-                <input id="branchLabels" type="checkbox" />
-                <i class="form-icon"></i> Branch Labels
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                Branch Label Size
+
+        <div class="card">
+          <div class="card-header" id="headingBranches">
+            <h5 class="mb-0">
+              <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseBranches" aria-expanded="false" aria-controls="collapseBranches">
+                Branches
+              </button>
+            </h5>
+          </div>
+          <div id="collapseBranches" class="collapse" aria-labelledby="headingBranches" data-parent="#accordion">
+            <div class="card-body">
+              <div class="form-group">
+                <label for="mode">Mode</label>
+                <select id="mode" class="custom-select"></select>
+              </div>
+              <div class="form-group">
+                <div class="switch">
+                  <label>
+                    <input id="branchNodes" type="checkbox" />
+                    Branch Nodes
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>
+                  Branch Node Size
+                </label>
+                  <input id="branchNodeSize" class="skip" type="range" min="0.5" max="10" value="2.5" step="0.5" />
+              </div>
+              <div class="form-group">
+                <div class="switch">
+                  <label>
+                    <input id="branchLabels" type="checkbox" />
+                    Branch Labels
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Branch Label Size</label>
                 <input id="branchLabelSize" class="skip" type="range" min="1" max="32" value="6" step="1" />
-              </label>
-            </div>
-            <div class="form-group">
-              <label class="form-switch">
-                <input id="branchDistances" type="checkbox" checked />
-                <i class="form-icon"></i> Branch Distances
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                Branch Distance Size
-                <input id="branchDistanceSize" class="skip" type="range" min="1" max="32" value="6" step="1" />
-              </label>
+              </div>
+              <div class="form-group">
+                <div class="switch">
+                  <label>
+                    <input id="branchDistances" type="checkbox" />
+                    Branch Distances
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Branch Distance Size</label>
+                <input id="branchDistanceSize" class="skip" type="range" min="1" max="32" value="12" step="1" />
+              </div>
             </div>
           </div>
         </div>
-        <div class="accordion">
-          <input type="radio" id="accordion-leaves" name="accordion-radio" hidden>
-          <label class="accordion-header" for="accordion-leaves">Leaves</label>
-          <div class="accordion-body">
-            <div class="form-group">
-              <label class="form-switch">
-                <input id="leafNodes" type="checkbox" checked>
-                <i class="form-icon"></i> Leaf Nodes
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                Leaf Node Size
+
+        <div class="card">
+          <div class="card-header" id="headingLeaves">
+            <h5 class="mb-0">
+              <button class="btn btn-link" data-toggle="collapse" data-target="#collapseLeaves" aria-expanded="false" aria-controls="collapseLeaves">
+                Leaves
+              </button>
+            </h5>
+          </div>
+          <div id="collapseLeaves" class="collapse" aria-labelledby="headingLeaves" data-parent="#accordion">
+            <div class="card-body">
+              <div class="form-group">
+                <div class="switch">
+                  <label>
+                    <input id="leafNodes" type="checkbox" checked>
+                    Leaf Nodes
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Leaf Node Size</label>
                 <input id="leafNodeSize" class="skip" type="range" min="0.5" max="10" value="2.5" step="0.5" />
-              </label>
-            </div>
-            <div class="form-group">
-              <label class="form-switch">
-                <input id="leafLabels" type="checkbox" checked />
-                <i class="form-icon"></i> Leaf Labels
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                Leaf Label Size
-                <input id="leafLabelSize" class="skip" type="range" min="1" max="32" value="6" step="1" />
-              </label>
+              </div>
+              <div class="form-group">
+                <div class="switch">
+                  <label>
+                    <input id="leafLabels" type="checkbox" />
+                    Leaf Labels
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Leaf Label Size</label>
+                <input id="leafLabelSize" class="skip" type="range" min="1" max="32" value="12" step="1" />
+              </div>
             </div>
           </div>
         </div>
-        <div class="accordion">
-          <input type="radio" id="accordion-meta" name="accordion-radio" hidden>
-          <label class="accordion-header" for="accordion-meta">Meta</label>
-          <div class="accordion-body">
-            <div class="form-group">
-              <label class="form-switch">
-                <input id="ruler" type="checkbox" checked />
-                <i class="form-icon"></i> Ruler
-              </label>
-            </div>
-            <div class="form-group">
-              <label class="">
+
+        <div class="card">
+          <div class="card-header" id="headingMeta">
+            <h5 class="mb-0">
+              <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseMeta" aria-expanded="false" aria-controls="collapseMeta">
+                Meta
+              </button>
+            </h5>
+          </div>
+          <div id="collapseMeta" class="collapse" aria-labelledby="headingMeta" data-parent="#accordion">
+            <div class="card-body">
+              <div class="form-group">
+                <div class="switch">
+                  <label>
+                    <input id="ruler" type="checkbox" checked />
+                    Ruler
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Background</label>
                 <input type="color" id="background" class="skip" value="#ffffff" />
-                Background
-              </label>
-            </div>
-            <div class="form-group">
-              <label class="form-switch">
-                <input id="tooltips" type="checkbox" class="skip" />
-                <i class="form-icon"></i> Tooltips
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                Animation Time
-                <input id="animation" type="range" min="0" max="2000" value="2000" step="10" />
-              </label>
+              </div>
+              <div class="form-group">
+                <div class="switch">
+                  <label>
+                    <input id="tooltips" type="checkbox" class="skip" />
+                    Tooltips
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Animation Time</label>
+                <input id="animation" type="range" min="0" max="2000" value="0" step="10" />
+              </div>
             </div>
           </div>
         </div>
-        <div class="accordion">
-          <input type="radio" id="accordion-export" name="accordion-radio" hidden>
-          <label class="accordion-header" for="accordion-export">Export</label>
-          <div class="accordion-body">
-            <div class="form-group">
-              <label class="form-label" for="export-filename">Filename</label>
-              <input class="form-input skip" type="text" id="export-filename" placeholder="Tidytree.nwk">
-            </div>
-            <div class="form-group">
-              <label for="export-format">Format</label>
-              <select id="export-format" class="form-select skip">
-                <option selected>nwk</option>
-                <option>png</option>
-                <option>svg</option>
-              </select>
-            </div>
-            <div class="form-group text-right">
-              <button id="export-download" class="btn btn-primary">Download</button>
+
+        <div class="card">
+          <div class="card-header" id="headingExport">
+            <h5 class="mb-0">
+              <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseExport" aria-expanded="false" aria-controls="collapseExport">
+                Export
+              </button>
+            </h5>
+          </div>
+          <div id="collapseExport" class="collapse" aria-labelledby="headingExport" data-parent="#accordion">
+            <div class="card-body">
+              <div class="form-group">
+                <label for="export-filename">Filename</label>
+                <input type="text" id="export-filename" class="skip" placeholder="Tidytree.nwk">
+              </div>
+              <div class="form-group">
+                <label for="export-format">Format</label>
+                <select id="export-format" class="custom-select skip">
+                  <option selected>nwk</option>
+                  <option>png</option>
+                  <option>svg</option>
+                </select>
+              </div>
+              <div class="form-group text-right">
+                <button id="export-download" class="btn btn-primary">Download</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div id="toggle-options"><</div>
-
-      <div id="tree" class="column"></div>
-
     </div>
-  </div>
 
-  <div id="search-wrapper" class="ui input">
-    <input type="text" id="search" placeholder="Search...">
-    <button id="search-close" class="ui button">✖</button>
+    <main class="bmd-layout-content">
+      <div id="tree"></div>
+    </main>
   </div>
 
   <ul id="context-menu" class="menu">
@@ -293,11 +352,23 @@
 
   <div id="tooltip"></div>
 
-  <script src="//unpkg.com/file-saver@2.0.0/dist/FileSaver.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/file-saver@2.0.0/dist/FileSaver.min.js"></script>
   <script src="saveSvgAsPng.js"></script>
   <script src="../dist/tidytree.js"></script>
   <script>
 var tree, original;
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+$(document).ready(function(){
+  $('body').bootstrapMaterialDesign();
+});
 
 ['layout', 'mode', 'type'].forEach(thing => {
   var title = 'valid' + thing[0].toUpperCase() + thing.slice(1) + 's';
