@@ -335,7 +335,7 @@ TidyTree.prototype.redraw = function(){
       newLinks.append('text')
         .attr('y', 2)
         .attr('text-anchor', 'middle')
-        .style('font-size', '6px')
+        .style('font-size', '12px')
         .text(d => {
           if(typeof d.target.data.length === 'undefined') return '0.000';
           return(d.target.data.length.toLocaleString());
@@ -406,7 +406,7 @@ TidyTree.prototype.redraw = function(){
 
       let nodeLabels = newNodes.append('text')
         .text(d => d.data.id)
-        .style('font-size', '6px')
+        .style('font-size', '12px')
         .attr('y', 2)
         .style('opacity', d => (d.children && this.branchLabels) || (!d.children && this.leafLabels) ? 1 : 0);
 
