@@ -342,7 +342,7 @@ TidyTree.prototype.redraw = function(){
         })
         .attr('transform', labelTransformer)
         .transition().duration(this.animation)
-        .attr('opacity', 1);
+        .attr('opacity', this.branchDistances ? 1 : 0);
     },
     update => {
       let linkTransformer = linkTransformers[this.type][this.mode][this.layout];
@@ -676,7 +676,7 @@ TidyTree.prototype.eachBranchLabel = function(styler){
 
 /**
  * Shows or hides the TidyTree's branch labels
- * @param {Boolean} show Should the TidyTree show branchLabels?
+ * @param {Boolean} show Should the TidyTree show branch distances?
  * @return {TidyTree} The TidyTree Object
  */
 TidyTree.prototype.setBranchDistances = function(show){
