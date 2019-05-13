@@ -1,13 +1,12 @@
 {
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Phylogenetic trees, powered by d3",
   "name": "tidytree",
   "main": "dist/tidytree.js",
   "scripts": {
     "all": "npm run build && npm run minify && npm run doc",
     "build": "rollup -c",
-    "bump": "npm version patch",
-    "demo": "npx http-server",
+    "demo": "npx http-server ..",
     "dev": "npm run demo & npm run watch",
     "doc": "documentation build src/main.js -f md -o docs/README.md",
     "minify": "terser dist/tidytree.js --compress > dist/tidytree.min.js",
@@ -22,7 +21,7 @@
   },
   "dependencies": {
     "d3": "^5.9.2",
-    "patristic": "^0.3.6"
+    "patristic": "^0.3.7"
   },
   "devDependencies": {
     "documentation": "^9.3.1",

@@ -13,7 +13,7 @@ var TidyTree = (function () {
      * @example
      * console.log(patristic.version);
      */
-    const version = "0.3.6";
+    const version = "0.3.7";
 
     /**
      * A class for representing Branches in trees.
@@ -26,15 +26,20 @@ var TidyTree = (function () {
      * attributes of a Branch, namely `id`, `parent`, `length`, and `children`.
      * @constructor
      */
-    function Branch(data){
+    function Branch(data, children){
+      if(!data) data = {};
+      if(!children) children = d => d.children;
       Object.assign(this, {
         _guid: guid(),
-        id: '',
-        parent: null,
-        length: 0,
-        value: 1,
-        children: []
-      }, data);
+        id: data.id || '',
+        data: data,
+        depth: data.depth || 0,
+        height: data.height || 0,
+        length: data.length || 0,
+        parent: data.parent || null,
+        children: children(data) || [],
+        value: data.value || 1
+      });
     }
 
     function guid(a){
@@ -93,12 +98,12 @@ var TidyTree = (function () {
      * @type {Array} An array of Branches
      */
     Branch.prototype.ancestors = function(){
-      return [this].concat(this.getAncestors());
+      return this.getAncestors(true);
     };
 
     /**
-     * Returns a clone of the Branch on which it is called. Note that this also
-     * clones all descendants, rather than providing references to the existing
+     * Returns a deep clone of the Branch on which it is called. Note that this does
+     * not clone all descendants, rather than providing references to the existing
      * descendant Branches.
      * @return {Branch} A clone of the Branch on which it is called.
      */
@@ -109,13 +114,16 @@ var TidyTree = (function () {
     /**
      * Returns a clone of the Branch on which it is called. Note that this also
      * clones all descendants, rather than providing references to the existing
-     * descendant Branches. Finally, the cloned Branch will become the root of the
-     * cloned tree, having a parent of `null`.
+     * descendant Branches. (For a deep clone, see [Branch.clone](#clone).
+     * Finally, the cloned Branch will become the root of the cloned tree, having a
+     * parent of `null`.
      * [d3-hierarchy compatibility method.](https://github.com/d3/d3-hierarchy#node_copy)
      * @return {Branch} A clone of the Branch on which it is called.
      */
     Branch.prototype.copy = function(){
-      return parseJSON(this.toObject());
+      var newThis = parseJSON(this.toObject());
+      newThis.parent = null;
+      return newThis.fixDistances();
     };
 
     /**
@@ -287,14 +295,15 @@ var TidyTree = (function () {
      * Returns an Array of all the ancestors of the Branch on which it is called.
      * Note that this does not include itself. For all ancestors and itself, see
      * [Branch.ancestors](#ancestors)
+     * @param {Boolean} includeSelf Should the Branch on which this is called be
+     * included in the results?
      * @return {Array} Every Ancestor of the Branch on which it was called.
      */
-    Branch.prototype.getAncestors = function(){
-      let ancestors = [];
+    Branch.prototype.getAncestors = function(includeSelf){
+      let ancestors = includeSelf ? [this] : [];
       let current = this;
-      while(!current.isRoot()){
-        ancestors.push(current.parent);
-        current = current.parent;
+      while(current = current.parent){
+        ancestors.push(current);
       }
       return ancestors;
     };
@@ -331,12 +340,12 @@ var TidyTree = (function () {
 
     /**
      * Returns an array of all Branches which are descendants of this Branch
-     * @param {falsy} [nonterminus] Is this not the Branch on which the user called
-     * the function? This is used internally and should be ignored.
+     * @param {Boolean} [includeSelf] Is this not the Branch on which the user
+     * called the function? This is used internally and should be ignored.
      * @return {Array} An array of all Branches descended from this Branch
      */
-    Branch.prototype.getDescendants = function(nonterminus){
-      let descendants = nonterminus ? [this] : [];
+    Branch.prototype.getDescendants = function(includeSelf){
+      let descendants = includeSelf ? [this] : [];
       if(!this.isLeaf()){
         this.children.forEach(child => {
           child.getDescendants(true).forEach(d => descendants.push(d));
@@ -611,9 +620,9 @@ var TidyTree = (function () {
       let current = this;
       let branches = [this];
       let mrca = this.getMRCA(target);
-      while(start !== mrca){
+      while(current !== mrca){
         current = current.parent;
-        branches.push(start);
+        branches.push(current);
       }
       let k = branches.length;
       current = target;
@@ -1437,6 +1446,13 @@ var TidyTree = (function () {
   labelTransformers.weighted.smooth = labelTransformers.weighted.straight;
   labelTransformers.dendrogram = labelTransformers.tree;
 
+  function labeler(d){
+    if(!d.target.data.length) return '0.000';
+    var ls = d.target.data.length.toLocaleString();
+    if(ls === '0') return '0.000';
+    return(ls);
+  }
+
   /**
    * Redraws the links and relocates the nodes accordingly
    * @return {TidyTree} The TidyTree Object
@@ -1475,14 +1491,11 @@ var TidyTree = (function () {
         newLinks.append('text')
           .attr('y', 2)
           .attr('text-anchor', 'middle')
-          .style('font-size', '6px')
-          .text(d => {
-            if(typeof d.target.data.length === 'undefined') return '0.000';
-            return(d.target.data.length.toLocaleString());
-          })
+          .style('font-size', '12px')
+          .text(labeler)
           .attr('transform', labelTransformer)
           .transition().duration(this.animation)
-          .attr('opacity', 1);
+          .style('opacity', this.branchDistances ? 1 : 0);
       },
       update => {
         let linkTransformer = linkTransformers[this.type][this.mode][this.layout];
@@ -1494,9 +1507,9 @@ var TidyTree = (function () {
             .transition().duration(this.animation/2)
             .attr('opacity', 0).end().then(() => {
               paths
-              .attr('d', linkTransformer)
-              .transition().duration(this.animation/2)
-              .attr('opacity', 1);
+                .attr('d', linkTransformer)
+                .transition().duration(this.animation/2)
+                .attr('opacity', 1);
             });
         }
 
@@ -1504,23 +1517,17 @@ var TidyTree = (function () {
         let labels = update.select('text');
         if(!this.animation > 0){
           labels
-            .text(d => {
-              if(typeof d.target.data.length === 'undefined') return '0.000';
-              return(d.target.data.length.toLocaleString());
-            })
+            .text(labeler)
             .attr('transform', labelTransformer);
         } else {
           labels
             .transition().duration(this.animation/2)
-            .attr('opacity', 0).end().then(() => {
+            .style('opacity', 0).end().then(() => {
               labels
-                .text(d => {
-                  if(typeof d.target.data.length === 'undefined') return '0.000';
-                  return(d.target.data.length.toLocaleString());
-                })
+                .text(labeler)
                 .attr('transform', labelTransformer)
                 .transition().duration(this.animation/2)
-                .attr('opacity', 1);
+                .style('opacity', 1);
             });
         }
       },
@@ -1546,7 +1553,7 @@ var TidyTree = (function () {
 
         let nodeLabels = newNodes.append('text')
           .text(d => d.data.id)
-          .style('font-size', '6px')
+          .style('font-size', '12px')
           .attr('y', 2)
           .style('opacity', d => (d.children && this.branchLabels) || (!d.children && this.leafLabels) ? 1 : 0);
 
@@ -1816,14 +1823,14 @@ var TidyTree = (function () {
 
   /**
    * Shows or hides the TidyTree's branch labels
-   * @param {Boolean} show Should the TidyTree show branchLabels?
+   * @param {Boolean} show Should the TidyTree show branch distances?
    * @return {TidyTree} The TidyTree Object
    */
   TidyTree.prototype.setBranchDistances = function(show){
     this.branchDistances = show ? true : false;
     if(this.parent){ //i.e. has already been drawn
       let links = this.parent.select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text');
-      if(show) links.attr('transform', labelTransformers[this.type][this.mode][this.layout]);
+      links.attr('transform', labelTransformers[this.type][this.mode][this.layout]);
       links
         .transition().duration(this.animation)
         .style('opacity', show ? 1 : 0);

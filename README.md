@@ -4,7 +4,7 @@
 
 This repository was created for use by CDC programs to collaborate on public health surveillance related projects in support of the CDC Surveillance Strategy.  Github is not hosted by the CDC, but is used by CDC and its partners to share information and collaborate on software.
 
-TidyTree is both [a full-featured web application](https://CDCgov.github.io/TidyTree/demo/index.html) for users, along with the underlying library for developers.
+TidyTree is both [a full-featured web application](https://CDCgov.github.io/TidyTree/demo/) for users, along with the underlying library for developers.
 
 ## Launch the Application
 
@@ -17,8 +17,11 @@ It's designed to replicate much of the functionality of [FigTree](http://tree.bi
 First import the library:
 
 ```HTML
+<script src="https://d3js.org/d3.v5.min.js"></script>
 <script src="https://unpkg.com/tidytree@0.2.11/dist/tidytree.min.js"></script>
 ```
+
+(It requires [d3](https://d3js.org/)!)
 
 Then stick this in an HTML `script` tag:
 
