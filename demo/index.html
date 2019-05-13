@@ -86,7 +86,7 @@
   <div class="bmd-layout-container bmd-drawer-f-l bmd-drawer-in">
     <header class="bmd-layout-header">
       <div class="navbar navbar-light bg-faded">
-        <button class="navbar-toggler" type="button" data-toggle="drawer" data-target="#dw-s1">
+        <button id="drawer-toggler" class="navbar-toggler" type="button" data-toggle="drawer" data-target="#dw-s1">
           <span class="sr-only">Toggle drawer</span>
           <i class="material-icons">menu</i>
         </button>
@@ -362,12 +362,16 @@
   <script>
 var tree, original;
 
-if ('serviceWorker' in navigator) {
+if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js');
 }
 
 $(document).ready(function(){
   $('body').bootstrapMaterialDesign();
+});
+
+$('#drawer-toggler').on('click', function(){
+  setTimeout(function(){tree.redraw()}, 200);
 });
 
 ['layout', 'mode', 'type'].forEach(thing => {
@@ -560,6 +564,10 @@ d3.select('body').on('click', function(){
   d3.selectAll('#context-menu, #tooltip')
     .style('z-index', -1)
     .style('display', 'none');
+});
+
+d3.select(window).on('resize', function(){
+  tree.redraw();
 });
 
 </script>
