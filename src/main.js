@@ -297,6 +297,13 @@ labelTransformers.tree.smooth = labelTransformers.tree.straight;
 labelTransformers.weighted.smooth = labelTransformers.weighted.straight;
 labelTransformers.dendrogram = labelTransformers.tree;
 
+function labeler(d){
+  if(!d.target.data.length) return '0.000';
+  var ls = d.target.data.length.toLocaleString();
+  if(ls === '0') return '0.000';
+  return(ls);
+}
+
 /**
  * Redraws the links and relocates the nodes accordingly
  * @return {TidyTree} The TidyTree Object
@@ -336,13 +343,10 @@ TidyTree.prototype.redraw = function(){
         .attr('y', 2)
         .attr('text-anchor', 'middle')
         .style('font-size', '12px')
-        .text(d => {
-          if(typeof d.target.data.length === 'undefined') return '0.000';
-          return(d.target.data.length.toLocaleString());
-        })
+        .text(labeler)
         .attr('transform', labelTransformer)
         .transition().duration(this.animation)
-        .attr('opacity', this.branchDistances ? 1 : 0);
+        .style('opacity', this.branchDistances ? 1 : 0);
     },
     update => {
       let linkTransformer = linkTransformers[this.type][this.mode][this.layout];
@@ -354,9 +358,9 @@ TidyTree.prototype.redraw = function(){
           .transition().duration(this.animation/2)
           .attr('opacity', 0).end().then(() => {
             paths
-            .attr('d', linkTransformer)
-            .transition().duration(this.animation/2)
-            .attr('opacity', 1);
+              .attr('d', linkTransformer)
+              .transition().duration(this.animation/2)
+              .attr('opacity', 1);
           });
       }
 
@@ -364,23 +368,17 @@ TidyTree.prototype.redraw = function(){
       let labels = update.select('text');
       if(!this.animation > 0){
         labels
-          .text(d => {
-            if(typeof d.target.data.length === 'undefined') return '0.000';
-            return(d.target.data.length.toLocaleString());
-          })
+          .text(labeler)
           .attr('transform', labelTransformer);
       } else {
         labels
           .transition().duration(this.animation/2)
-          .attr('opacity', 0).end().then(() => {
+          .style('opacity', 0).end().then(() => {
             labels
-              .text(d => {
-                if(typeof d.target.data.length === 'undefined') return '0.000';
-                return(d.target.data.length.toLocaleString());
-              })
+              .text(labeler)
               .attr('transform', labelTransformer)
               .transition().duration(this.animation/2)
-              .attr('opacity', 1);
+              .style('opacity', 1);
           });
       }
     },
@@ -683,7 +681,7 @@ TidyTree.prototype.setBranchDistances = function(show){
   this.branchDistances = show ? true : false;
   if(this.parent){ //i.e. has already been drawn
     let links = this.parent.select('svg g.tidytree-links').selectAll('g.tidytree-link').selectAll('text');
-    if(show) links.attr('transform', labelTransformers[this.type][this.mode][this.layout]);
+    links.attr('transform', labelTransformers[this.type][this.mode][this.layout]);
     links
       .transition().duration(this.animation)
       .style('opacity', show ? 1 : 0);
