@@ -7,7 +7,6 @@ self.addEventListener('install', function(event) {
         './',
         'index.html',
         'life.nwk',
-        'saveSvgAsPng.js'
       ]);
     })
   );
