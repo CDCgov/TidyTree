@@ -325,30 +325,18 @@
     </main>
   </div>
 
-  <ul id="context-menu" class="menu">
-    <li class="menu-item">
-      <a href="#" id="reroot">Set As Root</a>
-    </li>
-    <li class="menu-item">
-      <a href="#" id="rotate">Rotate</a>
-    </li>
-    <li class="menu-item">
-      <a href="#" id="flip">Flip</a>
-    </li>
-    <li class="menu-item">
-      <a href="#" id="sort">Sort</a>
-    </li>
-    <li class="menu-item"><hr /></li>
-    <li class="menu-item">
-      <a href="#" id="remove">Remove</a>
-    </li>
-    <li class="menu-item">
-      <a href="#" id="isolate">Isolate</a>
-    </li>
-    <li class="menu-item">
-      <a href="#" id="excise">Excise</a>
-    </li>
-  </ul>
+  <div id="context-menu" class="btn-group">
+    <div class="dropdown-menu dropdown-menu-left show">
+      <button id="reroot" class="dropdown-item">Set As Root</button>
+      <button id="rotate" class="dropdown-item">Rotate</button>
+      <button id="flip" class="dropdown-item">Flip</button>
+      <button id="sort" class="dropdown-item">Sort</button>
+      <div class="dropdown-divider"> </div>
+      <button id="remove" class="dropdown-item">Remove</button>
+      <button id="isolate" class="dropdown-item">Isolate</button>
+      <button id="excise" class="dropdown-item">Excise</button>
+    </div>
+  </div>
 
   <div id="tooltip"></div>
 
