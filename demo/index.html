@@ -98,7 +98,7 @@
 
     <div id="dw-s1" class="bmd-layout-drawer bg-faded">
       <header>
-        <a class="navbar-brand">TidyTree</a>
+        <a class="navbar-brand" data-toggle="modal" data-target="#aboutModal">TidyTree</a>
       </header>
 
       <div id="accordion">
@@ -339,6 +339,27 @@
   </div>
 
   <div id="tooltip"></div>
+
+  <div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-labelledby="aboutModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="aboutModalLabel">About TidyTree</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>TidyTree is a web application for rendering Phylogenetic Trees in-browser. No analysis performed by TidyTree is ever transmitted over the internet, making it safe for use with trees that contain Personally-Identifiable Information.</p>
+          <p>TidyTree was built by the Molecular Epidemiology and Bionformatics Team at the CDC in Atlanta.</p>
+          <p><a href="https://cdcgov.github.io/MEBT" target="_blank" rel="noreferrer noopener" class="ifOnline">Click Here to See MEBT's Other Tools</a></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Got it!</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
