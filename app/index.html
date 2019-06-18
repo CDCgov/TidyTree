@@ -80,27 +80,30 @@
     border-radius: 0.25rem;
     padding: 0.25rem;
   }
+  #export{
+    position: fixed;
+    bottom: 30px;
+    right: 10px;
+    z-index: 1001;
+  }
+  #export-format{
+    height: 33px;
+    padding: 7px 0;
+  }
 	</style>
 </head>
 <body>
+  <header class="bmd-layout-header">
+    <div class="navbar navbar-light bg-faded">
+      <a class="navbar-brand" data-toggle="modal" data-target="#aboutModal">TidyTree</a>
+      <form class="form-inline my-2 my-lg-0">
+        <input id="search" class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+      </form>
+    </div>
+  </header>
+
   <div class="bmd-layout-container bmd-drawer-f-l bmd-drawer-in">
-    <header class="bmd-layout-header">
-      <div class="navbar navbar-light bg-faded">
-        <button id="drawer-toggler" class="navbar-toggler" type="button" data-toggle="drawer" data-target="#dw-s1">
-          <span class="sr-only">Toggle drawer</span>
-          <i class="material-icons">menu</i>
-        </button>
-        <form class="form-inline my-2 my-lg-0">
-          <input id="search" class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-        </form>
-      </div>
-    </header>
-
     <div id="dw-s1" class="bmd-layout-drawer bg-faded">
-      <header>
-        <a class="navbar-brand" data-toggle="modal" data-target="#aboutModal">TidyTree</a>
-      </header>
-
       <div id="accordion">
         <div class="card">
           <div class="card-header" id="headingSourceData">
@@ -288,41 +291,10 @@
             </div>
           </div>
         </div>
-
-        <div class="card">
-          <div class="card-header" id="headingExport">
-            <h5 class="mb-0">
-              <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseExport" aria-expanded="false" aria-controls="collapseExport">
-                Export
-              </button>
-            </h5>
-          </div>
-          <div id="collapseExport" class="collapse" aria-labelledby="headingExport" data-parent="#accordion">
-            <div class="card-body">
-              <div class="form-group">
-                <label for="export-filename">Filename</label>
-                <input type="text" id="export-filename" class="skip" placeholder="Tidytree.nwk">
-              </div>
-              <div class="form-group">
-                <label for="export-format">Format</label>
-                <select id="export-format" class="custom-select skip">
-                  <option selected>nwk</option>
-                  <option>png</option>
-                  <option>svg</option>
-                </select>
-              </div>
-              <div class="form-group text-right">
-                <button id="export-download" class="btn btn-primary">Download</button>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
-    <main class="bmd-layout-content">
-      <div id="tree"></div>
-    </main>
+    <main id="tree" class="bmd-layout-content"></main>
   </div>
 
   <div id="context-menu" class="btn-group">
@@ -361,6 +333,41 @@
     </div>
   </div>
 
+  <button id="export" type="button" class="btn btn-primary bmd-btn-fab" data-toggle="modal" data-target="#exportModal">
+    <i class="material-icons">save_alt</i>
+  </button>
+
+  <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exportModalLabel">Export</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body row">
+          <div class="form-group col">
+            <label for="export-filename">Filename</label>
+            <input type="text" id="export-filename" class="form-control skip" />
+          </div>
+          <div class="form-group col">
+            <label for="export-format">Format</label>
+            <select id="export-format" class="form-control skip">
+              <option selected>nwk</option>
+              <option>png</option>
+              <option>svg</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" id="export-download" class="btn btn-primary" data-dismiss="modal">Export</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
@@ -377,10 +384,7 @@ if('serviceWorker' in navigator){
 
 $(document).ready(function(){
   $('body').bootstrapMaterialDesign();
-});
-
-$('#drawer-toggler').on('click', function(){
-  setTimeout(function(){tree.redraw()}, 200);
+  fetch('life.nwk').then(response => response.text().then(buildTree));
 });
 
 ['layout', 'mode', 'type'].forEach(thing => {
@@ -389,8 +393,6 @@ $('#drawer-toggler').on('click', function(){
     .enter().append('option')
     .text(d => d);
 });
-
-fetch('life.nwk').then(response => response.text().then(buildTree));
 
 d3.select('#source').on('input', function(){
   let reader = new FileReader();
@@ -410,7 +412,8 @@ function buildTree(newick){
     branchLabels: d3.select('#branchLabels').node().checked,
     branchDistances: d3.select('#branchDistances').node().checked,
     ruler: d3.select('#ruler').node().checked,
-    animation: parseFloat(d3.select('#animation').node().value)
+    animation: parseFloat(d3.select('#animation').node().value),
+    margin: [10, 10, 70, 10]
   }, {
     contextmenu: contextMenu,
     showtooltip: showTooltip,
