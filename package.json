@@ -21,11 +21,11 @@
   },
   "dependencies": {
     "d3": "^5.9.2",
-    "patristic": "^0.3.7"
+    "patristic": "^0.3.8"
   },
   "devDependencies": {
     "documentation": "^9.3.1",
-    "rollup-plugin-node-resolve": "^4.2.3",
+    "rollup-plugin-node-resolve": "^4.2.4",
     "terser": "^3.17.0"
   }
 }
