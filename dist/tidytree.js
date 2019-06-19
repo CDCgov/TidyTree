@@ -170,6 +170,18 @@ var TidyTree = (function () {
     };
 
     /**
+     * Computes the patristic distance between `descendantA` and `descendantB`.
+     * @param  {Branch} descendantA The Branch from which you wish to compute
+     * distance
+     * @param  {Branch} descendantB The Branch to which you wish to compute distance
+     * @return {number} The patristic distance between the given descendants.
+     */
+    Branch.prototype.distanceBetween = function(descendantA, descendantB) {
+      let mrca = descendantA.getMRCA(descendantB);
+      return mrca.depthOf(descendantA) + mrca.depthOf(descendantB);
+    };
+
+    /**
      * Computes the patristic distance between `cousin` and the Branch on which
      * this method is called.
      * @param  {Branch} cousin The Branch to which you wish to compute distance
@@ -667,17 +679,16 @@ var TidyTree = (function () {
      * this was called or its parent
      */
     Branch.prototype.reroot = function() {
-      if (this.isRoot()) return this;
-      if (this.parent.isRoot() && this.isLeaf()) return this.parent;
-      let newRoot = this.isLeaf() ? this.parent : this;
-      let current = newRoot;
+      let current = this;
       let toInvert = [];
       while (!current.isRoot()) {
         toInvert.push(current);
         current = current.parent;
       }
-      toInvert.reverse().forEach(c => c.invert());
-      return newRoot;
+      while (toInvert.length) {
+        toInvert.pop().invert();
+      }
+      return this;
     };
 
     /**
@@ -2335,9 +2346,9 @@ var TidyTree = (function () {
    */
   TidyTree.prototype.trigger = function(events, ...args) {
     return events.split(" ").map(event => {
-      if (!this.events[event].length)
-        throw Error(`No event named ${event} is defined.`);
-      return this.events[event].map(handler => handler(args));
+      if (this.events[event].length)
+        return this.events[event].map(handler => handler(args));
+      return [];
     });
   };
 
