@@ -1165,9 +1165,9 @@ TidyTree.prototype.off = function(events) {
  */
 TidyTree.prototype.trigger = function(events, ...args) {
   return events.split(" ").map(event => {
-    if (!this.events[event].length)
-      throw Error(`No event named ${event} is defined.`);
-    return this.events[event].map(handler => handler(args));
+    if (this.events[event].length)
+      return this.events[event].map(handler => handler(args));
+    return [];
   });
 };
 
