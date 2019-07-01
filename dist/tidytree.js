@@ -13,7 +13,7 @@ var TidyTree = (function () {
      * @example
      * console.log(patristic.version);
      */
-    const version = "0.3.8";
+    const version = "0.4.0";
 
     /**
      * A class for representing Branches in trees.
@@ -55,7 +55,7 @@ var TidyTree = (function () {
      * @param  {(Branch|Object)} [data={}] The new Branch, or data to attach to it.
      * @return {Branch} The (possibly new) child Branch
      */
-    Branch.prototype.addChild = function(data) {
+    Branch.prototype.addChild = function (data) {
       let c;
       if (data instanceof Branch) {
         c = data;
@@ -79,7 +79,7 @@ var TidyTree = (function () {
      * @param  {Array} [siblings=[]] An array of Branches to be the children of the new parent Branch (i.e. siblings of this Branch)
      * @return {Branch} The Branch on which this was called
      */
-    Branch.prototype.addParent = function(data, siblings) {
+    Branch.prototype.addParent = function (data, siblings) {
       if (!siblings) siblings = [];
       let c;
       if (data instanceof Branch) {
@@ -99,7 +99,7 @@ var TidyTree = (function () {
      * [d3-hierarchy compatibility method.](https://github.com/d3/d3-hierarchy#node_ancestors)
      * @type {Array} An array of Branches
      */
-    Branch.prototype.ancestors = function() {
+    Branch.prototype.ancestors = function () {
       return this.getAncestors(true);
     };
 
@@ -109,7 +109,7 @@ var TidyTree = (function () {
      * descendant Branches.
      * @return {Branch} A clone of the Branch on which it is called.
      */
-    Branch.prototype.clone = function() {
+    Branch.prototype.clone = function () {
       return parseJSON(this.toObject());
     };
 
@@ -122,7 +122,7 @@ var TidyTree = (function () {
      * [d3-hierarchy compatibility method.](https://github.com/d3/d3-hierarchy#node_copy)
      * @return {Branch} A clone of the Branch on which it is called.
      */
-    Branch.prototype.copy = function() {
+    Branch.prototype.copy = function () {
       var newThis = parseJSON(this.toObject());
       newThis.parent = null;
       return newThis.fixDistances();
@@ -132,7 +132,7 @@ var TidyTree = (function () {
      * Sets the values of all nodes to be equal to the number of their descendants.
      * @return {Branch} The Branch on which it was called
      */
-    Branch.prototype.count = function() {
+    Branch.prototype.count = function () {
       return this.sum(() => 1);
     };
 
@@ -141,7 +141,7 @@ var TidyTree = (function () {
      * [d3-hierarchy compatibility method.](https://github.com/d3/d3-hierarchy#node_descendants)
      * @type {Array} An Array of Branches, starting with this one.
      */
-    Branch.prototype.descendants = function() {
+    Branch.prototype.descendants = function () {
       return this.getDescendants(true);
     };
 
@@ -154,15 +154,14 @@ var TidyTree = (function () {
      * which it is called and `descendant`. Throws an error if `descendant` is not a
      * descendant of this Branch.
      */
-    Branch.prototype.depthOf = function(descendant) {
-      let distance = 0;
-      if (typeof descendant === "string")
+    Branch.prototype.depthOf = function (descendant) {
+      let distance = this.length;
+      if (typeof descendant == "string")
         descendant = this.getDescendant(descendant);
-      if (typeof descendant === "undefined")
+      if (typeof descendant == "undefined")
         throw Error("Cannot compute depth of undefined descendant!");
       let current = descendant;
-      while (!current.isRoot()) {
-        if (current === this) break;
+      while (current != this) {
         distance += current.length;
         current = current.parent;
       }
@@ -176,7 +175,7 @@ var TidyTree = (function () {
      * @param  {Branch} descendantB The Branch to which you wish to compute distance
      * @return {number} The patristic distance between the given descendants.
      */
-    Branch.prototype.distanceBetween = function(descendantA, descendantB) {
+    Branch.prototype.distanceBetween = function (descendantA, descendantB) {
       let mrca = descendantA.getMRCA(descendantB);
       return mrca.depthOf(descendantA) + mrca.depthOf(descendantB);
     };
@@ -188,7 +187,7 @@ var TidyTree = (function () {
      * @return {number} The patristic distance between `cousin` and the Branch on
      * this method is called.
      */
-    Branch.prototype.distanceTo = function(cousin) {
+    Branch.prototype.distanceTo = function (cousin) {
       let mrca = this.getMRCA(cousin);
       return mrca.depthOf(this) + mrca.depthOf(cousin);
     };
@@ -199,7 +198,7 @@ var TidyTree = (function () {
      * @param  {Function} callback The function to be run on each Branch
      * @return {Branch} The Branch on which it was called.
      */
-    Branch.prototype.each = function(callback) {
+    Branch.prototype.each = function (callback) {
       let branch = this,
         next = [branch],
         current;
@@ -221,7 +220,7 @@ var TidyTree = (function () {
      * @param  {Function} callback Function to run on each Branch
      * @return {Branch} The Branch on which it was called
      */
-    Branch.prototype.eachAfter = function(callback) {
+    Branch.prototype.eachAfter = function (callback) {
       this.eachChild(child => child.eachAfter(callback));
       callback(this);
       return this;
@@ -234,7 +233,7 @@ var TidyTree = (function () {
      * @param  {Function} callback [description]
      * @return {[type]}            [description]
      */
-    Branch.prototype.eachBefore = function(callback) {
+    Branch.prototype.eachBefore = function (callback) {
       callback(this);
       this.eachChild(child => child.eachBefore(callback));
       return this;
@@ -246,7 +245,7 @@ var TidyTree = (function () {
      * @param  {Function} callback The function to run on each child.
      * @return {Branch} The Branch on which it was called.
      */
-    Branch.prototype.eachChild = function(callback) {
+    Branch.prototype.eachChild = function (callback) {
       this.children.forEach(callback);
       return this;
     };
@@ -255,7 +254,7 @@ var TidyTree = (function () {
      * Excises the Branch on which it is called and updates its parent and children.
      * @return {Branch} The parent of the excised Branch.
      */
-    Branch.prototype.excise = function() {
+    Branch.prototype.excise = function () {
       if (this.isRoot() && this.children.length > 1) {
         throw new Error("Cannot excise a root Branch with multiple children.");
       }
@@ -272,7 +271,7 @@ var TidyTree = (function () {
      * Sets the distance values (height and depth) for each Branch
      * @return {Branch} The Branch on which it is called.
      */
-    Branch.prototype.fixDistances = function() {
+    Branch.prototype.fixDistances = function () {
       let maxdepth = 0,
         root = this.getRoot();
       root.depth = 0;
@@ -297,7 +296,7 @@ var TidyTree = (function () {
      * Branch on which it is called, or all descendants?
      * @return {Branch} The Branch on which it was called.
      */
-    Branch.prototype.fixParenthood = function(nonrecursive) {
+    Branch.prototype.fixParenthood = function (nonrecursive) {
       this.children.forEach(child => {
         if (!child.parent) child.parent = this;
         if (child.parent !== this) child.parent = this;
@@ -309,6 +308,14 @@ var TidyTree = (function () {
     };
 
     /**
+     * Reverses the order of (all of) the descendants of the Branch.
+     * @return {Branch} The Branch on which this was called.
+     */
+    Branch.prototype.flip = function () {
+      return this.each(c => c.rotate());
+    };
+
+    /**
      * Returns an Array of all the ancestors of the Branch on which it is called.
      * Note that this does not include itself. For all ancestors and itself, see
      * [Branch.ancestors](#ancestors)
@@ -316,7 +323,7 @@ var TidyTree = (function () {
      * included in the results?
      * @return {Array} Every Ancestor of the Branch on which it was called.
      */
-    Branch.prototype.getAncestors = function(includeSelf) {
+    Branch.prototype.getAncestors = function (includeSelf) {
       let ancestors = includeSelf ? [this] : [];
       let current = this;
       while ((current = current.parent)) {
@@ -332,7 +339,7 @@ var TidyTree = (function () {
      * @return {(Branch|undefined)} The desired child Branch, or `undefined` if the
      * child doesn't exist.
      */
-    Branch.prototype.getChild = function(childID) {
+    Branch.prototype.getChild = function (childID) {
       if (!typeof childID == "string") throw Error("childID is not a String!");
       return this.children.find(c => c.id === childID);
     };
@@ -344,7 +351,7 @@ var TidyTree = (function () {
      * @return {(Branch|undefined)} The descendant Branch, or `undefined` if it
      * doesn't exist
      */
-    Branch.prototype.getDescendant = function(id) {
+    Branch.prototype.getDescendant = function (id) {
       if (this.id === id) return this;
       let children = this.children,
         n = children.length;
@@ -362,7 +369,7 @@ var TidyTree = (function () {
      * called the function? This is used internally and should be ignored.
      * @return {Array} An array of all Branches descended from this Branch
      */
-    Branch.prototype.getDescendants = function(includeSelf) {
+    Branch.prototype.getDescendants = function (includeSelf) {
       let descendants = includeSelf ? [this] : [];
       if (!this.isLeaf()) {
         this.children.forEach(child => {
@@ -377,7 +384,7 @@ var TidyTree = (function () {
      * Alias of [getLeaves](#getLeaves) for people whose strong suit isn't spelling.
      * @return {Array} An array of all leaves descended from this Branch
      */
-    Branch.prototype.getLeafs = function() {
+    Branch.prototype.getLeafs = function () {
       return this.getLeaves();
     };
 
@@ -386,7 +393,7 @@ var TidyTree = (function () {
      * See also: [getLeafs](#getLeafs)
      * @return {Array} An array of all leaves descended from this Branch
      */
-    Branch.prototype.getLeaves = function() {
+    Branch.prototype.getLeaves = function () {
       if (this.isLeaf()) {
         return [this];
       } else {
@@ -406,7 +413,7 @@ var TidyTree = (function () {
      * @return {Branch} The Most Recent Common Ancestor of both the Branch on
      * which it was called and the `cousin`.
      */
-    Branch.prototype.getMRCA = function(cousin) {
+    Branch.prototype.getMRCA = function (cousin) {
       let mrca = this;
       while (!mrca.hasDescendant(cousin)) {
         if (mrca.isRoot())
@@ -423,7 +430,7 @@ var TidyTree = (function () {
      * root.
      * @return {Branch} The root Branch of the tree
      */
-    Branch.prototype.getRoot = function() {
+    Branch.prototype.getRoot = function () {
       let branch = this;
       while (!branch.isRoot()) branch = branch.parent;
       return branch;
@@ -434,7 +441,7 @@ var TidyTree = (function () {
      * @param  {(Branch|String)} child The Branch (or the id thereof) to check for
      * @return {Boolean}
      */
-    Branch.prototype.hasChild = function(child) {
+    Branch.prototype.hasChild = function (child) {
       if (child instanceof Branch) {
         return this.children.includes(child);
       } else if (typeof child === "string") {
@@ -453,7 +460,7 @@ var TidyTree = (function () {
      * @return {Boolean} True if `descendant` is descended from the Branch from
      * which this is called, otherwise false.
      */
-    Branch.prototype.hasDescendant = function(descendant) {
+    Branch.prototype.hasDescendant = function (descendant) {
       let descendants = this.getDescendants();
       if (descendant instanceof Branch) {
         return descendants.some(d => d === descendant);
@@ -468,7 +475,7 @@ var TidyTree = (function () {
      * @return {Boolean} True if leaf is both a leaf and a descendant of the
      * Branch on which this method is called, False otherwise.
      */
-    Branch.prototype.hasLeaf = function(leaf) {
+    Branch.prototype.hasLeaf = function (leaf) {
       let leaves = this.getleaves();
       if (leaf instanceof Branch) {
         return leaves.includes(leaf);
@@ -479,17 +486,22 @@ var TidyTree = (function () {
     };
 
     /**
-     * Swaps a child with its parent. This method is probably only useful as an
-     * internal component of [Branch.reroot](#reroot).
+     * Swaps the branch on which it is called with its parent. This method is
+     * probably only useful as an internal component of [Branch.reroot](#reroot).
      * @return {Branch} The Branch object on which it was called.
      */
-    Branch.prototype.invert = function() {
+    Branch.prototype.invert = function () {
       let oldParent = this.parent;
       if (oldParent) {
+        var temp = this.parent.length;
+        this.parent.length = this.length;
+        this.length = temp;
         this.parent = oldParent.parent;
         this.children.push(oldParent);
         oldParent.parent = this;
         oldParent.children.splice(oldParent.children.indexOf(this), 1);
+      } else {
+        throw Error("Cannot invert root node!");
       }
       return this;
     };
@@ -502,7 +514,7 @@ var TidyTree = (function () {
      * @return {Boolean} True is `parent` is the parent of this Branch, false
      * otherwise.
      */
-    Branch.prototype.isChildOf = function(parent) {
+    Branch.prototype.isChildOf = function (parent) {
       if (parent instanceof Branch) return this.parent === parent;
       if (typeof parent === "string") return this.parent.id === parent;
       throw Error("Unknown parent type passed to Branch.isChildOf");
@@ -513,7 +525,7 @@ var TidyTree = (function () {
      * its parent and its children.
      * @return {Boolean} True if consistent, otherwise false
      */
-    Branch.prototype.isConsistent = function() {
+    Branch.prototype.isConsistent = function () {
       if (!this.isRoot()) {
         if (!this.parent.children.includes(this)) return false;
       }
@@ -530,7 +542,7 @@ var TidyTree = (function () {
      * @param  {Branch} ancestor The Branch to check for ancestorhood
      * @return {Boolean} If this Branch is descended from `ancestor`
      */
-    Branch.prototype.isDescendantOf = function(ancestor) {
+    Branch.prototype.isDescendantOf = function (ancestor) {
       if (!ancestor || !this.parent) return false;
       if (this.parent === ancestor || this.parent.id === ancestor) return true;
       return this.parent.isDescendantOf(ancestor);
@@ -541,7 +553,7 @@ var TidyTree = (function () {
      * children).
      * @return {Boolean} True is this Branch is a leaf, otherwise false.
      */
-    Branch.prototype.isLeaf = function() {
+    Branch.prototype.isLeaf = function () {
       return this.children.length === 0;
     };
 
@@ -555,7 +567,7 @@ var TidyTree = (function () {
      * the Branch on which it is called.
      * @return {Branch} The Branch object on which it was called.
      */
-    Branch.prototype.isolate = function() {
+    Branch.prototype.isolate = function () {
       let index = this.parent.children.indexOf(this);
       this.parent.children.splice(index, 1);
       this.setParent(null);
@@ -567,7 +579,7 @@ var TidyTree = (function () {
      * no parents).
      * @return {Boolean} True if this Branch is the root, otherwise false.
      */
-    Branch.prototype.isRoot = function() {
+    Branch.prototype.isRoot = function () {
       return this.parent === null;
     };
 
@@ -577,7 +589,7 @@ var TidyTree = (function () {
      * @type {Array} An Array of Branches which are descended from this Branch and
      * have no children.
      */
-    Branch.prototype.leafs = function() {
+    Branch.prototype.leafs = function () {
       return this.getLeaves();
     };
 
@@ -588,7 +600,7 @@ var TidyTree = (function () {
      * @type {Array} An Array of Branches which are descended from this Branch and
      * have no children.
      */
-    Branch.prototype.leaves = function() {
+    Branch.prototype.leaves = function () {
       return this.getLeaves();
     };
 
@@ -599,7 +611,7 @@ var TidyTree = (function () {
      * [d3-hierarchy compatibility method](https://github.com/d3/d3-hierarchy#node_links)
      * @return {Array} An array of plain Javascript objects
      */
-    Branch.prototype.links = function() {
+    Branch.prototype.links = function () {
       let links = [];
       this.each(d => {
         if (d.isRoot()) return;
@@ -620,7 +632,7 @@ var TidyTree = (function () {
      * @param  {Number} newmax The desired maximum value.
      * @return {Branch} The Branch on which it was called.
      */
-    Branch.prototype.normalize = function(newmin, newmax) {
+    Branch.prototype.normalize = function (newmin, newmax) {
       if (typeof newmax !== "number") newmax = 1;
       if (typeof newmin !== "number") newmin = 0;
       let min = Infinity,
@@ -640,7 +652,7 @@ var TidyTree = (function () {
      * @return {Array} An ordered Array of Branches following the path between this
      * Branch and `target`
      */
-    Branch.prototype.path = function(target) {
+    Branch.prototype.path = function (target) {
       let current = this;
       let branches = [this];
       let mrca = this.getMRCA(target);
@@ -663,7 +675,7 @@ var TidyTree = (function () {
      * from which this Branch is removed.
      * @return {Branch} The root of the remaining tree.
      */
-    Branch.prototype.remove = function() {
+    Branch.prototype.remove = function () {
       let root = this.getRoot();
       this.isolate();
       return root;
@@ -675,36 +687,27 @@ var TidyTree = (function () {
      * not replace that root automatically.
      * @example
      * tree = tree.children[0].children[0].reroot();
-     * @return {Branch} The new root Branch, which is either the Branch on which
-     * this was called or its parent
+     * @return {Branch} The new root Branch, which is the Branch on which this was
+     * called
      */
-    Branch.prototype.reroot = function() {
+    Branch.prototype.reroot = function () {
       let current = this;
       let toInvert = [];
       while (!current.isRoot()) {
         toInvert.push(current);
         current = current.parent;
       }
-      while (toInvert.length) {
-        toInvert.pop().invert();
-      }
-      return this;
+      toInvert.reverse().forEach(c => c.invert());
+      return this.fixDistances();
     };
 
     /**
-     * Reverses the order of children (or descendants, if `recursive` of a Branch.
-     * @param {Boolean} recursive Whether or not to rotate all descendants, or just
-     * children. Non-recursive appears as though Branches have been swapped.
-     * Recursive appears as though the entire subtree has been flipped over.
+     * Reverses the order of the children of the branch on which it is called.
      * @return {Branch} The Branch on which this was called.
      */
-    Branch.prototype.rotate = function(recursive) {
+    Branch.prototype.rotate = function (recursive) {
       if (!this.children) return this;
-      if (recursive) {
-        this.each(c => c.rotate());
-      } else {
-        this.children.reverse();
-      }
+      this.children.reverse();
       return this;
     };
 
@@ -713,7 +716,7 @@ var TidyTree = (function () {
      * @param  {number} length The new length to assign to the Branch
      * @return {Branch} The Branch object on which this was called
      */
-    Branch.prototype.setLength = function(length) {
+    Branch.prototype.setLength = function (length) {
       this.length = length;
       return this;
     };
@@ -723,7 +726,7 @@ var TidyTree = (function () {
      * @param  {Branch} parent The Branch to set as parent
      * @return {Branch} The Branch on which this method was called.
      */
-    Branch.prototype.setParent = function(parent) {
+    Branch.prototype.setParent = function (parent) {
       if (!parent instanceof Branch && parent !== null)
         throw Error("Cannot set parent to non-Branch object!");
       this.parent = parent;
@@ -736,7 +739,7 @@ var TidyTree = (function () {
      * a numberic value. For details, see [MDN Array.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#Description)
      * @return {Branch} The Branch on which it was called
      */
-    Branch.prototype.sort = function(comparator) {
+    Branch.prototype.sort = function (comparator) {
       if (!comparator) comparator = (a, b) => a.value - b.value;
       return this.eachBefore(d => d.children.sort(comparator));
     };
@@ -748,7 +751,7 @@ var TidyTree = (function () {
      * @return {Boolean} True if this might be the source of cousin, otherwise
      * false.
      */
-    Branch.prototype.sources = function(cousin) {
+    Branch.prototype.sources = function (cousin) {
       let mrca = this.getMRCA(cousin);
       return mrca.depthOf(this) < mrca.depthOf(cousin);
     };
@@ -759,7 +762,7 @@ var TidyTree = (function () {
      * (numeric?) value.
      * @return {Branch} The Branch on which it was called.
      */
-    Branch.prototype.sum = function(value) {
+    Branch.prototype.sum = function (value) {
       if (!value) value = d => d.value;
       return this.eachAfter(
         d => (d.value = value(d) + d.children.reduce((a, c) => a + c.value, 0))
@@ -773,7 +776,7 @@ var TidyTree = (function () {
      * @return {Boolean} True if this might be the target of cousin, otherwise
      * false.
      */
-    Branch.prototype.targets = function(cousin) {
+    Branch.prototype.targets = function (cousin) {
       return cousin.sources(this);
     };
 
@@ -783,7 +786,7 @@ var TidyTree = (function () {
      * @type {Function}
      * @returns {Object} A serializable Object
      */
-    Branch.prototype.toJSON = function() {
+    Branch.prototype.toJSON = function () {
       return this.toObject();
     };
 
@@ -793,7 +796,7 @@ var TidyTree = (function () {
      * @return {Object} An Object containing a matrix (an Array of Arrays) and
      * Array of `id`s corresponding to the rows (and columns) of the matrix.
      */
-    Branch.prototype.toMatrix = function() {
+    Branch.prototype.toMatrix = function () {
       let leafs = this.getLeaves();
       let n = leafs.length;
       let matrix = new Array(n);
@@ -821,7 +824,7 @@ var TidyTree = (function () {
      * @return {String} The [Newick](https://en.wikipedia.org/wiki/Newick_format)
      * representation of the Branch.
      */
-    Branch.prototype.toNewick = function(nonterminus) {
+    Branch.prototype.toNewick = function (nonterminus) {
       let out = "";
       if (!this.isLeaf()) {
         out +=
@@ -868,7 +871,7 @@ var TidyTree = (function () {
      * @return {Object} A serializable bare Javascript Object representing this
      * Branch and its descendants.
      */
-    Branch.prototype.toObject = function() {
+    Branch.prototype.toObject = function () {
       var output = {
         id: this.id,
         length: this.length
@@ -876,6 +879,21 @@ var TidyTree = (function () {
       if (this.children.length > 0)
         output.children = this.children.map(c => c.toObject());
       return output;
+    };
+
+    /**
+     * Returns a valid JSON-string version of this Branch and its descendants.
+     * @param {Function} replacer A replacer function to [pass to `JSON.stringify`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Parameters).
+     * @param {(Number|String)} space A string or number of spaces to use for
+     * indenting the output. See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Parameters
+     * for additional details.
+     * @return {Object} A valid JSON string representing this Branch and its
+     * descendants.
+     */
+    Branch.prototype.toString = function (replacer, width) {
+      if (!replacer) replacer = null;
+      if (!width) width = 0;
+      return JSON.stringify(this, replacer, width);
     };
 
     /**
@@ -1234,7 +1252,7 @@ var TidyTree = (function () {
    * @param  {Object} data A patristic.Branch object
    * @return {Object}        the TidyTree object
    */
-  TidyTree.prototype.setData = function(data) {
+  TidyTree.prototype.setData = function (data) {
     if (!data) throw Error("Invalid Data");
     this.data = data;
     this.range = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER];
@@ -1259,7 +1277,7 @@ var TidyTree = (function () {
    * @param  {String} newick A valid newick string
    * @return {Object}        the TidyTree object
    */
-  TidyTree.prototype.setTree = function(newick) {
+  TidyTree.prototype.setTree = function (newick) {
     if (!newick) throw Error("Invalid Newick String");
     return this.setData(patristic.parseNewick(newick));
   };
@@ -1287,7 +1305,7 @@ var TidyTree = (function () {
    * @param  {String} selector A CSS selector
    * @return {TidyTree}           the TidyTree object
    */
-  TidyTree.prototype.draw = function(selector) {
+  TidyTree.prototype.draw = function (selector) {
     if (!selector && !this.parent) {
       throw Error("No valid target for drawing given! Where should the tree go?");
     }
@@ -1320,9 +1338,9 @@ var TidyTree = (function () {
       g.attr(
         "transform",
         `translate(${transform.x},${transform.y}) scale(${transform.k}) rotate(${
-        this.rotation
+      this.rotation
       },${this.layout === "circular" ? 0 : this.width / 2},${
-        this.layout === "circular" ? 0 : this.height / 2
+      this.layout === "circular" ? 0 : this.height / 2
       })`
       );
       updateRuler.call(this, transform);
@@ -1405,15 +1423,15 @@ var TidyTree = (function () {
             (endAngle === startAngle
               ? ""
               : "A" +
-                startRadius +
-                "," +
-                startRadius +
-                " 0 0 " +
-                (endAngle > startAngle ? 1 : 0) +
-                " " +
-                startRadius * x1 +
-                "," +
-                startRadius * y1) +
+              startRadius +
+              "," +
+              startRadius +
+              " 0 0 " +
+              (endAngle > startAngle ? 1 : 0) +
+              " " +
+              startRadius * x1 +
+              "," +
+              startRadius * y1) +
             "L" +
             endRadius * x1 +
             "," +
@@ -1466,11 +1484,11 @@ var TidyTree = (function () {
       square: {
         horizontal: d =>
           `M${d.source.weight} ${d.source.x} V ${d.target.x} H ${
-          d.target.weight
+        d.target.weight
         }`,
         vertical: d =>
           `M${d.source.x} ${d.source.weight} H ${d.target.x} V ${
-          d.target.weight
+        d.target.weight
         }`,
         circular: d => {
           const startAngle = d.source.x - Math.PI / 2,
@@ -1489,15 +1507,15 @@ var TidyTree = (function () {
             (endAngle === startAngle
               ? ""
               : "A" +
-                startRadius +
-                "," +
-                startRadius +
-                " 0 0 " +
-                (endAngle > startAngle ? 1 : 0) +
-                " " +
-                startRadius * x1 +
-                "," +
-                startRadius * y1) +
+              startRadius +
+              "," +
+              startRadius +
+              " 0 0 " +
+              (endAngle > startAngle ? 1 : 0) +
+              " " +
+              startRadius * x1 +
+              "," +
+              startRadius * y1) +
             "L" +
             endRadius * x1 +
             "," +
@@ -1537,13 +1555,13 @@ var TidyTree = (function () {
         horizontal: l =>
           `translate(${(l.source.y + l.target.y) / 2}, ${(l.source.x +
           l.target.x) /
-          2}) rotate(${Math.atan(
+        2}) rotate(${Math.atan(
           (l.target.x - l.source.x) / (l.target.y - l.source.y)
         ) * radToDeg})`,
         vertical: l =>
           `translate(${(l.source.x + l.target.x) / 2}, ${(l.source.y +
           l.target.y) /
-          2}) rotate(${Math.atan(
+        2}) rotate(${Math.atan(
           (l.source.y - l.target.y) / (l.source.x - l.target.x)
         ) * radToDeg})`,
         circular: l => {
@@ -1571,13 +1589,13 @@ var TidyTree = (function () {
         horizontal: l =>
           `translate(${(l.source.weight + l.target.weight) / 2}, ${(l.source.x +
           l.target.x) /
-          2}) rotate(${Math.atan(
+        2}) rotate(${Math.atan(
           (l.target.x - l.source.x) / (l.target.weight - l.source.weight)
         ) * radToDeg})`,
         vertical: l =>
           `translate(${(l.source.x + l.target.x) / 2}, ${(l.source.weight +
           l.target.weight) /
-          2}) rotate(${Math.atan(
+        2}) rotate(${Math.atan(
           (l.source.weight - l.target.weight) / (l.source.x - l.target.x)
         ) * radToDeg})`,
         circular: l => {
@@ -1592,7 +1610,7 @@ var TidyTree = (function () {
           `translate(${(l.source.weight + l.target.weight) / 2}, ${l.target.x})`,
         vertical: l =>
           `translate(${l.target.x}, ${(l.source.weight + l.target.weight) /
-          2}) rotate(90)`,
+        2}) rotate(90)`,
         circular: l => {
           let u = circularPoint(
             l.target.x,
@@ -1610,6 +1628,7 @@ var TidyTree = (function () {
   labelTransformers.dendrogram = labelTransformers.tree;
 
   function labeler(d) {
+    console.log(d.target);
     if (!d.target.data.length) return "0.000";
     var ls = d.target.data.length.toLocaleString();
     if (ls === "0") return "0.000";
@@ -1620,7 +1639,7 @@ var TidyTree = (function () {
    * Redraws the links and relocates the nodes accordingly
    * @return {TidyTree} The TidyTree Object
    */
-  TidyTree.prototype.redraw = function() {
+  TidyTree.prototype.redraw = function () {
     let parent = this.parent;
 
     this.width =
@@ -1637,8 +1656,8 @@ var TidyTree = (function () {
       this.layout === "horizontal"
         ? this.width
         : this.layout === "vertical"
-        ? this.height
-        : Math.min(this.width, this.height) / 2;
+          ? this.height
+          : Math.min(this.width, this.height) / 2;
     this.hierarchy.each(d => (d.weight = this.scalar * d.value));
 
     let g = parent.select("svg g");
@@ -1647,8 +1666,8 @@ var TidyTree = (function () {
       this.layout === "circular"
         ? [2 * Math.PI, Math.min(this.height, this.width) / 2]
         : this.layout === "horizontal"
-        ? [this.height, this.width]
-        : [this.width, this.height]
+          ? [this.height, this.width]
+          : [this.width, this.height]
     );
 
     if (this.layout === "circular")
@@ -1658,10 +1677,8 @@ var TidyTree = (function () {
     let links = g
       .select("g.tidytree-links")
       .selectAll("g.tidytree-link")
-      .data(
-        source(this.hierarchy).links(),
-        k => k.source.data._guid + k.target.data._guid
-      );
+      .data(source(this.hierarchy).links(), l => l.source.data._guid + ':' + l.target.data._guid);
+
     links.join(
       enter => {
         let newLinks = enter.append("g").attr("class", "tidytree-link");
@@ -1719,12 +1736,13 @@ var TidyTree = (function () {
             .style("opacity", 0)
             .end()
             .then(() => {
-              labels
-                .text(labeler)
-                .attr("transform", labelTransformer)
-                .transition()
-                .duration(this.animation / 2)
-                .style("opacity", this.branchDistances ? 1 : 0);
+              labels.text(labeler).attr("transform", labelTransformer);
+              if (this.branchDistances) {
+                labels
+                  .transition()
+                  .duration(this.animation / 2)
+                  .style("opacity", this.branchDistances ? 1 : 0);
+              }
             });
         } else {
           labels.text(labeler).attr("transform", labelTransformer);
@@ -1929,7 +1947,7 @@ var TidyTree = (function () {
    * Recenters the tree in the center of the view
    * @return {TidyTree} The TidyTree object
    */
-  TidyTree.prototype.recenter = function() {
+  TidyTree.prototype.recenter = function () {
     let svg = this.parent.select("svg"),
       x = this.margin[0],
       y = this.margin[3];
@@ -1949,7 +1967,7 @@ var TidyTree = (function () {
    * @param {String} newLayout The new layout
    * @return {TidyTree} The TidyTree Object
    */
-  TidyTree.prototype.setLayout = function(newLayout) {
+  TidyTree.prototype.setLayout = function (newLayout) {
     if (!TidyTree.validLayouts.includes(newLayout)) {
       throw Error(
         "Cannot set TidyTree to layout:",
@@ -1968,7 +1986,7 @@ var TidyTree = (function () {
    * @param {String} newMode The new mode
    * @return {TidyTree} The TidyTree object
    */
-  TidyTree.prototype.setMode = function(newMode) {
+  TidyTree.prototype.setMode = function (newMode) {
     if (!TidyTree.validModes.includes(newMode)) {
       throw Error(
         "Cannot set TidyTree to mode:",
@@ -1987,7 +2005,7 @@ var TidyTree = (function () {
    * @param {Boolean} newType The new type
    * @return {TidyTree} the TidyTree object
    */
-  TidyTree.prototype.setType = function(newType) {
+  TidyTree.prototype.setType = function (newType) {
     if (!TidyTree.validTypes.includes(newType)) {
       throw Error(
         "Cannot set TidyTree to type:",
@@ -2006,7 +2024,7 @@ var TidyTree = (function () {
    * @param {Number} degrees The new number of degrees by which to rotate the tree
    * @return {TidyTree} the TidyTree object
    */
-  TidyTree.prototype.setRotation = function(degrees) {
+  TidyTree.prototype.setRotation = function (degrees) {
     this.rotation = degrees;
     if (this.parent)
       this.parent
@@ -2014,9 +2032,9 @@ var TidyTree = (function () {
         .attr(
           "transform",
           `translate(${this.transform.x},${this.transform.y}) scale(${
-          this.transform.k
+        this.transform.k
         }) rotate(${this.rotation},${
-          this.layout === "circular" ? 0 : this.width / 2
+        this.layout === "circular" ? 0 : this.width / 2
         },${this.layout === "circular" ? 0 : this.height / 2})`
         );
     return this;
@@ -2027,7 +2045,7 @@ var TidyTree = (function () {
    * @param {Number} proportion The new proportion by which to stretch the tree
    * @return {TidyTree} the TidyTree object
    */
-  TidyTree.prototype.setHStretch = function(proportion) {
+  TidyTree.prototype.setHStretch = function (proportion) {
     this.hStretch = parseFloat(proportion);
     if (this.parent) {
       let animCache = this.animation;
@@ -2043,7 +2061,7 @@ var TidyTree = (function () {
    * @param {Number} proportion The new proportion by which to stretch the tree
    * @return {TidyTree} the TidyTree object
    */
-  TidyTree.prototype.setVStretch = function(proportion) {
+  TidyTree.prototype.setVStretch = function (proportion) {
     this.vStretch = parseFloat(proportion);
     if (this.parent) {
       let animCache = this.animation;
@@ -2061,7 +2079,7 @@ var TidyTree = (function () {
    * to turn animations off completely.
    * @return {TidyTree} The TidyTree object
    */
-  TidyTree.prototype.setAnimation = function(time) {
+  TidyTree.prototype.setAnimation = function (time) {
     this.animation = time;
     return this;
   };
@@ -2071,7 +2089,7 @@ var TidyTree = (function () {
    * @param  {Boolean} show Should Branch nodes be shown?
    * @return {TidyTree} the TidyTree object
    */
-  TidyTree.prototype.setBranchNodes = function(show) {
+  TidyTree.prototype.setBranchNodes = function (show) {
     this.branchNodes = show ? true : false;
     if (this.parent) {
       //i.e. has already been drawn
@@ -2092,7 +2110,7 @@ var TidyTree = (function () {
    * object.
    * @return {TidyTree} the TidyTree Object
    */
-  TidyTree.prototype.eachBranchNode = function(styler) {
+  TidyTree.prototype.eachBranchNode = function (styler) {
     if (!this.parent)
       throw Error(
         "Tree has not been rendered yet! Can't style Nodes that don't exist!"
@@ -2100,7 +2118,7 @@ var TidyTree = (function () {
     this.parent
       .select("svg")
       .selectAll("g.tidytree-node-internal circle")
-      .each(function(d) {
+      .each(function (d) {
         styler(this, d);
       });
     return this;
@@ -2111,7 +2129,7 @@ var TidyTree = (function () {
    * @param  {Boolean} show Should the TidyTree show branchLabels?
    * @return {TidyTree}     the TidyTree Object
    */
-  TidyTree.prototype.setBranchLabels = function(show) {
+  TidyTree.prototype.setBranchLabels = function (show) {
     this.branchLabels = show ? true : false;
     if (this.parent) {
       //i.e. has already been drawn
@@ -2132,7 +2150,7 @@ var TidyTree = (function () {
    * object.
    * @return {TidyTree} the TidyTree Object
    */
-  TidyTree.prototype.eachBranchLabel = function(styler) {
+  TidyTree.prototype.eachBranchLabel = function (styler) {
     if (!this.parent)
       throw Error(
         "Tree has not been rendered yet! Can't style Nodes that don't exist!"
@@ -2140,7 +2158,7 @@ var TidyTree = (function () {
     this.parent
       .select("svg")
       .selectAll("g.tidytree-node-internal text")
-      .each(function(d, i, l) {
+      .each(function (d, i, l) {
         styler(this, d);
       });
     return this;
@@ -2151,7 +2169,7 @@ var TidyTree = (function () {
    * @param {Boolean} show Should the TidyTree show branch distances?
    * @return {TidyTree} The TidyTree Object
    */
-  TidyTree.prototype.setBranchDistances = function(show) {
+  TidyTree.prototype.setBranchDistances = function (show) {
     this.branchDistances = show ? true : false;
     if (this.parent) {
       //i.e. has already been drawn
@@ -2178,7 +2196,7 @@ var TidyTree = (function () {
    * object.
    * @return {TidyTree} the TidyTree Object
    */
-  TidyTree.prototype.eachBranchDistance = function(styler) {
+  TidyTree.prototype.eachBranchDistance = function (styler) {
     if (!this.parent)
       throw Error(
         "Tree has not been rendered yet! Can't style Nodes that don't exist!"
@@ -2187,7 +2205,7 @@ var TidyTree = (function () {
       .select("svg g.tidytree-links")
       .selectAll("g.tidytree-link")
       .selectAll("text")
-      .each(function(d, i, l) {
+      .each(function (d, i, l) {
         styler(this, d);
       });
     return this;
@@ -2198,7 +2216,7 @@ var TidyTree = (function () {
    * @param  {Boolean} show Should leaf nodes be visible?
    * @return {TidyTree} The TidyTree Object
    */
-  TidyTree.prototype.setLeafNodes = function(show) {
+  TidyTree.prototype.setLeafNodes = function (show) {
     this.leafNodes = show ? true : false;
     if (this.parent) {
       //i.e. has already been drawn
@@ -2219,7 +2237,7 @@ var TidyTree = (function () {
    * object.
    * @return {TidyTree} the TidyTree Object
    */
-  TidyTree.prototype.eachLeafNode = function(styler) {
+  TidyTree.prototype.eachLeafNode = function (styler) {
     if (!this.parent)
       throw Error(
         "Tree has not been rendered yet! Can't style Nodes that don't exist!"
@@ -2227,7 +2245,7 @@ var TidyTree = (function () {
     this.parent
       .select("svg")
       .selectAll("g.tidytree-node-leaf circle")
-      .each(function(d) {
+      .each(function (d) {
         styler(this, d);
       });
     return this;
@@ -2238,7 +2256,7 @@ var TidyTree = (function () {
    * @param  {Boolean} show Should the TidyTree show leafLabels?
    * @return {TidyTree}     the TidyTree Object
    */
-  TidyTree.prototype.setLeafLabels = function(show) {
+  TidyTree.prototype.setLeafLabels = function (show) {
     this.leafLabels = show ? true : false;
     if (this.parent) {
       //i.e. has already been drawn
@@ -2259,7 +2277,7 @@ var TidyTree = (function () {
    * object.
    * @return {TidyTree} the TidyTree Object
    */
-  TidyTree.prototype.eachLeafLabel = function(styler) {
+  TidyTree.prototype.eachLeafLabel = function (styler) {
     if (!this.parent)
       throw Error(
         "Tree has not been rendered yet! Can't style Nodes that don't exist!"
@@ -2267,7 +2285,7 @@ var TidyTree = (function () {
     this.parent
       .select("svg")
       .selectAll("g.tidytree-node-leaf text")
-      .each(function(d) {
+      .each(function (d) {
         styler(this, d);
       });
     return this;
@@ -2278,7 +2296,7 @@ var TidyTree = (function () {
    * @param {Boolean} show Should the TidyTree show branchLabels?
    * @return {TidyTree} The TidyTree Object
    */
-  TidyTree.prototype.setRuler = function(show) {
+  TidyTree.prototype.setRuler = function (show) {
     this.ruler = show ? true : false;
     if (this.parent) {
       //i.e. has already been drawn
@@ -2305,7 +2323,7 @@ var TidyTree = (function () {
    * or Falsy value.
    * @return {Array} The array of results
    */
-  TidyTree.prototype.search = function(test) {
+  TidyTree.prototype.search = function (test) {
     if (!test) return;
     let results = this.parent
       .select("svg g.tidytree-nodes")
@@ -2322,7 +2340,7 @@ var TidyTree = (function () {
    * @param  {Function} callback The function to run when one of the `events` occurs.
    * @return {TidyTree} The TidyTree on which this method was called.
    */
-  TidyTree.prototype.on = function(events, callback) {
+  TidyTree.prototype.on = function (events, callback) {
     events.split(" ").forEach(event => this.events[event].push(callback));
     return this;
   };
@@ -2332,7 +2350,7 @@ var TidyTree = (function () {
    * @param  {String}   events   A space-delimited list of event names
    * @return {TidyTree} The TidyTree on which this method was called.
    */
-  TidyTree.prototype.off = function(events) {
+  TidyTree.prototype.off = function (events) {
     events.split(" ").forEach(event => (this.events[event] = []));
     return this;
   };
@@ -2344,7 +2362,7 @@ var TidyTree = (function () {
    * handler(s).
    * @return The output of the callback run on `event`
    */
-  TidyTree.prototype.trigger = function(events, ...args) {
+  TidyTree.prototype.trigger = function (events, ...args) {
     return events.split(" ").map(event => {
       if (this.events[event].length)
         return this.events[event].map(handler => handler(args));
@@ -2356,7 +2374,7 @@ var TidyTree = (function () {
    * Destroys the TidyTree
    * @return {undefined}
    */
-  TidyTree.prototype.destroy = function() {
+  TidyTree.prototype.destroy = function () {
     if (this.parent) {
       //i.e. has already been drawn
       this.parent.html(null);

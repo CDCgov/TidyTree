@@ -1,6 +1,6 @@
 {
-  "version": "0.3.6",
-  "description": "Phylogenetic trees, powered by d3",
+  "version": "0.4.0",
+  "description": "Uncompromisingly Flexible Phylogenetic Trees, Powered by D3.js",
   "name": "tidytree",
   "main": "dist/tidytree.js",
   "scripts": {
@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "d3": "^5.9.2",
-    "patristic": "^0.3.9"
+    "patristic": "^0.4.0"
   },
   "devDependencies": {
     "documentation": "^9.3.1",

@@ -53,7 +53,7 @@ export default function TidyTree(data, options, events) {
  * @param  {Object} data A patristic.Branch object
  * @return {Object}        the TidyTree object
  */
-TidyTree.prototype.setData = function(data) {
+TidyTree.prototype.setData = function (data) {
   if (!data) throw Error("Invalid Data");
   this.data = data;
   this.range = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER];
@@ -78,7 +78,7 @@ TidyTree.prototype.setData = function(data) {
  * @param  {String} newick A valid newick string
  * @return {Object}        the TidyTree object
  */
-TidyTree.prototype.setTree = function(newick) {
+TidyTree.prototype.setTree = function (newick) {
   if (!newick) throw Error("Invalid Newick String");
   return this.setData(patristic.parseNewick(newick));
 };
@@ -106,7 +106,7 @@ TidyTree.validModes = ["smooth", "square", "straight"];
  * @param  {String} selector A CSS selector
  * @return {TidyTree}           the TidyTree object
  */
-TidyTree.prototype.draw = function(selector) {
+TidyTree.prototype.draw = function (selector) {
   if (!selector && !this.parent) {
     throw Error("No valid target for drawing given! Where should the tree go?");
   }
@@ -439,7 +439,7 @@ function labeler(d) {
  * Redraws the links and relocates the nodes accordingly
  * @return {TidyTree} The TidyTree Object
  */
-TidyTree.prototype.redraw = function() {
+TidyTree.prototype.redraw = function () {
   let parent = this.parent;
 
   this.width =
@@ -477,10 +477,8 @@ TidyTree.prototype.redraw = function() {
   let links = g
     .select("g.tidytree-links")
     .selectAll("g.tidytree-link")
-    .data(
-      source(this.hierarchy).links(),
-      k => k.source.data._guid + k.target.data._guid
-    );
+    .data(source(this.hierarchy).links(), l => l.source.data._guid + ':' + l.target.data._guid);
+
   links.join(
     enter => {
       let newLinks = enter.append("g").attr("class", "tidytree-link");
@@ -538,12 +536,13 @@ TidyTree.prototype.redraw = function() {
           .style("opacity", 0)
           .end()
           .then(() => {
+            labels.text(labeler).attr("transform", labelTransformer);
+            if (this.branchDistances) {
             labels
-              .text(labeler)
-              .attr("transform", labelTransformer)
               .transition()
               .duration(this.animation / 2)
               .style("opacity", this.branchDistances ? 1 : 0);
+            }
           });
       } else {
         labels.text(labeler).attr("transform", labelTransformer);
@@ -748,7 +747,7 @@ function updateRuler(transform) {
  * Recenters the tree in the center of the view
  * @return {TidyTree} The TidyTree object
  */
-TidyTree.prototype.recenter = function() {
+TidyTree.prototype.recenter = function () {
   let svg = this.parent.select("svg"),
     x = this.margin[0],
     y = this.margin[3];
@@ -768,7 +767,7 @@ TidyTree.prototype.recenter = function() {
  * @param {String} newLayout The new layout
  * @return {TidyTree} The TidyTree Object
  */
-TidyTree.prototype.setLayout = function(newLayout) {
+TidyTree.prototype.setLayout = function (newLayout) {
   if (!TidyTree.validLayouts.includes(newLayout)) {
     throw Error(
       "Cannot set TidyTree to layout:",
@@ -787,7 +786,7 @@ TidyTree.prototype.setLayout = function(newLayout) {
  * @param {String} newMode The new mode
  * @return {TidyTree} The TidyTree object
  */
-TidyTree.prototype.setMode = function(newMode) {
+TidyTree.prototype.setMode = function (newMode) {
   if (!TidyTree.validModes.includes(newMode)) {
     throw Error(
       "Cannot set TidyTree to mode:",
@@ -806,7 +805,7 @@ TidyTree.prototype.setMode = function(newMode) {
  * @param {Boolean} newType The new type
  * @return {TidyTree} the TidyTree object
  */
-TidyTree.prototype.setType = function(newType) {
+TidyTree.prototype.setType = function (newType) {
   if (!TidyTree.validTypes.includes(newType)) {
     throw Error(
       "Cannot set TidyTree to type:",
@@ -825,7 +824,7 @@ TidyTree.prototype.setType = function(newType) {
  * @param {Number} degrees The new number of degrees by which to rotate the tree
  * @return {TidyTree} the TidyTree object
  */
-TidyTree.prototype.setRotation = function(degrees) {
+TidyTree.prototype.setRotation = function (degrees) {
   this.rotation = degrees;
   if (this.parent)
     this.parent
@@ -846,7 +845,7 @@ TidyTree.prototype.setRotation = function(degrees) {
  * @param {Number} proportion The new proportion by which to stretch the tree
  * @return {TidyTree} the TidyTree object
  */
-TidyTree.prototype.setHStretch = function(proportion) {
+TidyTree.prototype.setHStretch = function (proportion) {
   this.hStretch = parseFloat(proportion);
   if (this.parent) {
     let animCache = this.animation;
@@ -862,7 +861,7 @@ TidyTree.prototype.setHStretch = function(proportion) {
  * @param {Number} proportion The new proportion by which to stretch the tree
  * @return {TidyTree} the TidyTree object
  */
-TidyTree.prototype.setVStretch = function(proportion) {
+TidyTree.prototype.setVStretch = function (proportion) {
   this.vStretch = parseFloat(proportion);
   if (this.parent) {
     let animCache = this.animation;
@@ -880,7 +879,7 @@ TidyTree.prototype.setVStretch = function(proportion) {
  * to turn animations off completely.
  * @return {TidyTree} The TidyTree object
  */
-TidyTree.prototype.setAnimation = function(time) {
+TidyTree.prototype.setAnimation = function (time) {
   this.animation = time;
   return this;
 };
@@ -890,7 +889,7 @@ TidyTree.prototype.setAnimation = function(time) {
  * @param  {Boolean} show Should Branch nodes be shown?
  * @return {TidyTree} the TidyTree object
  */
-TidyTree.prototype.setBranchNodes = function(show) {
+TidyTree.prototype.setBranchNodes = function (show) {
   this.branchNodes = show ? true : false;
   if (this.parent) {
     //i.e. has already been drawn
@@ -911,7 +910,7 @@ TidyTree.prototype.setBranchNodes = function(show) {
  * object.
  * @return {TidyTree} the TidyTree Object
  */
-TidyTree.prototype.eachBranchNode = function(styler) {
+TidyTree.prototype.eachBranchNode = function (styler) {
   if (!this.parent)
     throw Error(
       "Tree has not been rendered yet! Can't style Nodes that don't exist!"
@@ -919,7 +918,7 @@ TidyTree.prototype.eachBranchNode = function(styler) {
   this.parent
     .select("svg")
     .selectAll("g.tidytree-node-internal circle")
-    .each(function(d) {
+    .each(function (d) {
       styler(this, d);
     });
   return this;
@@ -930,7 +929,7 @@ TidyTree.prototype.eachBranchNode = function(styler) {
  * @param  {Boolean} show Should the TidyTree show branchLabels?
  * @return {TidyTree}     the TidyTree Object
  */
-TidyTree.prototype.setBranchLabels = function(show) {
+TidyTree.prototype.setBranchLabels = function (show) {
   this.branchLabels = show ? true : false;
   if (this.parent) {
     //i.e. has already been drawn
@@ -951,7 +950,7 @@ TidyTree.prototype.setBranchLabels = function(show) {
  * object.
  * @return {TidyTree} the TidyTree Object
  */
-TidyTree.prototype.eachBranchLabel = function(styler) {
+TidyTree.prototype.eachBranchLabel = function (styler) {
   if (!this.parent)
     throw Error(
       "Tree has not been rendered yet! Can't style Nodes that don't exist!"
@@ -959,7 +958,7 @@ TidyTree.prototype.eachBranchLabel = function(styler) {
   this.parent
     .select("svg")
     .selectAll("g.tidytree-node-internal text")
-    .each(function(d, i, l) {
+    .each(function (d, i, l) {
       styler(this, d);
     });
   return this;
@@ -970,7 +969,7 @@ TidyTree.prototype.eachBranchLabel = function(styler) {
  * @param {Boolean} show Should the TidyTree show branch distances?
  * @return {TidyTree} The TidyTree Object
  */
-TidyTree.prototype.setBranchDistances = function(show) {
+TidyTree.prototype.setBranchDistances = function (show) {
   this.branchDistances = show ? true : false;
   if (this.parent) {
     //i.e. has already been drawn
@@ -997,7 +996,7 @@ TidyTree.prototype.setBranchDistances = function(show) {
  * object.
  * @return {TidyTree} the TidyTree Object
  */
-TidyTree.prototype.eachBranchDistance = function(styler) {
+TidyTree.prototype.eachBranchDistance = function (styler) {
   if (!this.parent)
     throw Error(
       "Tree has not been rendered yet! Can't style Nodes that don't exist!"
@@ -1006,7 +1005,7 @@ TidyTree.prototype.eachBranchDistance = function(styler) {
     .select("svg g.tidytree-links")
     .selectAll("g.tidytree-link")
     .selectAll("text")
-    .each(function(d, i, l) {
+    .each(function (d, i, l) {
       styler(this, d);
     });
   return this;
@@ -1017,7 +1016,7 @@ TidyTree.prototype.eachBranchDistance = function(styler) {
  * @param  {Boolean} show Should leaf nodes be visible?
  * @return {TidyTree} The TidyTree Object
  */
-TidyTree.prototype.setLeafNodes = function(show) {
+TidyTree.prototype.setLeafNodes = function (show) {
   this.leafNodes = show ? true : false;
   if (this.parent) {
     //i.e. has already been drawn
@@ -1038,7 +1037,7 @@ TidyTree.prototype.setLeafNodes = function(show) {
  * object.
  * @return {TidyTree} the TidyTree Object
  */
-TidyTree.prototype.eachLeafNode = function(styler) {
+TidyTree.prototype.eachLeafNode = function (styler) {
   if (!this.parent)
     throw Error(
       "Tree has not been rendered yet! Can't style Nodes that don't exist!"
@@ -1046,7 +1045,7 @@ TidyTree.prototype.eachLeafNode = function(styler) {
   this.parent
     .select("svg")
     .selectAll("g.tidytree-node-leaf circle")
-    .each(function(d) {
+    .each(function (d) {
       styler(this, d);
     });
   return this;
@@ -1057,7 +1056,7 @@ TidyTree.prototype.eachLeafNode = function(styler) {
  * @param  {Boolean} show Should the TidyTree show leafLabels?
  * @return {TidyTree}     the TidyTree Object
  */
-TidyTree.prototype.setLeafLabels = function(show) {
+TidyTree.prototype.setLeafLabels = function (show) {
   this.leafLabels = show ? true : false;
   if (this.parent) {
     //i.e. has already been drawn
@@ -1078,7 +1077,7 @@ TidyTree.prototype.setLeafLabels = function(show) {
  * object.
  * @return {TidyTree} the TidyTree Object
  */
-TidyTree.prototype.eachLeafLabel = function(styler) {
+TidyTree.prototype.eachLeafLabel = function (styler) {
   if (!this.parent)
     throw Error(
       "Tree has not been rendered yet! Can't style Nodes that don't exist!"
@@ -1086,7 +1085,7 @@ TidyTree.prototype.eachLeafLabel = function(styler) {
   this.parent
     .select("svg")
     .selectAll("g.tidytree-node-leaf text")
-    .each(function(d) {
+    .each(function (d) {
       styler(this, d);
     });
   return this;
@@ -1097,7 +1096,7 @@ TidyTree.prototype.eachLeafLabel = function(styler) {
  * @param {Boolean} show Should the TidyTree show branchLabels?
  * @return {TidyTree} The TidyTree Object
  */
-TidyTree.prototype.setRuler = function(show) {
+TidyTree.prototype.setRuler = function (show) {
   this.ruler = show ? true : false;
   if (this.parent) {
     //i.e. has already been drawn
@@ -1124,7 +1123,7 @@ TidyTree.prototype.setRuler = function(show) {
  * or Falsy value.
  * @return {Array} The array of results
  */
-TidyTree.prototype.search = function(test) {
+TidyTree.prototype.search = function (test) {
   if (!test) return;
   let results = this.parent
     .select("svg g.tidytree-nodes")
@@ -1141,7 +1140,7 @@ TidyTree.prototype.search = function(test) {
  * @param  {Function} callback The function to run when one of the `events` occurs.
  * @return {TidyTree} The TidyTree on which this method was called.
  */
-TidyTree.prototype.on = function(events, callback) {
+TidyTree.prototype.on = function (events, callback) {
   events.split(" ").forEach(event => this.events[event].push(callback));
   return this;
 };
@@ -1151,7 +1150,7 @@ TidyTree.prototype.on = function(events, callback) {
  * @param  {String}   events   A space-delimited list of event names
  * @return {TidyTree} The TidyTree on which this method was called.
  */
-TidyTree.prototype.off = function(events) {
+TidyTree.prototype.off = function (events) {
   events.split(" ").forEach(event => (this.events[event] = []));
   return this;
 };
@@ -1163,7 +1162,7 @@ TidyTree.prototype.off = function(events) {
  * handler(s).
  * @return The output of the callback run on `event`
  */
-TidyTree.prototype.trigger = function(events, ...args) {
+TidyTree.prototype.trigger = function (events, ...args) {
   return events.split(" ").map(event => {
     if (this.events[event].length)
       return this.events[event].map(handler => handler(args));
@@ -1175,7 +1174,7 @@ TidyTree.prototype.trigger = function(events, ...args) {
  * Destroys the TidyTree
  * @return {undefined}
  */
-TidyTree.prototype.destroy = function() {
+TidyTree.prototype.destroy = function () {
   if (this.parent) {
     //i.e. has already been drawn
     this.parent.html(null);
