@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Uncompromisingly Flexible Phylogenetic Trees, Powered by D3.js",
   "name": "tidytree",
   "main": "dist/tidytree.js",
@@ -20,7 +20,7 @@
     "url": "git+https://github.com/aaboyles/TidyTree.git"
   },
   "dependencies": {
-    "d3": "^5.9.2",
+    "d3": "^5.9.7",
     "patristic": "^0.4.0"
   },
   "devDependencies": {

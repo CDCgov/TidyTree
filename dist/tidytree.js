@@ -1338,9 +1338,9 @@ var TidyTree = (function () {
       g.attr(
         "transform",
         `translate(${transform.x},${transform.y}) scale(${transform.k}) rotate(${
-      this.rotation
+        this.rotation
       },${this.layout === "circular" ? 0 : this.width / 2},${
-      this.layout === "circular" ? 0 : this.height / 2
+        this.layout === "circular" ? 0 : this.height / 2
       })`
       );
       updateRuler.call(this, transform);
@@ -1423,15 +1423,15 @@ var TidyTree = (function () {
             (endAngle === startAngle
               ? ""
               : "A" +
-              startRadius +
-              "," +
-              startRadius +
-              " 0 0 " +
-              (endAngle > startAngle ? 1 : 0) +
-              " " +
-              startRadius * x1 +
-              "," +
-              startRadius * y1) +
+                startRadius +
+                "," +
+                startRadius +
+                " 0 0 " +
+                (endAngle > startAngle ? 1 : 0) +
+                " " +
+                startRadius * x1 +
+                "," +
+                startRadius * y1) +
             "L" +
             endRadius * x1 +
             "," +
@@ -1484,11 +1484,11 @@ var TidyTree = (function () {
       square: {
         horizontal: d =>
           `M${d.source.weight} ${d.source.x} V ${d.target.x} H ${
-        d.target.weight
+          d.target.weight
         }`,
         vertical: d =>
           `M${d.source.x} ${d.source.weight} H ${d.target.x} V ${
-        d.target.weight
+          d.target.weight
         }`,
         circular: d => {
           const startAngle = d.source.x - Math.PI / 2,
@@ -1507,15 +1507,15 @@ var TidyTree = (function () {
             (endAngle === startAngle
               ? ""
               : "A" +
-              startRadius +
-              "," +
-              startRadius +
-              " 0 0 " +
-              (endAngle > startAngle ? 1 : 0) +
-              " " +
-              startRadius * x1 +
-              "," +
-              startRadius * y1) +
+                startRadius +
+                "," +
+                startRadius +
+                " 0 0 " +
+                (endAngle > startAngle ? 1 : 0) +
+                " " +
+                startRadius * x1 +
+                "," +
+                startRadius * y1) +
             "L" +
             endRadius * x1 +
             "," +
@@ -1555,13 +1555,13 @@ var TidyTree = (function () {
         horizontal: l =>
           `translate(${(l.source.y + l.target.y) / 2}, ${(l.source.x +
           l.target.x) /
-        2}) rotate(${Math.atan(
+          2}) rotate(${Math.atan(
           (l.target.x - l.source.x) / (l.target.y - l.source.y)
         ) * radToDeg})`,
         vertical: l =>
           `translate(${(l.source.x + l.target.x) / 2}, ${(l.source.y +
           l.target.y) /
-        2}) rotate(${Math.atan(
+          2}) rotate(${Math.atan(
           (l.source.y - l.target.y) / (l.source.x - l.target.x)
         ) * radToDeg})`,
         circular: l => {
@@ -1589,13 +1589,13 @@ var TidyTree = (function () {
         horizontal: l =>
           `translate(${(l.source.weight + l.target.weight) / 2}, ${(l.source.x +
           l.target.x) /
-        2}) rotate(${Math.atan(
+          2}) rotate(${Math.atan(
           (l.target.x - l.source.x) / (l.target.weight - l.source.weight)
         ) * radToDeg})`,
         vertical: l =>
           `translate(${(l.source.x + l.target.x) / 2}, ${(l.source.weight +
           l.target.weight) /
-        2}) rotate(${Math.atan(
+          2}) rotate(${Math.atan(
           (l.source.weight - l.target.weight) / (l.source.x - l.target.x)
         ) * radToDeg})`,
         circular: l => {
@@ -1610,7 +1610,7 @@ var TidyTree = (function () {
           `translate(${(l.source.weight + l.target.weight) / 2}, ${l.target.x})`,
         vertical: l =>
           `translate(${l.target.x}, ${(l.source.weight + l.target.weight) /
-        2}) rotate(90)`,
+          2}) rotate(90)`,
         circular: l => {
           let u = circularPoint(
             l.target.x,
@@ -1628,7 +1628,6 @@ var TidyTree = (function () {
   labelTransformers.dendrogram = labelTransformers.tree;
 
   function labeler(d) {
-    console.log(d.target);
     if (!d.target.data.length) return "0.000";
     var ls = d.target.data.length.toLocaleString();
     if (ls === "0") return "0.000";
@@ -1656,8 +1655,8 @@ var TidyTree = (function () {
       this.layout === "horizontal"
         ? this.width
         : this.layout === "vertical"
-          ? this.height
-          : Math.min(this.width, this.height) / 2;
+        ? this.height
+        : Math.min(this.width, this.height) / 2;
     this.hierarchy.each(d => (d.weight = this.scalar * d.value));
 
     let g = parent.select("svg g");
@@ -1666,8 +1665,8 @@ var TidyTree = (function () {
       this.layout === "circular"
         ? [2 * Math.PI, Math.min(this.height, this.width) / 2]
         : this.layout === "horizontal"
-          ? [this.height, this.width]
-          : [this.width, this.height]
+        ? [this.height, this.width]
+        : [this.width, this.height]
     );
 
     if (this.layout === "circular")
@@ -1738,10 +1737,10 @@ var TidyTree = (function () {
             .then(() => {
               labels.text(labeler).attr("transform", labelTransformer);
               if (this.branchDistances) {
-                labels
-                  .transition()
-                  .duration(this.animation / 2)
-                  .style("opacity", this.branchDistances ? 1 : 0);
+              labels
+                .transition()
+                .duration(this.animation / 2)
+                .style("opacity", this.branchDistances ? 1 : 0);
               }
             });
         } else {
@@ -2032,9 +2031,9 @@ var TidyTree = (function () {
         .attr(
           "transform",
           `translate(${this.transform.x},${this.transform.y}) scale(${
-        this.transform.k
+          this.transform.k
         }) rotate(${this.rotation},${
-        this.layout === "circular" ? 0 : this.width / 2
+          this.layout === "circular" ? 0 : this.width / 2
         },${this.layout === "circular" ? 0 : this.height / 2})`
         );
     return this;
