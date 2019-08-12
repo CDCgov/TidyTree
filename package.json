@@ -24,7 +24,9 @@
     "patristic": "^0.4.3"
   },
   "devDependencies": {
+    "diff": ">=3.5.0",
     "documentation": "^9.3.1",
+    "rollup": "^1.19.4",
     "rollup-plugin-node-resolve": "^4.2.4",
     "terser": "^3.17.0"
   }
