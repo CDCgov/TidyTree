@@ -1,35 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
-    <meta
-      name="description"
-      content="TidyTree is a client-side renderer for Phylogenetic Trees, based on the TidyTree Javascript Library."
-    />
-    <meta name="author" content="humans.txt" />
-    <meta name="theme-color" content="#ffffff" />
-    <meta name="msapplication-TileColor" content="#2b5797" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="TidyTree is a client-side renderer for Phylogenetic Trees, based on the TidyTree Javascript Library.">
+    <meta name="author" content="humans.txt">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="msapplication-TileColor" content="#2b5797">
     <title>Tidy Tree</title>
-    <link rel="canonical" href="https://cdcgov.github.io/TidyTree/demo/" />
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
-    <link rel="manifest" href="site.webmanifest" />
-    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css"
-      integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX"
-      crossorigin="anonymous"
-    />
+    <link rel="canonical" href="https://cdcgov.github.io/TidyTree/demo/">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
     <style>
       html,
       body,
@@ -112,17 +98,9 @@
   <body>
     <header class="bmd-layout-header">
       <div class="navbar navbar-light bg-faded">
-        <a class="navbar-brand" data-toggle="modal" data-target="#aboutModal"
-          >TidyTree</a
-        >
+        <a class="navbar-brand" data-toggle="modal" data-target="#aboutModal">TidyTree</a>
         <form class="form-inline my-2 my-lg-0">
-          <input
-            id="search"
-            class="form-control mr-sm-2"
-            type="search"
-            placeholder="Search"
-            aria-label="Search"
-          />
+          <input id="search" class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
         </form>
       </div>
     </header>
@@ -155,7 +133,7 @@
                   <label for="source" class="btn btn-primary"
                     >Load Newick Tree</label
                   >
-                  <input type="file" id="source" class="d-none" />
+                  <input type="file" id="source" class="d-none">
                 </div>
                 <div class="form-group">
                   <button id="reset" class="btn btn-danger">Reset Tree</button>
@@ -187,7 +165,7 @@
               <div class="card-body">
                 <div class="form-group">
                   <label for="layout">Layout</label>
-                  <select id="layout" class="custom-select"></select>
+                  <select id="layout" class="form-control form-control-sm"></select>
                 </div>
                 <div class="form-group">
                   <label for="hStretch">Horizontal Stretch</label>
@@ -198,7 +176,7 @@
                     value="1"
                     step="0.1"
                     id="hStretch"
-                  />
+                 >
                 </div>
                 <div class="form-group">
                   <label for="vStretch">Vertical Stretch</label>
@@ -209,7 +187,7 @@
                     value="1"
                     step="0.1"
                     id="vStretch"
-                  />
+                 >
                 </div>
                 <div class="form-group">
                   <label for="rotation">Rotation</label>
@@ -219,11 +197,11 @@
                     max="360"
                     value="0"
                     id="rotation"
-                  />
+                 >
                 </div>
                 <div class="form-group">
                   <label for="type">Type</label>
-                  <select id="type" class="custom-select"></select>
+                  <select id="type" class="form-control form-control-sm"></select>
                 </div>
               </div>
             </div>
@@ -252,12 +230,12 @@
               <div class="card-body">
                 <div class="form-group">
                   <label for="mode">Mode</label>
-                  <select id="mode" class="custom-select"></select>
+                  <select id="mode" class="form-control form-control-sm"></select>
                 </div>
                 <div class="form-group">
                   <div class="switch">
                     <label>
-                      <input id="branchNodes" type="checkbox" /> Branch Nodes
+                      <input id="branchNodes" type="checkbox"> Branch Nodes
                     </label>
                   </div>
                 </div>
@@ -271,12 +249,12 @@
                     max="10"
                     value="2.5"
                     step="0.5"
-                  />
+                 >
                 </div>
                 <div class="form-group">
                   <div class="switch">
                     <label>
-                      <input id="branchLabels" type="checkbox" /> Branch Labels
+                      <input id="branchLabels" type="checkbox"> Branch Labels
                     </label>
                   </div>
                 </div>
@@ -290,12 +268,12 @@
                     max="32"
                     value="6"
                     step="1"
-                  />
+                 >
                 </div>
                 <div class="form-group">
                   <div class="switch">
                     <label>
-                      <input id="branchDistances" type="checkbox" /> Branch
+                      <input id="branchDistances" type="checkbox"> Branch
                       Distances
                     </label>
                   </div>
@@ -310,7 +288,7 @@
                     max="32"
                     value="12"
                     step="1"
-                  />
+                 >
                 </div>
               </div>
             </div>
@@ -340,7 +318,7 @@
                 <div class="form-group">
                   <div class="switch">
                     <label>
-                      <input id="leafNodes" type="checkbox" checked /> Leaf
+                      <input id="leafNodes" type="checkbox" checked> Leaf
                       Nodes
                     </label>
                   </div>
@@ -355,12 +333,12 @@
                     max="10"
                     value="2.5"
                     step="0.5"
-                  />
+                 >
                 </div>
                 <div class="form-group">
                   <div class="switch">
                     <label>
-                      <input id="leafLabels" type="checkbox" /> Leaf Labels
+                      <input id="leafLabels" type="checkbox"> Leaf Labels
                     </label>
                   </div>
                 </div>
@@ -374,7 +352,7 @@
                     max="32"
                     value="12"
                     step="1"
-                  />
+                 >
                 </div>
               </div>
             </div>
@@ -404,7 +382,7 @@
                 <div class="form-group">
                   <div class="switch">
                     <label>
-                      <input id="ruler" type="checkbox" checked /> Ruler
+                      <input id="ruler" type="checkbox" checked> Ruler
                     </label>
                   </div>
                 </div>
@@ -415,12 +393,12 @@
                     id="background"
                     class="skip"
                     value="#ffffff"
-                  />
+                 >
                 </div>
                 <div class="form-group">
                   <div class="switch">
                     <label>
-                      <input id="tooltips" type="checkbox" class="skip" />
+                      <input id="tooltips" type="checkbox" class="skip">
                       Tooltips
                     </label>
                   </div>
@@ -434,7 +412,7 @@
                     max="2000"
                     value="0"
                     step="10"
-                  />
+                 >
                 </div>
               </div>
             </div>
@@ -456,6 +434,7 @@
         <button id="isolate" class="dropdown-item">Isolate</button>
         <button id="excise" class="dropdown-item">Excise</button>
         <button id="simplify" class="dropdown-item">Simplify</button>
+        <button id="consolidate" class="dropdown-item">Consolidate</button>
       </div>
     </div>
 
@@ -554,11 +533,11 @@
                 type="text"
                 id="export-filename"
                 class="form-control skip"
-              />
+             >
             </div>
             <div class="form-group col">
               <label for="export-format">Format</label>
-              <select id="export-format" class="form-control skip">
+              <select id="export-format" class="form-control form-control-sm skip">
                 <option selected>nwk</option>
                 <option>png</option>
                 <option>svg</option>
@@ -824,7 +803,9 @@
           .style("left", e.pageX + "px")
           .style("z-index", 1000)
           .style("display", "block");
-        d3.select("#reroot").on("click", c => tree.setData(d[0].data.reroot()));
+        d3.select("#reroot").on("click", c =>
+          tree.setData(d[0].data.reroot())
+        );
         d3.select("#rotate").on("click", c =>
           tree.setData(d[0].data.rotate().getRoot())
         );
@@ -834,22 +815,21 @@
         d3.select("#sort").on("click", c =>
           tree.setData(d[0].data.sort().getRoot())
         );
-        d3.select("#remove").on("click", c => tree.setData(d[0].data.remove()));
+        d3.select("#remove").on("click", c =>
+          tree.setData(d[0].data.remove())
+        );
         d3.select("#isolate").on("click", c =>
           tree.setData(d[0].data.isolate())
         );
         d3.select("#excise").on("click", c =>
           tree.setData(d[0].data.excise().getRoot())
         );
-        d3.select("#simplify").on("click", c => {
-          var root = d[0].data.getRoot();
-          if (d[0].data === root) {
-            tree.setData(d[0].data.simplify(true));
-          } else {
-            d[0].data.replace(d[0].data.simplify(true));
-            tree.setData(root);
-          }
-        });
+        d3.select("#simplify").on("click", c =>
+          tree.setData(d[0].data.simplify().getRoot())
+        );
+        d3.select("#consolidate").on("click", c =>
+          tree.setData(d[0].data.consolidate().getRoot())
+        );
       }
 
       function showTooltip(d) {
