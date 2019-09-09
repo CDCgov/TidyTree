@@ -407,19 +407,22 @@ let labelTransformers = {
       }
     },
     square: {
-      horizontal: l =>
-        `translate(${(l.source.weight + l.target.weight) / 2}, ${l.target.x})`,
-      vertical: l =>
-        `translate(${l.target.x}, ${(l.source.weight + l.target.weight) /
-          2}) rotate(90)`,
+      horizontal: l => `
+        translate(${(l.source.weight + l.target.weight) / 2}, ${l.target.x})
+      `,
+      vertical: l => `
+        translate(${l.target.x}, ${(l.source.weight + l.target.weight) / 2})
+        rotate(90)
+      `,
       circular: l => {
         let u = circularPoint(
           l.target.x,
           (l.source.weight + l.target.weight) / 2
         );
-        return `translate(${u[0]}, ${u[1]}) rotate(${((l.target.x * radToDeg) %
-          180) -
-          90})`;
+        return `
+          translate(${u[0]}, ${u[1]})
+          rotate(${((l.target.x * radToDeg) % 180) - 90})
+        `;
       }
     }
   }
@@ -430,9 +433,7 @@ labelTransformers.dendrogram = labelTransformers.tree;
 
 function labeler(d) {
   if (!d.target.data.length) return "0.000";
-  var ls = d.target.data.length.toLocaleString();
-  if (ls === "0") return "0.000";
-  return ls;
+  return d.target.data.length.toFixed(3);
 }
 
 /**
@@ -442,32 +443,22 @@ function labeler(d) {
 TidyTree.prototype.redraw = function () {
   let parent = this.parent;
 
-  this.width =
-    (parseFloat(parent.style("width")) - this.margin[1] - this.margin[3]) *
-    this.hStretch;
-  this.height =
-    (parseFloat(parent.style("height")) -
-      this.margin[0] -
-      this.margin[2] -
-      25) *
-    this.vStretch;
+  this.width  = (parseFloat(parent.style("width" )) - this.margin[1] - this.margin[3]     ) * this.hStretch;
+  this.height = (parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - 25) * this.vStretch;
 
   this.scalar =
-    this.layout === "horizontal"
-      ? this.width
-      : this.layout === "vertical"
-      ? this.height
-      : Math.min(this.width, this.height) / 2;
+    this.layout === "horizontal" ? this.width :
+    this.layout === "vertical" ? this.height :
+    Math.min(this.width, this.height) / 2;
+
   this.hierarchy.each(d => (d.weight = this.scalar * d.value));
 
   let g = parent.select("svg g");
 
   let source = (this.type === "tree" ? d3.tree() : d3.cluster()).size(
-    this.layout === "circular"
-      ? [2 * Math.PI, Math.min(this.height, this.width) / 2]
-      : this.layout === "horizontal"
-      ? [this.height, this.width]
-      : [this.width, this.height]
+    this.layout === "circular"   ? [2 * Math.PI, Math.min(this.height, this.width) / 2] :
+    this.layout === "horizontal" ? [this.height, this.width] :
+    [this.width, this.height]
   );
 
   if (this.layout === "circular")
@@ -483,18 +474,17 @@ TidyTree.prototype.redraw = function () {
     enter => {
       let newLinks = enter.append("g").attr("class", "tidytree-link");
 
-      let lt = linkTransformers[this.type][this.mode][this.layout];
+      let linkTransformer = linkTransformers[this.type][this.mode][this.layout];
       newLinks
         .append("path")
         .attr("fill", "none")
         .attr("stroke", "#ccc")
-        .attr("d", lt)
+        .attr("d", linkTransformer)
         .transition()
         .duration(this.animation)
         .attr("opacity", 1);
 
-      let labelTransformer =
-        labelTransformers[this.type][this.mode][this.layout];
+      let labelTransformer = labelTransformers[this.type][this.mode][this.layout];
       newLinks
         .append("text")
         .attr("y", 2)
@@ -565,21 +555,17 @@ TidyTree.prototype.redraw = function () {
       let nt = nodeTransformers[this.type][this.layout];
       let newNodes = enter
         .append("g")
-        .attr(
-          "class",
-          d =>
-            "tidytree-node " +
-            (d.children ? "tidytree-node-internal" : "tidytree-node-leaf")
-        )
+        .attr("class", "tidytree-node")
+        .classed("tidytree-node-internal", d => d.children)
+        .classed("tidytree-node-leaf", d => !d.children)
         .attr("transform", nt);
 
       newNodes
         .append("circle")
         .attr("title", d => d.data.id)
         .style("opacity", d =>
-          (d.children && this.branchNodes) || (!d.children && this.leafNodes)
-            ? 1
-            : 0
+          (d.children && this.branchNodes) ||
+          (!d.children && this.leafNodes) ? 1 : 0
         )
         .on("mouseenter focusin", d => this.trigger("showtooltip", d))
         .on("mouseout focusout", d => this.trigger("hidetooltip", d))
@@ -593,9 +579,8 @@ TidyTree.prototype.redraw = function () {
         .style("font-size", "12px")
         .attr("y", 2)
         .style("opacity", d =>
-          (d.children && this.branchLabels) || (!d.children && this.leafLabels)
-            ? 1
-            : 0
+          ( d.children && this.branchLabels) ||
+          (!d.children && this.leafLabels) ? 1 : 0
         );
 
       if (this.layout === "vertical") {
@@ -616,13 +601,8 @@ TidyTree.prototype.redraw = function () {
         nodeLabels
           .transition()
           .duration(this.animation)
-          .attr(
-            "transform",
-            l => "rotate(" + ((((l.x / Math.PI) * 180) % 180) - 90) + ")"
-          )
-          .attr("text-anchor", l =>
-            l.x % (2 * Math.PI) > Math.PI ? "end" : "start"
-          )
+          .attr("transform", l => `rotate(${(((l.x / Math.PI) * 180) % 180) - 90})`)
+          .attr("text-anchor", l => l.x % (2 * Math.PI) > Math.PI ? "end" : "start")
           .attr("x", l => (l.x % (2 * Math.PI) > Math.PI ? -5 : 5));
       }
 
@@ -632,11 +612,11 @@ TidyTree.prototype.redraw = function () {
         .attr("opacity", 1);
     },
     update => {
-      let nt = nodeTransformers[this.type][this.layout];
+      let nodeTransformer = nodeTransformers[this.type][this.layout];
       update
         .transition()
         .duration(this.animation)
-        .attr("transform", nt);
+        .attr("transform", nodeTransformer);
 
       let nodeLabels = update.select("text");
       if (this.layout === "vertical") {
@@ -657,13 +637,8 @@ TidyTree.prototype.redraw = function () {
         nodeLabels
           .transition()
           .duration(this.animation)
-          .attr(
-            "transform",
-            l => "rotate(" + ((((l.x / Math.PI) * 180) % 180) - 90) + ")"
-          )
-          .attr("text-anchor", l =>
-            l.x % (2 * Math.PI) > Math.PI ? "end" : "start"
-          )
+          .attr("transform", l => `rotate(${(((l.x / Math.PI) * 180) % 180) - 90})`)
+          .attr("text-anchor", l => l.x % (2 * Math.PI) > Math.PI ? "end" : "start")
           .attr("x", l => (l.x % (2 * Math.PI) > Math.PI ? -5 : 5));
       }
     },
@@ -688,21 +663,14 @@ function updateRuler(transform) {
   if (this.ruler) {
     if (this.layout == "horizontal") {
       ruler.attr("transform", `translate(${this.margin[3]}, ${height})`);
-      bg.attr(
-        "width",
-        "calc(100% - " + (this.margin[1] + this.margin[3] - 15) + "px)"
-      )
+      bg
+        .attr("width", `calc(100% - ${this.margin[1] + this.margin[3] - 15}px)`)
         .attr("height", "25px")
         .attr("x", -5);
     } else {
-      ruler.attr(
-        "transform",
-        `translate(${this.margin[3] - 10}, ${this.margin[0]})`
-      );
-      bg.attr(
-        "height",
-        "calc(100% - " + (this.margin[0] + this.margin[2] - 15) + "px)"
-      )
+      ruler.attr("transform", `translate(${this.margin[3] - 10}, ${this.margin[0]})`);
+      bg
+        .attr("height", `calc(100% - ${this.margin[0] + this.margin[2] - 15}px)`)
         .attr("width", "25px")
         .attr("x", -25);
     }
@@ -769,12 +737,10 @@ TidyTree.prototype.recenter = function () {
  */
 TidyTree.prototype.setLayout = function (newLayout) {
   if (!TidyTree.validLayouts.includes(newLayout)) {
-    throw Error(
-      "Cannot set TidyTree to layout:",
-      newLayout,
-      "\nValid layouts are:",
-      TidyTree.validLayouts
-    );
+    throw Error(`
+      Cannot set TidyTree to layout: ${newLayout}\n
+      Valid layouts are: ${TidyTree.validLayouts.join(', ')}
+    `);
   }
   this.layout = newLayout;
   if (this.parent) return this.redraw();
@@ -788,12 +754,10 @@ TidyTree.prototype.setLayout = function (newLayout) {
  */
 TidyTree.prototype.setMode = function (newMode) {
   if (!TidyTree.validModes.includes(newMode)) {
-    throw Error(
-      "Cannot set TidyTree to mode:",
-      newMode,
-      "\nValid modes are:",
-      TidyTree.validModes
-    );
+    throw Error(`
+      Cannot set TidyTree to mode: ${newMode},\n
+      Valid modes are: ${TidyTree.validModes.join(', ')}
+    `);
   }
   this.mode = newMode;
   if (this.parent) return this.redraw();
@@ -807,12 +771,10 @@ TidyTree.prototype.setMode = function (newMode) {
  */
 TidyTree.prototype.setType = function (newType) {
   if (!TidyTree.validTypes.includes(newType)) {
-    throw Error(
-      "Cannot set TidyTree to type:",
-      newType,
-      "\nValid types are:",
-      TidyTree.validTypes
-    );
+    throw Error(`
+      Cannot set TidyTree to type: ${newType},\n
+      Valid types are: ${TidyTree.validTypes.join(', ')}
+    `);
   }
   this.type = newType;
   if (this.parent) return this.redraw();
@@ -829,14 +791,14 @@ TidyTree.prototype.setRotation = function (degrees) {
   if (this.parent)
     this.parent
       .select("svg g")
-      .attr(
-        "transform",
-        `translate(${this.transform.x},${this.transform.y}) scale(${
-          this.transform.k
-        }) rotate(${this.rotation},${
-          this.layout === "circular" ? 0 : this.width / 2
-        },${this.layout === "circular" ? 0 : this.height / 2})`
-      );
+      .attr("transform", `
+        translate(${this.transform.x},${this.transform.y})
+        scale(${this.transform.k})
+        rotate(${this.rotation},
+          ${this.layout === "circular" ? 0 : this.width / 2},
+          ${this.layout === "circular" ? 0 : this.height / 2}
+        )
+      `);
   return this;
 };
 
@@ -918,9 +880,7 @@ TidyTree.prototype.eachBranchNode = function (styler) {
   this.parent
     .select("svg")
     .selectAll("g.tidytree-node-internal circle")
-    .each(function (d) {
-      styler(this, d);
-    });
+    .each(function (d) { styler(this, d); });
   return this;
 };
 
@@ -951,16 +911,13 @@ TidyTree.prototype.setBranchLabels = function (show) {
  * @return {TidyTree} the TidyTree Object
  */
 TidyTree.prototype.eachBranchLabel = function (styler) {
-  if (!this.parent)
-    throw Error(
-      "Tree has not been rendered yet! Can't style Nodes that don't exist!"
-    );
+  if (!this.parent){
+    throw Error("Tree has not been rendered yet! Can't style Nodes that don't exist!");
+  }
   this.parent
     .select("svg")
     .selectAll("g.tidytree-node-internal text")
-    .each(function (d, i, l) {
-      styler(this, d);
-    });
+    .each(function (d, i, l) { styler(this, d); });
   return this;
 };
 
@@ -977,10 +934,7 @@ TidyTree.prototype.setBranchDistances = function (show) {
       .select("svg g.tidytree-links")
       .selectAll("g.tidytree-link")
       .selectAll("text");
-    links.attr(
-      "transform",
-      labelTransformers[this.type][this.mode][this.layout]
-    );
+    links.attr("transform", labelTransformers[this.type][this.mode][this.layout]);
     links
       .transition()
       .duration(this.animation)
@@ -998,16 +952,12 @@ TidyTree.prototype.setBranchDistances = function (show) {
  */
 TidyTree.prototype.eachBranchDistance = function (styler) {
   if (!this.parent)
-    throw Error(
-      "Tree has not been rendered yet! Can't style Nodes that don't exist!"
-    );
+    throw Error("Tree has not been rendered yet! Can't style Nodes that don't exist!");
   this.parent
     .select("svg g.tidytree-links")
     .selectAll("g.tidytree-link")
     .selectAll("text")
-    .each(function (d, i, l) {
-      styler(this, d);
-    });
+    .each(function (d, i, l) { styler(this, d); });
   return this;
 };
 
@@ -1038,10 +988,9 @@ TidyTree.prototype.setLeafNodes = function (show) {
  * @return {TidyTree} the TidyTree Object
  */
 TidyTree.prototype.eachLeafNode = function (styler) {
-  if (!this.parent)
-    throw Error(
-      "Tree has not been rendered yet! Can't style Nodes that don't exist!"
-    );
+  if (!this.parent){
+    throw Error("Tree has not been rendered yet! Can't style Nodes that don't exist!");
+  }
   this.parent
     .select("svg")
     .selectAll("g.tidytree-node-leaf circle")
@@ -1078,16 +1027,13 @@ TidyTree.prototype.setLeafLabels = function (show) {
  * @return {TidyTree} the TidyTree Object
  */
 TidyTree.prototype.eachLeafLabel = function (styler) {
-  if (!this.parent)
-    throw Error(
-      "Tree has not been rendered yet! Can't style Nodes that don't exist!"
-    );
+  if (!this.parent){
+    throw Error("Tree has not been rendered yet! Can't style Nodes that don't exist!");
+  }
   this.parent
     .select("svg")
     .selectAll("g.tidytree-node-leaf text")
-    .each(function (d) {
-      styler(this, d);
-    });
+    .each(function (d) { styler(this, d); });
   return this;
 };
 
