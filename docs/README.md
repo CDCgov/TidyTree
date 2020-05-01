@@ -242,7 +242,7 @@ Shows or hides the TidyTree's branch labels
 
 #### Parameters
 
--   `show` **[Boolean][62]** Should the TidyTree show branchLabels?
+-   `show` **[Boolean][62]** Should the TidyTree show branch distances?
 
 Returns **[TidyTree][61]** The TidyTree Object
 
