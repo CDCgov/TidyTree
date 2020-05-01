@@ -34,14 +34,16 @@ export default function TidyTree(data, options, events) {
     }
   });
 
-  Object.keys(events).forEach(e => this.events[e].push(events[e]));
+  if(events) Object.keys(events).forEach(e => this.events[e].push(events[e]));
 
   if (this.parent) this.draw(this.parent);
+
   if (data instanceof patristic.Branch) {
     this.setData(data);
   } else {
     this.setTree(data);
   }
+
   if (this.parent) this.recenter();
 }
 
