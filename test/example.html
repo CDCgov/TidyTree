@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="utf-8">
+    <style>html, body { height: 100%; width: 100%; padding: 0; margin: 0; overflow: hidden; }</style>
+</head>
+
+<body>
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+	<script src="../dist/tidytree.min.js"></script>
+    <script type="text/javascript">
+        let newick = "(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);";
+        let tree = new TidyTree(newick, { parent: "body" });
+    </script>    
+</body>
+
+</html>
