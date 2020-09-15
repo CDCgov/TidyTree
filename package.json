@@ -8,8 +8,8 @@
     "build": "rollup -c",
     "demo": "npx http-server ..",
     "dev": "npm run demo & npm run watch",
-    "doc": "documentation build src/main.js -f md -o docs/README.md",
-    "minify": "terser dist/tidytree.js --compress > dist/tidytree.min.js",
+    "doc": "npx documentation build src/main.js -f md -o docs/README.md",
+    "minify": "npx terser dist/tidytree.js --compress > dist/tidytree.min.js",
     "version": "npm version patch",
     "watch": "rollup -c --watch"
   },
@@ -24,10 +24,7 @@
     "patristic": "^0.5.4"
   },
   "devDependencies": {
-    "diff": "^4.0.2",
-    "documentation": "^12.3.0",
-    "rollup": "^1.32.1",
-    "rollup-plugin-node-resolve": "^4.2.4",
-    "terser": "^3.17.0"
+    "@rollup/plugin-node-resolve": "^9.0.0",
+    "rollup": "^1.32.1"
   }
 }
