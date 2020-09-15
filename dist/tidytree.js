@@ -4,8 +4,8 @@ var TidyTree = (function () {
   (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = global || self, factory(global.patristic = {}));
-  }(undefined, function (exports) {
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.patristic = {}));
+  }(undefined, (function (exports) {
     /**
      * The [SemVer](https://semver.org/) version string of the patristic library
      * @type {String} A string specifying the current version of the Patristic Library.
@@ -13,7 +13,7 @@ var TidyTree = (function () {
      * @example
      * console.log(patristic.version);
      */
-    const version = "0.5.4";
+    const version = "0.5.6";
 
     /**
      * A class for representing Branches in trees.
@@ -1244,7 +1244,7 @@ var TidyTree = (function () {
 
     Object.defineProperty(exports, '__esModule', { value: true });
 
-  }));
+  })));
 
   /**
    * This class function creates a TidyTree object.
