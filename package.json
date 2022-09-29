@@ -20,7 +20,7 @@
     "url": "git+https://github.com/aaboyles/TidyTree.git"
   },
   "dependencies": {
-    "d3": "^5.16.0",
+    "d3": "^7.6.1",
     "patristic": "^0.5.7"
   },
   "devDependencies": {
