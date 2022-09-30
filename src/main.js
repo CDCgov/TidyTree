@@ -1,4 +1,5 @@
 import "patristic";
+// import "d3";
 
 /**
  * This class function creates a TidyTree object.

@@ -1246,6 +1246,8 @@ var TidyTree = (function () {
 
   })));
 
+  // import "d3";
+
   /**
    * This class function creates a TidyTree object.
    * @param {String} newick A valid newick string
