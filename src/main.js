@@ -13,6 +13,7 @@ export default function TidyTree(data, options, events) {
     mode: "smooth",
     leafNodes: true,
     leafLabels: false,
+    equidistantLeaves: false,
     branchNodes: false,
     branchLabels: false,
     branchDistances: false,
@@ -1018,6 +1019,16 @@ TidyTree.prototype.getLeafCount = function () {
     .select("svg")
     .selectAll("g.tidytree-node-leaf circle")
     .size();
+}
+
+/**
+ * Set the TidyTree's leaves to be equidistant
+ */
+TidyTree.prototype.setEquidistantLeaves = function (isEquidistant) {
+  this.equidistantLeaves = isEquidistant ? true : false;
+
+  if (this.parent) return this.redraw();
+  return this;
 }
 
 /**
