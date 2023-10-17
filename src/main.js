@@ -447,6 +447,22 @@ function labeler(d) {
   return d.target.data.length.toFixed(3);
 }
 
+// TODO also add to redraw a bit where we use this helper..
+/** finds linear equidistant coordinates for some number of points */
+function linearEquidistantCoordinates(linearDistance, numberPoints) {
+  const distanceBetweenPoints = linearDistance / (numberPoints + 1);
+
+  let x = distanceBetweenPoints;
+  const xValues = []; // array of x values
+
+  for (let i = 0; i < numberPoints; i++) {
+    x += distanceBetweenPoints;
+    xValues.push(x);
+  }
+
+  return xValues;
+}
+
 /**
  * Redraws the links and relocates the nodes accordingly
  * @return {TidyTree} The TidyTree Object
