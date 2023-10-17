@@ -332,6 +332,13 @@ let linkTransformers = {
 
 linkTransformers.dendrogram = linkTransformers.tree;
 
+/**
+ * Calculate the coordinates of a point transformed onto a circle.
+ *
+ * @param {number} x - The x-coordinate of the center of the point.
+ * @param {number} y - The y-coordinate of the center of the point.
+ * @return {Array<number>} The new x and y coordinates of the point on the circle.
+ */
 function circularPoint(x, y) {
   return [(y = +y) * Math.cos((x -= Math.PI / 2)), y * Math.sin(x)];
 }
