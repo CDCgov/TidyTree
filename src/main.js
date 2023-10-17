@@ -1004,6 +1004,16 @@ TidyTree.prototype.eachLeafNode = function (styler) {
 };
 
 /**
+ * Returns number of leaf nodes in TidyTree
+ */
+TidyTree.prototype.getLeafCount = function () {
+  return this.parent
+    .select("svg")
+    .selectAll("g.tidytree-node-leaf circle")
+    .size();
+}
+
+/**
  * Shows or Hides the TidyTree's Leaf Labels
  * @param  {Boolean} show Should the TidyTree show leafLabels?
  * @return {TidyTree}     the TidyTree Object
