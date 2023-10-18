@@ -357,7 +357,30 @@ let nodeTransformers = {
   }
 };
 
+function findEquidistantCoordFromIndex(index, totalPx) {
+  const numberOfLeaves = getLeafCount();
+  
+  const numberPxsBetweenLeaves = totalPx / numberOfLeaves;
+  const equidistantCoord = index * numberPxsBetweenLeaves;
+
+  return equidistantCoord;
+}
+
+let equidistantNodeTransformers = {
+  tree: {
+    horizontal: d => `translate(${d.y}, ${findEquidistantCoordFromIndex(d.index, this.height)})`,
+    vertical: d => `translate(${findEquidistantCoordFromIndex(d.index, this.width)}, ${d.y})`,
+    circular: d => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, this.width), d.y)})`
+  },
+  weighted: {
+    horizontal: d => `translate(${d.weight}, ${findEquidistantCoordFromIndex(d.index, this.height)})`,
+    vertical: d => `translate(${findEquidistantCoordFromIndex(d.index, this.width)}, ${d.weight})`,
+    circular: d => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, this.width), d.weight)})`
+  }
+}
+
 nodeTransformers.dendrogram = nodeTransformers.tree;
+equidistantNodeTransformers.dendrogram = equidistantNodeTransformers.tree;
 
 const radToDeg = 180 / Math.PI;
 
@@ -445,22 +468,6 @@ labelTransformers.dendrogram = labelTransformers.tree;
 function labeler(d) {
   if (!d.target.data.length) return "0.000";
   return d.target.data.length.toFixed(3);
-}
-
-// TODO also add to redraw a bit where we use this helper..
-/** finds linear equidistant coordinates for some number of points */
-function linearEquidistantCoordinates(linearDistance, numberPoints) {
-  const distanceBetweenPoints = linearDistance / (numberPoints + 1);
-
-  let x = distanceBetweenPoints;
-  const xValues = []; // array of x values
-
-  for (let i = 0; i < numberPoints; i++) {
-    x += distanceBetweenPoints;
-    xValues.push(x);
-  }
-
-  return xValues;
 }
 
 /**
@@ -579,7 +586,7 @@ TidyTree.prototype.redraw = function () {
     .data(this.hierarchy.descendants(), d => d.data._guid);
   nodes.join(
     enter => {
-      let nt = nodeTransformers[this.type][this.layout];
+      let nt = this.equidistantLeaves ? equidistantNodeTransformers[this.type][this.layout] : nodeTransformers[this.type][this.layout];
       let newNodes = enter
         .append("g")
         .attr("class", "tidytree-node")
@@ -639,7 +646,7 @@ TidyTree.prototype.redraw = function () {
         .attr("opacity", 1);
     },
     update => {
-      let nodeTransformer = nodeTransformers[this.type][this.layout];
+      let nodeTransformer = this.equidistantLeaves ? equidistantNodeTransformers[this.type][this.layout] : nodeTransformers[this.type][this.layout];
       update
         .transition()
         .duration(this.animation)
