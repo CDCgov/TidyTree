@@ -474,9 +474,9 @@ TidyTree.prototype.redraw = function () {
 
   if (this.equidistantLeaves) {
     if (this.layout === "circular") {
-      source.separation(a => 1 / a.depth);
+      source.separation((a,b) => 1 / a.depth);
     } else {
-      source.separation(1);
+      source.separation((a,b) => 1);
     }
   } else {
     if (this.layout === "circular")
@@ -1018,16 +1018,6 @@ TidyTree.prototype.eachLeafNode = function (styler) {
     });
   return this;
 };
-
-/**
- * Returns number of leaf nodes in TidyTree
- */
-TidyTree.prototype.getLeafCount = function () {
-  return this.parent
-    .select("svg")
-    .selectAll("g.tidytree-node-leaf circle")
-    .size();
-}
 
 /**
  * Set the TidyTree's leaves to be equidistant
