@@ -357,27 +357,7 @@ let nodeTransformers = {
   }
 };
 
-function findEquidistantCoordFromIndex(index, distanceBetweenLeaves) {
-  console.log("findEquidistantCoordFromIndex params", index, distanceBetweenLeaves);
-  console.log("findEquidistantCoordFromIndex result", index * distanceBetweenLeaves);
-  return index * distanceBetweenLeaves;
-}
-
-let equidistantNodeTransformers = {
-  tree: {
-    horizontal: (d, distanceBetweenLeaves) => {console.log("d", d); return `translate(${d.y}, ${findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves)})`},
-    vertical: (d, distanceBetweenLeaves) => `translate(${findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves)}, ${d.y})`,
-    circular: (d, distanceBetweenLeaves) => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves), d.y)})`
-  },
-  weighted: {
-    horizontal: (d, distanceBetweenLeaves) => `translate(${d.weight}, ${findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves)})`,
-    vertical: (d, distanceBetweenLeaves) => `translate(${findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves)}, ${d.weight})`,
-    circular: (d, distanceBetweenLeaves) => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves), d.weight)})`
-  }
-}
-
 nodeTransformers.dendrogram = nodeTransformers.tree;
-equidistantNodeTransformers.dendrogram = equidistantNodeTransformers.tree;
 
 const radToDeg = 180 / Math.PI;
 
@@ -492,9 +472,17 @@ TidyTree.prototype.redraw = function () {
     [this.width, this.height]
   );
 
-  if (this.layout === "circular")
-    source.separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
-
+  if (this.equidistantLeaves) {
+    if (this.layout === "circular") {
+      source.separation(a => 1 / a.depth);
+    } else {
+      source.separation(1);
+    }
+  } else {
+    if (this.layout === "circular")
+      source.separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
+  }
+  
   //Note: You must render links prior to nodes in order to get correct placement!
   let links = g
     .select("g.tidytree-links")
@@ -577,24 +565,19 @@ TidyTree.prototype.redraw = function () {
         .remove()
   );
 
-  let totalDistanceForLeaves = this.layout === "horizontal" ? this.height : this.width;
-  let getLeafCount = this.getLeafCount();
-  this.distanceBetweenLeaves = totalDistanceForLeaves / (getLeafCount + 1);
-  console.log("this.distanceBetweenLeaves", this.distanceBetweenLeaves);
-
   let nodes = g
     .select("g.tidytree-nodes")
     .selectAll("g.tidytree-node")
     .data(this.hierarchy.descendants(), d => d.data._guid);
   nodes.join(
     enter => {
-      let nt = this.equidistantLeaves ? equidistantNodeTransformers[this.type][this.layout] : nodeTransformers[this.type][this.layout];
+      let nt = nodeTransformers[this.type][this.layout];
       let newNodes = enter
         .append("g")
         .attr("class", "tidytree-node")
         .classed("tidytree-node-internal", d => d.children)
         .classed("tidytree-node-leaf", d => !d.children)
-        .attr("transform", nt, d => d, distanceBetweenLeaves => this.distanceBetweenLeaves);
+        .attr("transform", nt);
 
       newNodes
         .append("circle")
@@ -648,11 +631,11 @@ TidyTree.prototype.redraw = function () {
         .attr("opacity", 1);
     },
     update => {
-      let nodeTransformer = this.equidistantLeaves ? equidistantNodeTransformers[this.type][this.layout] : nodeTransformers[this.type][this.layout];
+      let nodeTransformer = nodeTransformers[this.type][this.layout];
       update
         .transition()
         .duration(this.animation)
-        .attr("transform", nodeTransformer, distanceBetweenLeaves => this.distanceBetweenLeaves);
+        .attr("transform", nodeTransformer);
 
       let nodeLabels = update.select("text");
       if (this.layout === "vertical") {
