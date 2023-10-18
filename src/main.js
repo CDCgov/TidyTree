@@ -357,25 +357,22 @@ let nodeTransformers = {
   }
 };
 
-function findEquidistantCoordFromIndex(index, totalPx) {
-  const numberOfLeaves = getLeafCount();
-  
-  const numberPxsBetweenLeaves = totalPx / numberOfLeaves;
-  const equidistantCoord = index * numberPxsBetweenLeaves;
-
-  return equidistantCoord;
+function findEquidistantCoordFromIndex(index, distanceBetweenLeaves) {
+  console.log("findEquidistantCoordFromIndex params", index, distanceBetweenLeaves);
+  console.log("findEquidistantCoordFromIndex result", index * distanceBetweenLeaves);
+  return index * distanceBetweenLeaves;
 }
 
 let equidistantNodeTransformers = {
   tree: {
-    horizontal: (d, height) => `translate(${d.y}, ${findEquidistantCoordFromIndex(d.index, height)})`,
-    vertical: (d, width) => `translate(${findEquidistantCoordFromIndex(d.index, width)}, ${d.y})`,
-    circular: (d, width) => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, width), d.y)})`
+    horizontal: (d, distanceBetweenLeaves) => {console.log("d", d); return `translate(${d.y}, ${findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves)})`},
+    vertical: (d, distanceBetweenLeaves) => `translate(${findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves)}, ${d.y})`,
+    circular: (d, distanceBetweenLeaves) => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves), d.y)})`
   },
   weighted: {
-    horizontal: (d, height) => `translate(${d.weight}, ${findEquidistantCoordFromIndex(d.index, height)})`,
-    vertical: (d, width) => `translate(${findEquidistantCoordFromIndex(d.index, width)}, ${d.weight})`,
-    circular: (d, width) => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, width), d.weight)})`
+    horizontal: (d, distanceBetweenLeaves) => `translate(${d.weight}, ${findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves)})`,
+    vertical: (d, distanceBetweenLeaves) => `translate(${findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves)}, ${d.weight})`,
+    circular: (d, distanceBetweenLeaves) => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, distanceBetweenLeaves), d.weight)})`
   }
 }
 
@@ -580,6 +577,11 @@ TidyTree.prototype.redraw = function () {
         .remove()
   );
 
+  let totalDistanceForLeaves = this.layout === "horizontal" ? this.height : this.width;
+  let getLeafCount = this.getLeafCount();
+  this.distanceBetweenLeaves = totalDistanceForLeaves / (getLeafCount + 1);
+  console.log("this.distanceBetweenLeaves", this.distanceBetweenLeaves);
+
   let nodes = g
     .select("g.tidytree-nodes")
     .selectAll("g.tidytree-node")
@@ -592,7 +594,7 @@ TidyTree.prototype.redraw = function () {
         .attr("class", "tidytree-node")
         .classed("tidytree-node-internal", d => d.children)
         .classed("tidytree-node-leaf", d => !d.children)
-        .attr("transform", nt, d => d, width => this.width, height => this.height);
+        .attr("transform", nt, d => d, distanceBetweenLeaves => this.distanceBetweenLeaves);
 
       newNodes
         .append("circle")
@@ -650,7 +652,7 @@ TidyTree.prototype.redraw = function () {
       update
         .transition()
         .duration(this.animation)
-        .attr("transform", nodeTransformer, d => d, width => this.width, height => this.height);
+        .attr("transform", nodeTransformer, distanceBetweenLeaves => this.distanceBetweenLeaves);
 
       let nodeLabels = update.select("text");
       if (this.layout === "vertical") {
