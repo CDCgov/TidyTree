@@ -368,14 +368,14 @@ function findEquidistantCoordFromIndex(index, totalPx) {
 
 let equidistantNodeTransformers = {
   tree: {
-    horizontal: d => `translate(${d.y}, ${findEquidistantCoordFromIndex(d.index, this.height)})`,
-    vertical: d => `translate(${findEquidistantCoordFromIndex(d.index, this.width)}, ${d.y})`,
-    circular: d => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, this.width), d.y)})`
+    horizontal: (d, height) => `translate(${d.y}, ${findEquidistantCoordFromIndex(d.index, height)})`,
+    vertical: (d, width) => `translate(${findEquidistantCoordFromIndex(d.index, width)}, ${d.y})`,
+    circular: (d, width) => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, width), d.y)})`
   },
   weighted: {
-    horizontal: d => `translate(${d.weight}, ${findEquidistantCoordFromIndex(d.index, this.height)})`,
-    vertical: d => `translate(${findEquidistantCoordFromIndex(d.index, this.width)}, ${d.weight})`,
-    circular: d => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, this.width), d.weight)})`
+    horizontal: (d, height) => `translate(${d.weight}, ${findEquidistantCoordFromIndex(d.index, height)})`,
+    vertical: (d, width) => `translate(${findEquidistantCoordFromIndex(d.index, width)}, ${d.weight})`,
+    circular: (d, width) => `translate(${circularPoint(findEquidistantCoordFromIndex(d.index, width), d.weight)})`
   }
 }
 
@@ -592,7 +592,7 @@ TidyTree.prototype.redraw = function () {
         .attr("class", "tidytree-node")
         .classed("tidytree-node-internal", d => d.children)
         .classed("tidytree-node-leaf", d => !d.children)
-        .attr("transform", nt);
+        .attr("transform", nt, d => d, width => this.width, height => this.height);
 
       newNodes
         .append("circle")
@@ -650,7 +650,7 @@ TidyTree.prototype.redraw = function () {
       update
         .transition()
         .duration(this.animation)
-        .attr("transform", nodeTransformer);
+        .attr("transform", nodeTransformer, d => d, width => this.width, height => this.height);
 
       let nodeLabels = update.select("text");
       if (this.layout === "vertical") {
