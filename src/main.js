@@ -13,6 +13,7 @@ export default function TidyTree(data, options, events) {
     mode: "smooth",
     leafNodes: true,
     leafLabels: false,
+    equidistantLeaves: false,
     branchNodes: false,
     branchLabels: false,
     branchDistances: false,
@@ -332,6 +333,13 @@ let linkTransformers = {
 
 linkTransformers.dendrogram = linkTransformers.tree;
 
+/**
+ * Calculate the coordinates of a point transformed onto a circle.
+ *
+ * @param {number} x - The x-coordinate of the center of the point.
+ * @param {number} y - The y-coordinate of the center of the point.
+ * @return {Array<number>} The new x and y coordinates of the point on the circle.
+ */
 function circularPoint(x, y) {
   return [(y = +y) * Math.cos((x -= Math.PI / 2)), y * Math.sin(x)];
 }
@@ -464,9 +472,17 @@ TidyTree.prototype.redraw = function () {
     [this.width, this.height]
   );
 
-  if (this.layout === "circular")
-    source.separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
-
+  if (this.equidistantLeaves) {
+    if (this.layout === "circular") {
+      source.separation((a,b) => 1 / a.depth);
+    } else {
+      source.separation((a,b) => 1);
+    }
+  } else {
+    if (this.layout === "circular")
+      source.separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
+  }
+  
   //Note: You must render links prior to nodes in order to get correct placement!
   let links = g
     .select("g.tidytree-links")
@@ -1002,6 +1018,16 @@ TidyTree.prototype.eachLeafNode = function (styler) {
     });
   return this;
 };
+
+/**
+ * Set the TidyTree's leaves to be equidistant
+ */
+TidyTree.prototype.setEquidistantLeaves = function (isEquidistant) {
+  this.equidistantLeaves = isEquidistant ? true : false;
+
+  if (this.parent) return this.redraw();
+  return this;
+}
 
 /**
  * Shows or Hides the TidyTree's Leaf Labels
