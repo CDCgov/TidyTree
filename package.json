@@ -21,7 +21,8 @@
   },
   "dependencies": {
     "d3": "^7.6.1",
-    "patristic": "^0.5.7"
+    "patristic": "^0.5.7",
+    "typescript": "^5.2.2"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^9.0.0",
