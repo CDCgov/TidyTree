@@ -380,13 +380,11 @@ function findNodeColor(node, colorOptions) {
   }
 
   let nodeList = colorOptions.nodeList;
-  let defaultColor = colorOptions.defaultColor;
-  let highlightColor = colorOptions.highlightColor;
 
   if (nodeList.includes(node.id)) {
-    return highlightColor;
+    return colorOptions.highlightColor ?? "#feb640";
   } else {
-    return defaultColor;
+    return colorOptions.defaultColor ?? "#243127";
   }
 }
 
@@ -814,9 +812,9 @@ TidyTree.prototype.setColorOptions = function (newColorOptions) {
     if (!Array.isArray(newColorOptions.nodeList)) {
       throw Error('nodeList must be an array for colorMode "list"');
     }
-    if (!newColorOptions.defaultColor || !newColorOptions.highlightColor) {
-      throw Error('defaultColor and highlightColor must be defined for colorMode "list"');
-    }
+    //if (!newColorOptions.defaultColor || !newColorOptions.highlightColor) {
+    //  throw Error('defaultColor and highlightColor must be defined for colorMode "list"');
+    //}
   }
   this.colorOptions = newColorOptions;
   if (this.parent) return this.redraw();
