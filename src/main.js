@@ -617,6 +617,7 @@ TidyTree.prototype.redraw = function () {
           (d.children && this.branchNodes) ||
           (!d.children && this.leafNodes) ? 1 : 0
         )
+        .style("fill", d => findNodeColor(d, this.colorOptions))
         .on("mouseenter focusin", d => this.trigger("showtooltip", d))
         .on("mouseout focusout", d => this.trigger("hidetooltip", d))
         .on("contextmenu", d => this.trigger("contextmenu", d))
