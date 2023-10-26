@@ -367,6 +367,29 @@ let nodeTransformers = {
 
 nodeTransformers.dendrogram = nodeTransformers.tree;
 
+/**
+ * Finds the color of a given node based on the color options provided.
+ *
+ * @param {Object} node - The node for which to find the color.
+ * @param {Object} colorOptions - The color options object containing the color mode, node list, default color, and highlight color.
+ * @return {string} The color of the node.
+ */
+function findNodeColor(node, colorOptions) {
+  if (colorOptions.colorMode === "none") {
+    return colorOptions.defaultColor ?? "steelblue";
+  }
+
+  let nodeList = colorOptions.nodeList;
+  let defaultColor = colorOptions.defaultColor;
+  let highlightColor = colorOptions.highlightColor;
+
+  if (nodeList.includes(node.id)) {
+    return highlightColor;
+  } else {
+    return defaultColor;
+  }
+}
+
 const radToDeg = 180 / Math.PI;
 
 let labelTransformers = {
