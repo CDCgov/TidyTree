@@ -378,7 +378,7 @@ function findNodeColor(node, colorOptions) {
   if (colorOptions.colorMode === "none") {
     return colorOptions.defaultColor ?? "steelblue";
   }
-
+  console.log(node);
   let nodeList = colorOptions.nodeList;
 
   if (nodeList.includes(node.id)) {

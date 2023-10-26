@@ -361,6 +361,10 @@
                     </label>
                   </div>
                 </div>
+                <div class="form-group">
+                  <label for="colorMode">Color Options</label>
+                  <select id="colorMode" class="form-control form-control-sm"></select>
+                </div>
               </div>
             </div>
           </div>
@@ -603,7 +607,7 @@
         fetch("life.nwk").then(response => response.text().then(buildTree));
       });
 
-      ["layout", "mode", "type"].forEach(thing => {
+      ["layout", "mode", "type", "colorMode"].forEach(thing => {
         var title = "valid" + thing[0].toUpperCase() + thing.slice(1) + "s";
         d3.select("#" + thing)
           .selectAll("option")
@@ -627,6 +631,7 @@
             layout: d3.select("#layout").node().value,
             mode: d3.select("#mode").node().value,
             type: d3.select("#type").node().value,
+            colorOptions: d3.select("#colorMode").node().value,
             leafNodes: d3.select("#leafNodes").node().checked,
             branchNodes: d3.select("#branchNodes").node().checked,
             leafLabels: d3.select("#leafLabels").node().checked,
