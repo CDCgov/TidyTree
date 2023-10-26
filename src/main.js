@@ -775,6 +775,27 @@ TidyTree.prototype.setLayout = function (newLayout) {
 };
 
 /**
+ * Set the TidyTree's colorOptions
+ * @param {Object} newColorOptions The new colorOptions
+ * @return {TidyTree} The TidyTree Object
+ */
+TidyTree.prototype.setColorOptions = function (newColorOptions) {
+  if (!TidyTree.validColorModes.includes(newColorOptions.colorMode)) {
+    throw Error(`
+      Cannot set TidyTree to colorOptions: ${newColorOptions.colorMode}\n
+      Valid colorModes are: ${TidyTree.validColorModes.join(', ')}
+    `);
+  }
+  // TODO: validate color options for mode 'list'
+  // should have two colors, one for nodes in the list and one for the others
+  // should have a list of nodes
+  
+  this.colorOptions = newColorOptions;
+  if (this.parent) return this.redraw();
+  return this;
+}
+
+/**
  * Set the TidyTree's mode
  * @param {String} newMode The new mode
  * @return {TidyTree} The TidyTree object
