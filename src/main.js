@@ -786,10 +786,14 @@ TidyTree.prototype.setColorOptions = function (newColorOptions) {
       Valid colorModes are: ${TidyTree.validColorModes.join(', ')}
     `);
   }
-  // TODO: validate color options for mode 'list'
-  // should have two colors, one for nodes in the list and one for the others
-  // should have a list of nodes
-  
+  if (newColorOptions.colorMode === 'list') {
+    if (!Array.isArray(newColorOptions.nodeList)) {
+      throw Error('nodeList must be an array for colorMode "list"');
+    }
+    if (!newColorOptions.defaultColor || !newColorOptions.highlightColor) {
+      throw Error('defaultColor and highlightColor must be defined for colorMode "list"');
+    }
+  }
   this.colorOptions = newColorOptions;
   if (this.parent) return this.redraw();
   return this;
