@@ -7,17 +7,12 @@ import "patristic";
  * @param {Object} options A Javascript object containing options to set up the tree
  */
 export default function TidyTree(data, options, events) {
-  let defaultColorOptions = {
-    colorMode: "list",
-    colorList: ["#000000", "#FFE37A"],
-    selectedNodes: [],
-  }
   let defaults = {
     layout: "vertical",
     type: "tree",
     mode: "smooth",
     // trying to leave room to grow here
-    colorOptions: defaultColorOptions,
+    colorOptions: { colorMode: "none" },
     leafNodes: true,
     leafLabels: false,
     equidistantLeaves: false,
@@ -116,7 +111,7 @@ TidyTree.validModes = ["smooth", "square", "straight"];
  * The available color modes for rendering nodes.
  * @type {Array}
  */
-TidyTree.validColorModes = ["list"]; // later, highlight on hover, or maybe color by annotation on a node/ search
+TidyTree.validColorModes = ["none", "list"]; // later, highlight on hover, or maybe color by annotation on a node/ search
 
 /**
  * Draws a Phylogenetic on the element referred to by selector
