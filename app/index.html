@@ -362,7 +362,7 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label for="colorMode">Color Options</label>
+                  <label for="colorMode">Color Mode</label>
                   <select id="colorMode" class="form-control form-control-sm"></select>
                 </div>
               </div>
@@ -631,7 +631,7 @@
             layout: d3.select("#layout").node().value,
             mode: d3.select("#mode").node().value,
             type: d3.select("#type").node().value,
-            colorOptions: d3.select("#colorMode").node().value,
+            colorOptions: { colorMode: d3.select("#colorMode").node().value },
             leafNodes: d3.select("#leafNodes").node().checked,
             branchNodes: d3.select("#branchNodes").node().checked,
             leafLabels: d3.select("#leafLabels").node().checked,

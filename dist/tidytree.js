@@ -1258,6 +1258,8 @@ var TidyTree = (function () {
       layout: "vertical",
       type: "tree",
       mode: "smooth",
+      // trying to leave room to grow here
+      colorOptions: { colorMode: "none" },
       leafNodes: true,
       leafLabels: false,
       equidistantLeaves: false,
@@ -1351,6 +1353,12 @@ var TidyTree = (function () {
    * @type {Array}
    */
   TidyTree.validModes = ["smooth", "square", "straight"];
+
+  /**
+   * The available color modes for rendering nodes.
+   * @type {Array}
+   */
+  TidyTree.validColorModes = ["none", "list"]; // later, highlight on hover, or maybe color by annotation on a node/ search
 
   /**
    * Draws a Phylogenetic on the element referred to by selector
@@ -1606,6 +1614,27 @@ var TidyTree = (function () {
 
   nodeTransformers.dendrogram = nodeTransformers.tree;
 
+  /**
+   * Finds the color of a given node based on the color options provided.
+   *
+   * @param {Object} node - The node for which to find the color.
+   * @param {Object} colorOptions - The color options object containing the color mode, node list, default color, and highlight color.
+   * @return {string} The color of the node.
+   */
+  function findNodeColor(node, colorOptions) {
+    if (colorOptions.colorMode === "none") {
+      return colorOptions.defaultColor ?? "steelblue";
+    }
+    console.log(node);
+    let nodeList = colorOptions.nodeList;
+
+    if (nodeList.includes(node.id)) {
+      return colorOptions.highlightColor ?? "#feb640";
+    } else {
+      return colorOptions.defaultColor ?? "#243127";
+    }
+  }
+
   const radToDeg = 180 / Math.PI;
 
   let labelTransformers = {
@@ -1833,6 +1862,7 @@ var TidyTree = (function () {
             (d.children && this.branchNodes) ||
             (!d.children && this.leafNodes) ? 1 : 0
           )
+          .style("fill", d => findNodeColor(d, this.colorOptions))
           .on("mouseenter focusin", d => this.trigger("showtooltip", d))
           .on("mouseout focusout", d => this.trigger("hidetooltip", d))
           .on("contextmenu", d => this.trigger("contextmenu", d))
@@ -2009,6 +2039,31 @@ var TidyTree = (function () {
     `);
     }
     this.layout = newLayout;
+    if (this.parent) return this.redraw();
+    return this;
+  };
+
+  /**
+   * Set the TidyTree's colorOptions
+   * @param {Object} newColorOptions The new colorOptions
+   * @return {TidyTree} The TidyTree Object
+   */
+  TidyTree.prototype.setColorOptions = function (newColorOptions) {
+    if (!TidyTree.validColorModes.includes(newColorOptions.colorMode)) {
+      throw Error(`
+      Cannot set TidyTree to colorOptions: ${newColorOptions.colorMode}\n
+      Valid colorModes are: ${TidyTree.validColorModes.join(', ')}
+    `);
+    }
+    if (newColorOptions.colorMode === 'list') {
+      if (!Array.isArray(newColorOptions.nodeList)) {
+        throw Error('nodeList must be an array for colorMode "list"');
+      }
+      //if (!newColorOptions.defaultColor || !newColorOptions.highlightColor) {
+      //  throw Error('defaultColor and highlightColor must be defined for colorMode "list"');
+      //}
+    }
+    this.colorOptions = newColorOptions;
     if (this.parent) return this.redraw();
     return this;
   };
