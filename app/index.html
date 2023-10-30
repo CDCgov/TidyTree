@@ -386,10 +386,10 @@
               data-parent="#accordion"
             >
               <div class="card-body">
-                  <div class="form-group">
+              <!--    <div class="form-group">
                     <label for="colorMode">Color Mode</label>
                     <select id="colorMode" class="form-control form-control-sm skip"></select>
-                   </div>
+                   </div> -->
                 <div class="form-group">
                   <label>Default Color</label>
                   <input
@@ -407,6 +407,13 @@
                     class="skip"
                     value="#feb640"
                  >
+                </div>
+                <div class="form-group">
+                  <div class="switch">
+                    <label>
+                      <input id="highlightLeaves" type="checkbox" class="skip"> Highlight Leaves
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -676,7 +683,7 @@
             type: d3.select("#type").node().value,
             colorOptions: 
             { 
-              colorMode: d3.select("#colorMode").node().value,
+              colorMode: "none",
               defaultColor: d3.select("#defaultColor").node().value,
               highlightColor: d3.select("#highlightColor").node().value,
             },
@@ -725,7 +732,7 @@
           tree.setAnimation(cached);
         });
 
-      d3.select("#colorMode").on("input", function() {
+/*      d3.select("#colorMode").on("input", function() {
         // this could prove annoying, but ill leave it for now
         if (this.value === "list") {
           d3.select("#defaultColor").node().value = "#243127";
@@ -739,21 +746,40 @@
           highlightColor: d3.select("#highlightColor").node().value
         });
       });
-
+*/
       d3.select("#defaultColor").on("input", function() {
         tree.setColorOptions({ 
-          colorMode: d3.select("#colorMode").node().value,
+          colorMode: d3.select("#highlightLeaves").node().value ? "list" : "none",
           defaultColor: this.value,
-          highlightColor: d3.select("#highlightColor").node().value
+          highlightColor: d3.select("#highlightColor").node().value,
+          nodeList: []
         });
       });
 
       d3.select("#highlightColor").on("input", function() {
         tree.setColorOptions({ 
-          colorMode: d3.select("#colorMode").node().value,
+          colorMode: d3.select("#highlightLeaves").node().value ? "list" : "none",
           defaultColor: d3.select("#defaultColor").node().value,
-          highlightColor: this.value
+          highlightColor: this.value,
+          nodeList: []
         });
+      });
+
+      d3.select("#highlightLeaves").on("input", function() {
+        if (this.value) {
+          tree.setColorOptions({
+            colorMode: "list",
+            defaultColor: d3.select("#defaultColor").node().value,
+            highlightColor: d3.select("#highlightColor").node().value,
+            nodeList: []
+          })
+        } else {
+          tree.setColorOptions({
+            colorMode: "none",
+            defaultColor: d3.select("#defaultColor").node().value,
+            highlightColor: d3.select("#highlightColor").node().value
+          })
+        }
       });
       
       d3.select("#branchNodeSize").on("input", function() {
