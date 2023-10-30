@@ -363,7 +363,7 @@
                 </div>
                 <div class="form-group">
                   <label for="colorMode">Color Mode</label>
-                  <select id="colorMode" class="form-control form-control-sm"></select>
+                  <select id="colorMode" class="form-control form-control-sm skip"></select>
                 </div>
               </div>
             </div>
@@ -677,6 +677,13 @@
           tree.setAnimation(cached);
         });
 
+      // im considering how to change the coloroptions as part of this form
+      // maybe ill make a color section, separate of leaves and branches etc
+      // for now ill do this and let it grow
+      d3.select("#colorMode").on("input", function() {
+        tree.setColorOptions({ colorMode: this.value });
+      });
+      
       d3.select("#branchNodeSize").on("input", function() {
         tree.eachBranchNode((node, data) => {
           d3.select(node).attr("r", this.value);
