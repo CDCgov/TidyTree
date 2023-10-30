@@ -670,6 +670,9 @@ TidyTree.prototype.redraw = function () {
         .duration(this.animation)
         .attr("transform", nodeTransformer);
 
+      let nodeGlyphs = update.select("circle");
+      nodeGlyphs.style("fill", d => findNodeColor(d, this.colorOptions));      
+
       let nodeLabels = update.select("text");
       if (this.layout === "vertical") {
         nodeLabels
@@ -815,9 +818,6 @@ TidyTree.prototype.setColorOptions = function (newColorOptions) {
     if (!Array.isArray(newColorOptions.nodeList)) {
       throw Error('nodeList must be an array for colorMode "list"');
     }
-    //if (!newColorOptions.defaultColor || !newColorOptions.highlightColor) {
-    //  throw Error('defaultColor and highlightColor must be defined for colorMode "list"');
-    //}
   }
   this.colorOptions = newColorOptions;
   if (this.parent) return this.redraw();
