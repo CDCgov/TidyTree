@@ -361,9 +361,52 @@
                     </label>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header" id="headingColor">
+              <h5 class="mb-0">
+                <button
+                  class="btn btn-link collapsed"
+                  data-toggle="collapse"
+                  data-target="#collapseColor"
+                  aria-expanded="false"
+                  aria-controls="collapseColor"
+                >
+                  Color
+                </button>
+              </h5>
+            </div>
+            <div
+              id="collapseColor"
+              class="collapse"
+              aria-labelledby="headingColor"
+              data-parent="#accordion"
+            >
+              <div class="card-body">
+                  <div class="form-group">
+                    <label for="colorMode">Color Mode</label>
+                    <select id="colorMode" class="form-control form-control-sm skip"></select>
+                   </div>
                 <div class="form-group">
-                  <label for="colorMode">Color Mode</label>
-                  <select id="colorMode" class="form-control form-control-sm skip"></select>
+                  <label>Default Color</label>
+                  <input
+                    type="color"
+                    id="defaultColor"
+                    class="skip"
+                    value="#243127"
+                 >
+                </div>
+                <div class="form-group">
+                  <label>Highlight Color</label>
+                  <input
+                    type="color"
+                    id="highlightColor"
+                    class="skip"
+                    value="#feb640"
+                 >
                 </div>
               </div>
             </div>
