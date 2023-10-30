@@ -376,14 +376,17 @@ nodeTransformers.dendrogram = nodeTransformers.tree;
  */
 function findNodeColor(node, colorOptions) {
   if (colorOptions.colorMode === "none") {
-    return colorOptions.defaultColor ?? "steelblue";
+    // steelblue
+    return colorOptions.defaultColor ?? "#4682B4";
   }
   console.log(node);
   let nodeList = colorOptions.nodeList;
 
   if (nodeList.includes(node.id)) {
+    // charcoal
     return colorOptions.highlightColor ?? "#feb640";
   } else {
+    // yellowish
     return colorOptions.defaultColor ?? "#243127";
   }
 }
