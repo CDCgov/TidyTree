@@ -379,10 +379,10 @@ function findNodeColor(node, colorOptions) {
     // steelblue
     return colorOptions.defaultColor ?? "#4682B4";
   }
-  console.log(node);
+ 
   let nodeList = colorOptions.nodeList;
 
-  if (nodeList.includes(node.id)) {
+  if (nodeList.includes(node.data._guid)) {
     // charcoal
     return colorOptions.highlightColor ?? "#feb640";
   } else {
@@ -1149,6 +1149,34 @@ TidyTree.prototype.setRuler = function (show) {
   }
   return this;
 };
+
+/**
+ * Retrieves the GUIDs of the nodes in the TidyTree instance.
+ *
+ * @param {boolean} leavesOnly - Whether to retrieve GUIDs only for leaf nodes.
+ * @return {Array} An array of GUIDs of the nodes.
+ */
+TidyTree.prototype.getNodeGUIDs = function (leavesOnly) {
+  // todo: make sure these are returned in order
+  let nodeList = this.parent
+    .select("svg")
+    .selectAll("g.tidytree-node-leaf circle")
+    ._groups[0];
+
+  if (!leavesOnly) {
+    nodeList = this.parent
+      .select("svg")
+      .selectAll("g.tidytree-node-leaf circle, g.tidytree-node-internal circle")
+      ._groups[0];
+  }
+
+  let nodeGUIDs = [];
+  for (const node of nodeList.values()) {
+    nodeGUIDs.push(node.__data__.data._guid);
+  }
+
+  return nodeGUIDs;
+}
 
 /**
  * Searches the tree, returns Search Results
