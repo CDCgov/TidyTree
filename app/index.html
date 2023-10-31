@@ -752,7 +752,7 @@
           colorMode: d3.select("#highlightLeaves").node().value ? "list" : "none",
           defaultColor: this.value,
           highlightColor: d3.select("#highlightColor").node().value,
-          nodeList: []
+          nodeList: tree.getNodeGUIDs(true)
         });
       });
 
@@ -761,17 +761,18 @@
           colorMode: d3.select("#highlightLeaves").node().value ? "list" : "none",
           defaultColor: d3.select("#defaultColor").node().value,
           highlightColor: this.value,
-          nodeList: []
+          nodeList: tree.getNodeGUIDs(true)
         });
       });
 
       d3.select("#highlightLeaves").on("input", function() {
+        console.log("tree", tree.getNodeGUIDs(true));
         if (this.value) {
           tree.setColorOptions({
             colorMode: "list",
             defaultColor: d3.select("#defaultColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
-            nodeList: []
+            nodeList: tree.getNodeGUIDs(true)
           })
         } else {
           tree.setColorOptions({
