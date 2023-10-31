@@ -11,7 +11,6 @@ export default function TidyTree(data, options, events) {
     layout: "vertical",
     type: "tree",
     mode: "smooth",
-    // trying to leave room to grow here
     colorOptions: { colorMode: "none" },
     leafNodes: true,
     leafLabels: false,
