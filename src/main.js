@@ -11,7 +11,7 @@ export default function TidyTree(data, options, events) {
     layout: "vertical",
     type: "tree",
     mode: "smooth",
-    colorOptions: { colorMode: "none" },
+    colorOptions: { nodeColorMode: "none" },
     leafNodes: true,
     leafLabels: false,
     equidistantLeaves: false,
@@ -110,7 +110,13 @@ TidyTree.validModes = ["smooth", "square", "straight"];
  * The available color modes for rendering nodes.
  * @type {Array}
  */
-TidyTree.validColorModes = ["none", "list"]; // later, highlight on hover, or maybe color by annotation on a node/ search
+TidyTree.validNodeColorModes = ["none", "list"]; // later, highlight on hover, or maybe color by annotation on a node/ search
+
+/**
+ * The available color modes for rendering branches.
+ * @type {Array}
+ */
+TidyTree.validLinkColorModes = ["none", "monophyletic"]; // later, toRoot? 
 
 /**
  * Draws a Phylogenetic on the element referred to by selector
@@ -374,7 +380,7 @@ nodeTransformers.dendrogram = nodeTransformers.tree;
  * @return {string} The color of the node.
  */
 function findNodeColor(node, colorOptions) {
-  if (colorOptions.colorMode === "none") {
+  if (colorOptions.nodeColorMode === "none") {
     // steelblue
     return colorOptions.defaultColor ?? "#4682B4";
   }
@@ -382,11 +388,43 @@ function findNodeColor(node, colorOptions) {
   let nodeList = colorOptions.nodeList;
 
   if (nodeList.includes(node.data._guid)) {
-    // charcoal
+    // yellowish
     return colorOptions.highlightColor ?? "#feb640";
   } else {
-    // yellowish
+    // charcoal
     return colorOptions.defaultColor ?? "#243127";
+  }
+}
+
+/**
+ * Find the color of a given link based on the provided color options.
+ *
+ * @param {string} link - The link for which to find the color.
+ * @param {object} colorOptions - The options for different link colors.
+ * @return {string} The color of the link.
+ */
+function findLinkColor(link, colorOptions) {
+  if (colorOptions.linkColorMode === "none") {
+    // charcoal
+    return colorOptions.defaultColor ?? "#243127";
+  }
+  let source = link.source;
+
+  // todo modify this to find all leaves rather than all children
+  // find all children of the source
+  let children = source.children;
+
+  // check if all children are in the node list
+  let allChildrenInNodeList = children.every(child => colorOptions.nodeList.includes(child.data._guid));
+
+  // if all of the children are in the node list, return the highlight color
+  if (allChildrenInNodeList) {
+    // yellowish
+    return colorOptions.highlightColor ?? "#feb640";
+  }
+
+  // otherwise, return the default color
+  return colorOptions.defaultColor ?? "#243127";
   }
 }
 
@@ -807,17 +845,30 @@ TidyTree.prototype.setLayout = function (newLayout) {
  * @return {TidyTree} The TidyTree Object
  */
 TidyTree.prototype.setColorOptions = function (newColorOptions) {
-  if (!TidyTree.validColorModes.includes(newColorOptions.colorMode)) {
+  if (!TidyTree.validNodeColorModes.includes(newColorOptions.nodeColorMode)) {
     throw Error(`
-      Cannot set TidyTree to colorOptions: ${newColorOptions.colorMode}\n
-      Valid colorModes are: ${TidyTree.validColorModes.join(', ')}
+      Cannot set TidyTree colorOptions: ${newColorOptions.nodeColorMode}\n
+      Valid nodeColorModes are: ${TidyTree.validnodeColorModes.join(', ')}
     `);
   }
-  if (newColorOptions.colorMode === 'list') {
+  if (!TidyTree.validLinkColorModes.includes(newColorOptions.linkColorMode)) {
+    throw Error(`
+      Cannot set TidyTree colorOptions: ${newColorOptions.linkColorMode}\n
+      Valid linkColorModes are: ${TidyTree.validLinkColorModes.join(', ')}
+    `);
+  }
+
+  if (newColorOptions.nodeColorMode === 'list') {
     if (!Array.isArray(newColorOptions.nodeList)) {
-      throw Error('nodeList must be an array for colorMode "list"');
+      throw Error('nodeList must be an array for nodeColorMode "list"');
+    }
+  } else {
+    // nodeColorMode === 'none'
+    if (newColorOptions.linkColorMode !== 'none') {
+      throw Error('linkColorMode must be "none" for nodeColorMode "none"');
     }
   }
+
   this.colorOptions = newColorOptions;
   if (this.parent) return this.redraw();
   return this;
