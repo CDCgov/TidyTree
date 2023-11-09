@@ -405,27 +405,35 @@ function findNodeColor(node, colorOptions) {
  */
 function findLinkColor(link, colorOptions) {
   if (colorOptions.linkColorMode === "none") {
-    // charcoal
     return colorOptions.defaultColor ?? "#243127";
   }
+
   let source = link.source;
+  let children = getAllLeaves(source);
 
-  // todo modify this to find all leaves rather than all children
-  // find all children of the source
-  let children = source.children;
+  let allChildrenInNodeList = children.every(child =>
+    colorOptions.nodeList.includes(child.data._guid)
+  );
 
-  // check if all children are in the node list
-  let allChildrenInNodeList = children.every(child => colorOptions.nodeList.includes(child.data._guid));
-
-  // if all of the children are in the node list, return the highlight color
   if (allChildrenInNodeList) {
-    // yellowish
     return colorOptions.highlightColor ?? "#feb640";
   }
 
-  // otherwise, return the default color
   return colorOptions.defaultColor ?? "#243127";
+}
+
+function getAllLeaves(node) {
+  let leaves = [];
+
+  if (node.children.length === 0) {
+    leaves.push(node);
+  } else {
+    node.children.forEach(child => {
+      leaves.push(...getAllLeaves(child));
+    });
   }
+
+  return leaves;
 }
 
 const radToDeg = 180 / Math.PI;
