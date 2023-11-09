@@ -366,6 +366,60 @@
           </div>
 
           <div class="card">
+            <div class="card-header" id="headingColor">
+              <h5 class="mb-0">
+                <button
+                  class="btn btn-link collapsed"
+                  data-toggle="collapse"
+                  data-target="#collapseColor"
+                  aria-expanded="false"
+                  aria-controls="collapseColor"
+                >
+                  Color
+                </button>
+              </h5>
+            </div>
+            <div
+              id="collapseColor"
+              class="collapse"
+              aria-labelledby="headingColor"
+              data-parent="#accordion"
+            >
+              <div class="card-body">
+              <!--    <div class="form-group">
+                    <label for="colorMode">Color Mode</label>
+                    <select id="colorMode" class="form-control form-control-sm skip"></select>
+                   </div> -->
+                <div class="form-group">
+                  <label>Default Color</label>
+                  <input
+                    type="color"
+                    id="defaultColor"
+                    class="skip"
+                    value="#4682B4"
+                 >
+                </div>
+                <div class="form-group">
+                  <label>Highlight Color</label>
+                  <input
+                    type="color"
+                    id="highlightColor"
+                    class="skip"
+                    value="#feb640"
+                 >
+                </div>
+                <div class="form-group">
+                  <div class="switch">
+                    <label>
+                      <input id="highlightLeaves" type="checkbox" class="skip"> Highlight Leaves
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
             <div class="card-header" id="headingMeta">
               <h5 class="mb-0">
                 <button
@@ -603,7 +657,7 @@
         fetch("life.nwk").then(response => response.text().then(buildTree));
       });
 
-      ["layout", "mode", "type"].forEach(thing => {
+      ["layout", "mode", "type", "colorMode"].forEach(thing => {
         var title = "valid" + thing[0].toUpperCase() + thing.slice(1) + "s";
         d3.select("#" + thing)
           .selectAll("option")
@@ -627,6 +681,12 @@
             layout: d3.select("#layout").node().value,
             mode: d3.select("#mode").node().value,
             type: d3.select("#type").node().value,
+            colorOptions: 
+            { 
+              colorMode: "list",
+              defaultColor: d3.select("#defaultColor").node().value,
+              highlightColor: d3.select("#highlightColor").node().value,
+            },
             leafNodes: d3.select("#leafNodes").node().checked,
             branchNodes: d3.select("#branchNodes").node().checked,
             leafLabels: d3.select("#leafLabels").node().checked,
@@ -672,6 +732,63 @@
           tree.setAnimation(cached);
         });
 
+        // might want this back when we have more color mode options
+        // for now, ill leave it out in favor of the highlight toggle
+/*      d3.select("#colorMode").on("input", function() {
+        // this could prove annoying, but ill leave it for now
+        if (this.value === "list") {
+          d3.select("#defaultColor").node().value = "#243127";
+        } else {
+          d3.select("#defaultColor").node().value = "#4682B4";
+        }
+
+        tree.setColorOptions({ 
+          colorMode: this.value,
+          defaultColor: d3.select("#defaultColor").node().value,
+          highlightColor: d3.select("#highlightColor").node().value
+        });
+      });
+*/
+      d3.select("#defaultColor").on("input", function() {
+        tree.setColorOptions({ 
+          colorMode: d3.select("#highlightLeaves").node().value ? "list" : "none",
+          defaultColor: this.value,
+          highlightColor: d3.select("#highlightColor").node().value,
+          nodeList: tree.getNodeGUIDs(true)
+        });
+      });
+
+      d3.select("#highlightColor").on("input", function() {
+        if (!d3.select("#highlightLeaves").property("checked")) {
+            d3.select("#highlightLeaves").property("checked",true);
+        }
+        tree.setColorOptions({ 
+          colorMode: d3.select("#highlightLeaves").node().value ? "list" : "none",
+          defaultColor: d3.select("#defaultColor").node().value,
+          highlightColor: this.value,
+          nodeList: tree.getNodeGUIDs(true)
+        });
+      });
+
+      d3.select("#highlightLeaves").on("input", function() {
+        // console.log("tree", tree.getNodeGUIDs(this.value));
+        if (d3.select("#highlightLeaves").property("checked")) {
+          tree.setColorOptions({
+            colorMode: "list",
+            defaultColor: d3.select("#defaultColor").node().value,
+            highlightColor: d3.select("#highlightColor").node().value,
+            nodeList: tree.getNodeGUIDs(true)
+          })
+        } else {
+          tree.setColorOptions({
+            colorMode: "none",
+            defaultColor: d3.select("#defaultColor").node().value,
+            highlightColor: d3.select("#highlightColor").node().value,
+            nodeList: tree.getNodeGUIDs(false)
+          })
+        }
+      });
+      
       d3.select("#branchNodeSize").on("input", function() {
         tree.eachBranchNode((node, data) => {
           d3.select(node).attr("r", this.value);

@@ -11,6 +11,7 @@ export default function TidyTree(data, options, events) {
     layout: "vertical",
     type: "tree",
     mode: "smooth",
+    colorOptions: { colorMode: "none" },
     leafNodes: true,
     leafLabels: false,
     equidistantLeaves: false,
@@ -104,6 +105,12 @@ TidyTree.validTypes = ["tree", "weighted", "dendrogram"];
  * @type {Array}
  */
 TidyTree.validModes = ["smooth", "square", "straight"];
+
+/**
+ * The available color modes for rendering nodes.
+ * @type {Array}
+ */
+TidyTree.validColorModes = ["none", "list"]; // later, highlight on hover, or maybe color by annotation on a node/ search
 
 /**
  * Draws a Phylogenetic on the element referred to by selector
@@ -359,6 +366,30 @@ let nodeTransformers = {
 
 nodeTransformers.dendrogram = nodeTransformers.tree;
 
+/**
+ * Finds the color of a given node based on the color options provided.
+ *
+ * @param {Object} node - The node for which to find the color.
+ * @param {Object} colorOptions - The color options object containing the color mode, node list, default color, and highlight color.
+ * @return {string} The color of the node.
+ */
+function findNodeColor(node, colorOptions) {
+  if (colorOptions.colorMode === "none") {
+    // steelblue
+    return colorOptions.defaultColor ?? "#4682B4";
+  }
+ 
+  let nodeList = colorOptions.nodeList;
+
+  if (nodeList && nodeList.includes(node.data._guid)) {
+    // charcoal
+    return colorOptions.highlightColor ?? "#feb640";
+  } else {
+    // yellowish
+    return colorOptions.defaultColor ?? "#243127";
+  }
+}
+
 const radToDeg = 180 / Math.PI;
 
 let labelTransformers = {
@@ -586,6 +617,7 @@ TidyTree.prototype.redraw = function () {
           (d.children && this.branchNodes) ||
           (!d.children && this.leafNodes) ? 1 : 0
         )
+        .style("fill", d => findNodeColor(d, this.colorOptions))
         .on("mouseenter focusin", d => this.trigger("showtooltip", d))
         .on("mouseout focusout", d => this.trigger("hidetooltip", d))
         .on("contextmenu", d => this.trigger("contextmenu", d))
@@ -636,6 +668,9 @@ TidyTree.prototype.redraw = function () {
         .transition()
         .duration(this.animation)
         .attr("transform", nodeTransformer);
+
+      let nodeGlyphs = update.select("circle");
+      nodeGlyphs.style("fill", d => findNodeColor(d, this.colorOptions));      
 
       let nodeLabels = update.select("text");
       if (this.layout === "vertical") {
@@ -765,6 +800,28 @@ TidyTree.prototype.setLayout = function (newLayout) {
   if (this.parent) return this.redraw();
   return this;
 };
+
+/**
+ * Set the TidyTree's colorOptions
+ * @param {Object} newColorOptions The new colorOptions
+ * @return {TidyTree} The TidyTree Object
+ */
+TidyTree.prototype.setColorOptions = function (newColorOptions) {
+  if (!TidyTree.validColorModes.includes(newColorOptions.colorMode)) {
+    throw Error(`
+      Cannot set TidyTree to colorOptions: ${newColorOptions.colorMode}\n
+      Valid colorModes are: ${TidyTree.validColorModes.join(', ')}
+    `);
+  }
+  if (newColorOptions.colorMode === 'list') {
+    if (!Array.isArray(newColorOptions.nodeList)) {
+      throw Error('nodeList must be an array for colorMode "list"');
+    }
+  }
+  this.colorOptions = newColorOptions;
+  if (this.parent) return this.redraw();
+  return this;
+}
 
 /**
  * Set the TidyTree's mode
@@ -1091,6 +1148,34 @@ TidyTree.prototype.setRuler = function (show) {
   }
   return this;
 };
+
+/**
+ * Retrieves the GUIDs of the nodes in the TidyTree instance.
+ *
+ * @param {boolean} leavesOnly - Whether to retrieve GUIDs only for leaf nodes.
+ * @return {Array} An array of GUIDs of the nodes.
+ */
+TidyTree.prototype.getNodeGUIDs = function (leavesOnly) {
+  // todo: make sure these are returned in order
+  let nodeList = this.parent
+    .select("svg")
+    .selectAll("g.tidytree-node-leaf circle")
+    ._groups[0];
+
+  if (!leavesOnly) {
+    nodeList = this.parent
+      .select("svg")
+      .selectAll("g.tidytree-node-leaf circle, g.tidytree-node-internal circle")
+      ._groups[0];
+  }
+
+  let nodeGUIDs = [];
+  for (const node of nodeList.values()) {
+    nodeGUIDs.push(node.__data__.data._guid);
+  }
+
+  return nodeGUIDs;
+}
 
 /**
  * Searches the tree, returns Search Results
