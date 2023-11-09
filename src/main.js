@@ -574,7 +574,7 @@ TidyTree.prototype.redraw = function () {
       newLinks
         .append("path")
         .attr("fill", "none")
-        .attr("stroke", "#ccc")
+        .attr("stroke", d => findLinkColor(d, this.colorOptions))
         .attr("d", linkTransformer)
         .transition()
         .duration(this.animation)
@@ -601,6 +601,7 @@ TidyTree.prototype.redraw = function () {
         paths
           .transition()
           .duration(this.animation / 2)
+          .attr("stroke", d => findLinkColor(d, this.colorOptions))
           .attr("opacity", 0)
           .end()
           .then(() => {
