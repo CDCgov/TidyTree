@@ -405,7 +405,7 @@ function findNodeColor(node, colorOptions) {
  */
 function findLinkColor(link, colorOptions) {
   if (colorOptions.linkColorMode === "none") {
-    return colorOptions.defaultColor ?? "#243127";
+    return colorOptions.defaultColor ?? "#ccc";
   }
 
   let source = link.source;
@@ -419,7 +419,7 @@ function findLinkColor(link, colorOptions) {
     return colorOptions.highlightColor ?? "#feb640";
   }
 
-  return colorOptions.defaultColor ?? "#243127";
+  return colorOptions.defaultColor ?? "#ccc";
 }
 
 function getAllLeaves(node) {
