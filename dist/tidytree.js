@@ -1628,7 +1628,7 @@ var TidyTree = (function () {
    
     let nodeList = colorOptions.nodeList;
 
-    if (nodeList.includes(node.data._guid)) {
+    if (nodeList && nodeList.includes(node.data._guid)) {
       // charcoal
       return colorOptions.highlightColor ?? "#feb640";
     } else {

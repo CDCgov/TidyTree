@@ -690,7 +690,7 @@
             type: d3.select("#type").node().value,
             colorOptions: 
             { 
-              colorMode: "none",
+              colorMode: "list",
               defaultColor: d3.select("#defaultColor").node().value,
               highlightColor: d3.select("#highlightColor").node().value,
             },
@@ -766,6 +766,9 @@
       });
 
       d3.select("#highlightColor").on("input", function() {
+        if (!d3.select("#highlightLeaves").property("checked")) {
+            d3.select("#highlightLeaves").property("checked",true);
+        }
         tree.setColorOptions({ 
           colorMode: d3.select("#highlightLeaves").node().value ? "list" : "none",
           defaultColor: d3.select("#defaultColor").node().value,
@@ -775,8 +778,8 @@
       });
 
       d3.select("#highlightLeaves").on("input", function() {
-        console.log("tree", tree.getNodeGUIDs(true));
-        if (this.value) {
+        // console.log("tree", tree.getNodeGUIDs(this.value));
+        if (d3.select("#highlightLeaves").property("checked")) {
           tree.setColorOptions({
             colorMode: "list",
             defaultColor: d3.select("#defaultColor").node().value,
@@ -787,7 +790,8 @@
           tree.setColorOptions({
             colorMode: "none",
             defaultColor: d3.select("#defaultColor").node().value,
-            highlightColor: d3.select("#highlightColor").node().value
+            highlightColor: d3.select("#highlightColor").node().value,
+            nodeList: tree.getNodeGUIDs(false)
           })
         }
       });
