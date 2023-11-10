@@ -409,13 +409,13 @@ function findBranchColor(link, colorOptions) {
   }
   
   let source = link.source;
-  let childLeaves = getAllLeaves(source);
+  let children = source.children;
   
-  let allChildLeavesInNodeList = childLeaves.every(childLeaf =>
-    colorOptions.nodeList?.includes(childLeaf.data._guid)
+  let allChildrenInNodeList = children.every(child =>
+    colorOptions.nodeList?.includes(child.data._guid)
   );
-
-  if (allChildLeavesInNodeList) {
+ 
+  if (allChildrenInNodeList) {
     return colorOptions.highlightColor ?? "#feb640";
   }
 
@@ -604,7 +604,9 @@ TidyTree.prototype.redraw = function () {
       let linkTransformer = linkTransformers[this.type][this.mode][this.layout];
       let paths = update.select("path");
       if (!this.animation > 0) {
-        paths.attr("d", linkTransformer);
+        paths
+        .attr("d", linkTransformer)
+        .attr("stroke", d => findBranchColor(d, this.colorOptions));
       } else {
         paths
           .transition()
