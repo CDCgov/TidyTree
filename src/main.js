@@ -116,7 +116,7 @@ TidyTree.validNodeColorModes = ["none", "list"]; // later, highlight on hover, o
  * The available color modes for rendering branches.
  * @type {Array}
  */
-TidyTree.validLinkColorModes = ["none", "monophyletic"]; // later, toRoot? 
+TidyTree.validBranchColorModes = ["none", "monophyletic"]; // later, toRoot? 
 
 /**
  * Draws a Phylogenetic on the element referred to by selector
@@ -403,33 +403,41 @@ function findNodeColor(node, colorOptions) {
  * @param {object} colorOptions - The options for different link colors.
  * @return {string} The color of the link.
  */
-function findLinkColor(link, colorOptions) {
-  if (colorOptions.linkColorMode === "none") {
+function findBranchColor(link, colorOptions) {
+  if (colorOptions.branchColorMode === "none") {
     return colorOptions.defaultColor ?? "#ccc";
   }
-
+  
   let source = link.source;
-  let children = getAllLeaves(source);
-
-  let allChildrenInNodeList = children.every(child =>
-    colorOptions.nodeList.includes(child.data._guid)
+  let childLeaves = getAllLeaves(source);
+  console.log("childLeaves", childLeaves);
+  let allChildLeavesInNodeList = childLeaves.every(childLeaf =>
+    colorOptions.nodeList?.includes(childLeaf.data._guid)
   );
 
-  if (allChildrenInNodeList) {
+  if (allChildLeavesInNodeList) {
     return colorOptions.highlightColor ?? "#feb640";
   }
 
   return colorOptions.defaultColor ?? "#ccc";
 }
 
-function getAllLeaves(node) {
+/**
+ * Returns an array of all the child leaf nodes of the given node in a tree.
+ *
+ * @param {Object} node - A node of the tree.
+ * @param {boolean} includeSelf - Whether to include the given node itself as a leaf node. Defaults to false.
+ * @return {Array} An array of leaf nodes.
+ */
+function getAllLeaves(node, includeSelf) {
+  includeSelf = includeSelf ?? false;
   let leaves = [];
 
-  if (node.children.length === 0) {
+  if (includeSelf && node.height === 0) {
     leaves.push(node);
   } else {
     node.children.forEach(child => {
-      leaves.push(...getAllLeaves(child));
+      leaves.push(...getAllLeaves(child, true));
     });
   }
 
@@ -574,7 +582,7 @@ TidyTree.prototype.redraw = function () {
       newLinks
         .append("path")
         .attr("fill", "none")
-        .attr("stroke", d => findLinkColor(d, this.colorOptions))
+        .attr("stroke", d => findBranchColor(d, this.colorOptions))
         .attr("d", linkTransformer)
         .transition()
         .duration(this.animation)
@@ -601,7 +609,7 @@ TidyTree.prototype.redraw = function () {
         paths
           .transition()
           .duration(this.animation / 2)
-          .attr("stroke", d => findLinkColor(d, this.colorOptions))
+          .attr("stroke", d => findBranchColor(d, this.colorOptions))
           .attr("opacity", 0)
           .end()
           .then(() => {
@@ -857,13 +865,13 @@ TidyTree.prototype.setColorOptions = function (newColorOptions) {
   if (!TidyTree.validNodeColorModes.includes(newColorOptions.nodeColorMode)) {
     throw Error(`
       Cannot set TidyTree colorOptions: ${newColorOptions.nodeColorMode}\n
-      Valid nodeColorModes are: ${TidyTree.validnodeColorModes.join(', ')}
+      Valid nodeColorModes are: ${TidyTree.validNodeColorModes.join(', ')}
     `);
   }
-  if (!TidyTree.validLinkColorModes.includes(newColorOptions.linkColorMode)) {
+  if (!TidyTree.validBranchColorModes.includes(newColorOptions.branchColorMode)) {
     throw Error(`
-      Cannot set TidyTree colorOptions: ${newColorOptions.linkColorMode}\n
-      Valid linkColorModes are: ${TidyTree.validLinkColorModes.join(', ')}
+      Cannot set TidyTree colorOptions: ${newColorOptions.branchColorMode}\n
+      Valid branchColorModes are: ${TidyTree.validBranchColorModes.join(', ')}
     `);
   }
 
@@ -873,8 +881,8 @@ TidyTree.prototype.setColorOptions = function (newColorOptions) {
     }
   } else {
     // nodeColorMode === 'none'
-    if (newColorOptions.linkColorMode !== 'none') {
-      throw Error('linkColorMode must be "none" for nodeColorMode "none"');
+    if (newColorOptions.branchColorMode !== 'none') {
+      throw Error('branchColorMode must be "none" for nodeColorMode "none"');
     }
   }
 
