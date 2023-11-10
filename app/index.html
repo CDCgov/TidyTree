@@ -405,7 +405,7 @@
                     type="color"
                     id="defaultBranchColor"
                     class="skip"
-                    value="#ccc"
+                    value="#cccccc"
                  >
                 </div>
                 <div class="form-group">
@@ -804,7 +804,6 @@
       });
 
       d3.select("#highlightLeaves").on("input", function() {
-        // console.log("tree", tree.getNodeGUIDs(this.value));
         if (d3.select("#highlightLeaves").property("checked")) {
           tree.setColorOptions({
             nodeColorMode: "list",
@@ -815,6 +814,9 @@
             nodeList: tree.getNodeGUIDs(true)
           })
         } else {
+          if (d3.select("#highlightBranches").property("checked")) {
+            d3.select("#highlightBranches").property("checked", false);
+          }
           tree.setColorOptions({
             nodeColorMode: "none",
             branchColorMode: d3.select("#highlightBranches").property("checked") ? "monophyletic" : "none",
@@ -831,7 +833,7 @@
           if (!d3.select("#highlightLeaves").property("checked")) {
             d3.select("#highlightLeaves").property("checked", true);
           }
-          setColorOptions({
+          tree.setColorOptions({
             nodeColorMode: "list",
             branchColorMode: "monophyletic",
             defaultNodeColor: d3.select("#defaultNodeColor").node().value,
@@ -840,7 +842,7 @@
             nodeList: tree.getNodeGUIDs(true)
           })
         } else {
-          setColorOptions({
+          tree.setColorOptions({
             nodeColorMode: d3.select("#highlightLeaves").property("checked") ? "list" : "none",
             branchColorMode: "none",
             defaultNodeColor: d3.select("#defaultNodeColor").node().value,
