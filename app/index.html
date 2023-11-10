@@ -664,7 +664,7 @@
         fetch("life.nwk").then(response => response.text().then(buildTree));
       });
 
-      ["layout", "mode", "type", "nodeColorMode", "branchColorMode"].forEach(thing => {
+      ["layout", "mode", "type"].forEach(thing => {
         var title = "valid" + thing[0].toUpperCase() + thing.slice(1) + "s";
         d3.select("#" + thing)
           .selectAll("option")
