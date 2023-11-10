@@ -391,12 +391,21 @@
                     <select id="colorMode" class="form-control form-control-sm skip"></select>
                    </div> -->
                 <div class="form-group">
-                  <label>Default Color</label>
+                  <label>Default Node Color</label>
                   <input
                     type="color"
-                    id="defaultColor"
+                    id="defaultNodeColor"
                     class="skip"
                     value="#4682B4"
+                 >
+                </div>
+                <div class="form-group">
+                  <label>Default Branch Color</label>
+                  <input
+                    type="color"
+                    id="defaultBranchColor"
+                    class="skip"
+                    value="#ccc"
                  >
                 </div>
                 <div class="form-group">
@@ -692,7 +701,8 @@
             { 
               nodeColorMode: "list",
               branchColorMode: "monophyletic",
-              defaultColor: d3.select("#defaultColor").node().value,
+              defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+              defaultBranchColor: d3.select("#defaultBranchColor").node().value,
               highlightColor: d3.select("#highlightColor").node().value,
             },
             leafNodes: d3.select("#leafNodes").node().checked,
@@ -745,23 +755,35 @@
 /*      d3.select("#colorMode").on("input", function() {
         // this could prove annoying, but ill leave it for now
         if (this.value === "list") {
-          d3.select("#defaultColor").node().value = "#243127";
+          d3.select("#defaultNodeColor").node().value = "#243127";
         } else {
-          d3.select("#defaultColor").node().value = "#4682B4";
+          d3.select("#defaultNodeColor").node().value = "#4682B4";
         }
 
         tree.setColorOptions({ 
           colorMode: this.value,
-          defaultColor: d3.select("#defaultColor").node().value,
+          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
           highlightColor: d3.select("#highlightColor").node().value
         });
       });
 */
-      d3.select("#defaultColor").on("input", function() {
+      d3.select("#defaultNodeColor").on("input", function() {
         tree.setColorOptions({ 
           nodeColorMode: d3.select("#highlightLeaves").node().value ? "list" : "none",
           branchColorMode: d3.select("#highlightBranches").property("checked") ? "monophyletic" : "none",
-          defaultColor: this.value,
+          defaultNodeColor: this.value,
+          defaultBranchColor: d3.select("#defaultBranchColor").node().value,
+          highlightColor: d3.select("#highlightColor").node().value,
+          nodeList: tree.getNodeGUIDs(true)
+        });
+      });
+
+      d3.select("#defaultBranchColor").on("input", function() {
+        tree.setColorOptions({ 
+          nodeColorMode: d3.select("#highlightLeaves").node().value ? "list" : "none",
+          branchColorMode: d3.select("#highlightBranches").property("checked") ? "monophyletic" : "none",
+          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+          defaultBranchColor: this.value,
           highlightColor: d3.select("#highlightColor").node().value,
           nodeList: tree.getNodeGUIDs(true)
         });
@@ -774,7 +796,8 @@
         tree.setColorOptions({ 
           nodeColorMode: d3.select("#highlightLeaves").node().value ? "list" : "none",
           branchColorMode: d3.select("#highlightBranches").property("checked") ? "monophyletic" : "none",
-          defaultColor: d3.select("#defaultColor").node().value,
+          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+          defaultBranchColor: d3.select("#defaultBranchColor").node().value,
           highlightColor: this.value,
           nodeList: tree.getNodeGUIDs(true)
         });
@@ -786,7 +809,8 @@
           tree.setColorOptions({
             nodeColorMode: "list",
             branchColorMode: d3.select("#highlightBranches").property("checked") ? "monophyletic" : "none",
-            defaultColor: d3.select("#defaultColor").node().value,
+            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
             nodeList: tree.getNodeGUIDs(true)
           })
@@ -794,7 +818,8 @@
           tree.setColorOptions({
             nodeColorMode: "none",
             branchColorMode: d3.select("#highlightBranches").property("checked") ? "monophyletic" : "none",
-            defaultColor: d3.select("#defaultColor").node().value,
+            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
             nodeList: tree.getNodeGUIDs(false)
           })
@@ -809,7 +834,8 @@
           setColorOptions({
             nodeColorMode: "list",
             branchColorMode: "monophyletic",
-            defaultColor: d3.select("#defaultColor").node().value,
+            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
             nodeList: tree.getNodeGUIDs(true)
           })
@@ -817,7 +843,8 @@
           setColorOptions({
             nodeColorMode: d3.select("#highlightLeaves").property("checked") ? "list" : "none",
             branchColorMode: "none",
-            defaultColor: d3.select("#defaultColor").node().value,
+            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
             nodeList: tree.getNodeGUIDs(true)
           })

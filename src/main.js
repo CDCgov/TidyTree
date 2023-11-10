@@ -382,7 +382,7 @@ nodeTransformers.dendrogram = nodeTransformers.tree;
 function findNodeColor(node, colorOptions) {
   if (colorOptions.nodeColorMode === "none") {
     // steelblue
-    return colorOptions.defaultColor ?? "#4682B4";
+    return colorOptions.defaultNodeColor ?? "#4682B4";
   }
  
   let nodeList = colorOptions.nodeList;
@@ -392,7 +392,7 @@ function findNodeColor(node, colorOptions) {
     return colorOptions.highlightColor ?? "#feb640";
   } else {
     // charcoal
-    return colorOptions.defaultColor ?? "#243127";
+    return colorOptions.defaultNodeColor ?? "#243127";
   }
 }
 
@@ -405,12 +405,12 @@ function findNodeColor(node, colorOptions) {
  */
 function findBranchColor(link, colorOptions) {
   if (colorOptions.branchColorMode === "none") {
-    return colorOptions.defaultColor ?? "#ccc";
+    return colorOptions.defaultBranchColor ?? "#ccc";
   }
   
   let source = link.source;
   let childLeaves = getAllLeaves(source);
-  console.log("childLeaves", childLeaves);
+  
   let allChildLeavesInNodeList = childLeaves.every(childLeaf =>
     colorOptions.nodeList?.includes(childLeaf.data._guid)
   );
@@ -419,7 +419,7 @@ function findBranchColor(link, colorOptions) {
     return colorOptions.highlightColor ?? "#feb640";
   }
 
-  return colorOptions.defaultColor ?? "#ccc";
+  return colorOptions.defaultBranchColor ?? "#ccc";
 }
 
 /**
