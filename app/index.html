@@ -386,10 +386,14 @@
               data-parent="#accordion"
             >
               <div class="card-body">
-              <!--    <div class="form-group">
-                    <label for="colorMode">Color Mode</label>
-                    <select id="colorMode" class="form-control form-control-sm skip"></select>
-                   </div> -->
+                <div class="form-group">
+                  <label for="highlightMode">Highlighting Example</label>
+                  <select id="highlightMode" class="form-control form-control-sm skip">
+                    <option value="none">No highlighting</option>
+                    <option value="leaves">Highlight leaf nodes</option>
+                    <option value="monophyletic">Highlight E. coli and Shigella branches+nodes</option>
+                  </select>
+                </div>
                 <div class="form-group">
                   <label>Default Node Color</label>
                   <input
@@ -416,20 +420,6 @@
                     class="skip"
                     value="#feb640"
                  >
-                </div>
-                <div class="form-group">
-                  <div class="switch">
-                    <label>
-                      <input id="highlightLeaves" type="checkbox" class="skip"> Highlight Leaves
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <div class="switch">
-                    <label>
-                      <input id="highlightBranches" type="checkbox" class="skip"> Highlight Branches
-                    </label>
-                  </div>
                 </div>
               </div>
             </div>
@@ -750,107 +740,72 @@
           tree.setAnimation(cached);
         });
 
-        // might want this back when we have more color mode options
-        // for now, ill leave it out in favor of the highlight toggle
-/*      d3.select("#colorMode").on("input", function() {
-        // this could prove annoying, but ill leave it for now
-        if (this.value === "list") {
-          d3.select("#defaultNodeColor").node().value = "#243127";
-        } else {
-          d3.select("#defaultNodeColor").node().value = "#4682B4";
-        }
-
-        tree.setColorOptions({ 
-          colorMode: this.value,
-          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-          highlightColor: d3.select("#highlightColor").node().value
-        });
-      });
-*/
-      d3.select("#defaultNodeColor").on("input", function() {
-        tree.setColorOptions({ 
-          nodeColorMode: d3.select("#highlightLeaves").property("checked") ? "list" : "none",
-          branchColorMode: d3.select("#highlightBranches").property("checked") ? "monophyletic" : "none",
-          defaultNodeColor: this.value,
-          defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-          highlightColor: d3.select("#highlightColor").node().value,
-          nodeList: tree.getNodeGUIDs(true)
-        });
-      });
-
-      d3.select("#defaultBranchColor").on("input", function() {
-        tree.setColorOptions({ 
-          nodeColorMode: d3.select("#highlightLeaves").property("checked") ? "list" : "none",
-          branchColorMode: d3.select("#highlightBranches").property("checked") ? "monophyletic" : "none",
-          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-          defaultBranchColor: this.value,
-          highlightColor: d3.select("#highlightColor").node().value,
-          nodeList: tree.getNodeGUIDs(true)
-        });
-      });
-
-      d3.select("#highlightColor").on("input", function() {
-        if (!d3.select("#highlightLeaves").property("checked")) {
-            d3.select("#highlightLeaves").property("checked",true);
-        }
-        tree.setColorOptions({ 
-          nodeColorMode: d3.select("#highlightLeaves").property("checked") ? "list" : "none",
-          branchColorMode: d3.select("#highlightBranches").property("checked") ? "monophyletic" : "none",
-          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-          defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-          highlightColor: this.value,
-          nodeList: tree.getNodeGUIDs(true)
-        });
-      });
-
-      d3.select("#highlightLeaves").on("input", function() {
-        if (d3.select("#highlightLeaves").property("checked")) {
+      d3.select("#highlightMode").on("input", function() {
+        if (this.value === "none") {
+          tree.setColorOptions({
+            nodeColorMode: "none",
+            branchColorMode: "none",
+            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
+            highlightColor: d3.select("#highlightColor").node().value
+          });
+        } else if (this.value === "leaves") {
           tree.setColorOptions({
             nodeColorMode: "list",
-            branchColorMode: d3.select("#highlightBranches").property("checked") ? "monophyletic" : "none",
+            branchColorMode: "none",
             defaultNodeColor: d3.select("#defaultNodeColor").node().value,
             defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
             nodeList: tree.getNodeGUIDs(true)
-          })
-        } else {
-          if (d3.select("#highlightBranches").property("checked")) {
-            d3.select("#highlightBranches").property("checked", false);
-          }
-          tree.setColorOptions({
-            nodeColorMode: "none",
-            branchColorMode: d3.select("#highlightBranches").property("checked") ? "monophyletic" : "none",
-            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-            highlightColor: d3.select("#highlightColor").node().value,
-            nodeList: tree.getNodeGUIDs(false)
-          })
-        }
-      });
-
-      d3.select("#highlightBranches").on("input", function() {
-        if (d3.select("#highlightBranches").property("checked")) {
-          if (!d3.select("#highlightLeaves").property("checked")) {
-            d3.select("#highlightLeaves").property("checked", true);
-          }
+          });
+        } else if (this.value === "monophyletic") {
           tree.setColorOptions({
             nodeColorMode: "list",
             branchColorMode: "monophyletic",
             defaultNodeColor: d3.select("#defaultNodeColor").node().value,
             defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
-            nodeList: tree.getNodeGUIDs(true)
-          })
-        } else {
-          tree.setColorOptions({
-            nodeColorMode: d3.select("#highlightLeaves").property("checked") ? "list" : "none",
-            branchColorMode: "none",
-            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-            highlightColor: d3.select("#highlightColor").node().value,
+            // todo set to false, to get branch nodes too
+            // todo update this fxn, or add another, to return GUIDs based on some attribute, or the id of the node
             nodeList: tree.getNodeGUIDs(true)
           })
         }
+      });
+
+      d3.select("#defaultNodeColor").on("input", function() {
+        tree.setColorOptions({ 
+          nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
+          branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
+          defaultNodeColor: this.value,
+          defaultBranchColor: d3.select("#defaultBranchColor").node().value,
+          highlightColor: d3.select("#highlightColor").node().value,
+          // todo make this dependent on highlightMode, once this fxn is updated
+          nodeList: tree.getNodeGUIDs(true)
+        });
+      });
+
+      d3.select("#defaultBranchColor").on("input", function() {
+        tree.setColorOptions({ 
+          nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
+          branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
+          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+          defaultBranchColor: this.value,
+          highlightColor: d3.select("#highlightColor").node().value,
+          // todo make this dependent on highlightMode, once this fxn is updated
+          nodeList: tree.getNodeGUIDs(true)
+        });
+      });
+
+      d3.select("#highlightColor").on("input", function() {
+        tree.setColorOptions({ 
+          nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
+          branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
+          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+          defaultBranchColor: d3.select("#defaultBranchColor").node().value,
+          highlightColor: this.value,
+          // todo make this dependent on highlightMode, once this fxn is updated
+          nodeList: tree.getNodeGUIDs(true)
+        });
       });
       
       d3.select("#branchNodeSize").on("input", function() {
