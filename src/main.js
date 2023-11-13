@@ -405,21 +405,27 @@ function findNodeColor(node, colorOptions) {
  */
 function findBranchColor(link, colorOptions) {
   if (colorOptions.branchColorMode === "none") {
-    return colorOptions.defaultBranchColor ?? "#ccc";
+    // light gray
+    return colorOptions.defaultBranchColor ?? "#cccccc";
   }
   
   let source = link.source;
-  let children = source.children;
+  //let children = source.children;
+  let childLeafNodes = getAllLeaves(source);
   
-  let allChildrenInNodeList = children.every(child =>
+  //let allChildrenInNodeList = children.every(child =>
+  //  colorOptions.nodeList?.includes(child.data._guid)
+  //);
+  let allChildLeafNodesInNodeList = childLeafNodes.every(child =>
     colorOptions.nodeList?.includes(child.data._guid)
   );
  
-  if (allChildrenInNodeList) {
+  if (allChildLeafNodesInNodeList) {
+    // yellowish
     return colorOptions.highlightColor ?? "#feb640";
   }
 
-  return colorOptions.defaultBranchColor ?? "#ccc";
+  return colorOptions.defaultBranchColor ?? "#cccccc";
 }
 
 /**
