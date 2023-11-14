@@ -740,6 +740,24 @@
           tree.setAnimation(cached);
         });
 
+      // Checks if the given node, or all of its leaves, is an E. Coli or Shigella node.
+      //
+      // Parameters:
+      // - node: The node to check.
+      //
+      // Returns:
+      // - true if the node, or all of its leaves, is an E. Coli or Shigella node, false otherwise.
+      isEColiOrShigellaNode = function(node) {
+        // this bc its recursive and the children are organized differently
+        let nodeData = node.__data__ ? node.__data__.data : node;
+       
+        if (nodeData.children.length === 0) {
+          return nodeData.id.includes("Escherichia_coli") || nodeData.id.includes("Shigella");
+        } else {
+          return nodeData.children.every(isEColiOrShigellaNode);
+        }
+      }
+
       d3.select("#highlightMode").on("input", function() {
         if (this.value === "none") {
           tree.setColorOptions({
@@ -765,9 +783,7 @@
             defaultNodeColor: d3.select("#defaultNodeColor").node().value,
             defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
-            // todo set to false, to get branch nodes too
-            // todo update this fxn, or add another, to return GUIDs based on some attribute, or the id of the node
-            nodeList: tree.getNodeGUIDs(true)
+            nodeList: tree.getNodeGUIDs(false, isEColiOrShigellaNode)
           })
         }
       });
@@ -779,8 +795,7 @@
           defaultNodeColor: this.value,
           defaultBranchColor: d3.select("#defaultBranchColor").node().value,
           highlightColor: d3.select("#highlightColor").node().value,
-          // todo make this dependent on highlightMode, once this fxn is updated
-          nodeList: tree.getNodeGUIDs(true)
+          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeGUIDs(false, isEColiOrShigellaNode) : tree.getNodeGUIDs(true)
         });
       });
 
@@ -791,8 +806,7 @@
           defaultNodeColor: d3.select("#defaultNodeColor").node().value,
           defaultBranchColor: this.value,
           highlightColor: d3.select("#highlightColor").node().value,
-          // todo make this dependent on highlightMode, once this fxn is updated
-          nodeList: tree.getNodeGUIDs(true)
+          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeGUIDs(false, isEColiOrShigellaNode) : tree.getNodeGUIDs(true)
         });
       });
 
@@ -803,8 +817,7 @@
           defaultNodeColor: d3.select("#defaultNodeColor").node().value,
           defaultBranchColor: d3.select("#defaultBranchColor").node().value,
           highlightColor: this.value,
-          // todo make this dependent on highlightMode, once this fxn is updated
-          nodeList: tree.getNodeGUIDs(true)
+          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeGUIDs(false, isEColiOrShigellaNode) : tree.getNodeGUIDs(true)
         });
       });
       

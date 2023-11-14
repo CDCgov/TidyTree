@@ -410,12 +410,8 @@ function findBranchColor(link, colorOptions) {
   }
   
   let source = link.source;
-  //let children = source.children;
   let childLeafNodes = getAllLeaves(source);
   
-  //let allChildrenInNodeList = children.every(child =>
-  //  colorOptions.nodeList?.includes(child.data._guid)
-  //);
   let allChildLeafNodesInNodeList = childLeafNodes.every(child =>
     colorOptions.nodeList?.includes(child.data._guid)
   );
@@ -1229,10 +1225,10 @@ TidyTree.prototype.setRuler = function (show) {
  * Retrieves the GUIDs of the nodes in the TidyTree instance.
  *
  * @param {boolean} leavesOnly - Whether to retrieve GUIDs only for leaf nodes.
+ * @param {function} predicate - A function that returns true if the node should be included
  * @return {Array} An array of GUIDs of the nodes.
  */
-TidyTree.prototype.getNodeGUIDs = function (leavesOnly) {
-  // todo: make sure these are returned in order
+TidyTree.prototype.getNodeGUIDs = function (leavesOnly, predicate) {
   let nodeList = this.parent
     .select("svg")
     .selectAll("g.tidytree-node-leaf circle")
@@ -1247,7 +1243,9 @@ TidyTree.prototype.getNodeGUIDs = function (leavesOnly) {
 
   let nodeGUIDs = [];
   for (const node of nodeList.values()) {
-    nodeGUIDs.push(node.__data__.data._guid);
+    if (!predicate || predicate(node)) {
+      nodeGUIDs.push(node.__data__.data._guid);
+    }
   }
 
   return nodeGUIDs;
