@@ -769,33 +769,35 @@
           });
         } else if (this.value === "leaves") {
           tree.setColorOptions({
-            nodeColorMode: "list",
+            nodeColorMode: "predicate",
             branchColorMode: "none",
             defaultNodeColor: d3.select("#defaultNodeColor").node().value,
             defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
-            nodeList: tree.getNodeGUIDs(true)
+            leavesOnly: true,
           });
         } else if (this.value === "monophyletic") {
           tree.setColorOptions({
-            nodeColorMode: "list",
+            nodeColorMode: "predicate",
             branchColorMode: "monophyletic",
             defaultNodeColor: d3.select("#defaultNodeColor").node().value,
             defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
-            nodeList: tree.getNodeGUIDs(false, isEColiOrShigellaNode)
+            leavesOnly: false,
+            predicate: isEColiOrShigellaNode
           })
         }
       });
 
       d3.select("#defaultNodeColor").on("input", function() {
         tree.setColorOptions({ 
-          nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
+          nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "predicate",
           branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
           defaultNodeColor: this.value,
           defaultBranchColor: d3.select("#defaultBranchColor").node().value,
           highlightColor: d3.select("#highlightColor").node().value,
-          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeGUIDs(false, isEColiOrShigellaNode) : tree.getNodeGUIDs(true)
+          leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
+          predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
         });
       });
 
@@ -806,7 +808,8 @@
           defaultNodeColor: d3.select("#defaultNodeColor").node().value,
           defaultBranchColor: this.value,
           highlightColor: d3.select("#highlightColor").node().value,
-          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeGUIDs(false, isEColiOrShigellaNode) : tree.getNodeGUIDs(true)
+          leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
+          predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
         });
       });
 
@@ -817,7 +820,8 @@
           defaultNodeColor: d3.select("#defaultNodeColor").node().value,
           defaultBranchColor: d3.select("#defaultBranchColor").node().value,
           highlightColor: this.value,
-          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeGUIDs(false, isEColiOrShigellaNode) : tree.getNodeGUIDs(true)
+          leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
+          predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
         });
       });
       
