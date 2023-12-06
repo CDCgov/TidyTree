@@ -385,7 +385,7 @@ function findNodeColor(node, colorOptions) {
     return colorOptions.defaultNodeColor ?? "#4682B4";
   }
  
-  let guidList = getNodeGUIDs(colorOptions.leavesOnly, colorOptions.predicate)?.map(node => node._guid);
+  let guidList = colorOptions.nodeList?.map(node => node._guid);
 
   if (guidList && guidList.includes(node.data._guid)) {
     // yellowish
@@ -411,7 +411,7 @@ function findBranchColor(link, colorOptions) {
   
   let source = link.source;
   let childLeafNodes = getAllLeaves(source);
-  let guidList = getNodeGUIDs(colorOptions.leavesOnly, colorOptions.predicate)?.map(node => node._guid);
+  let guidList = colorOptions.nodeList?.map(node => node._guid);
   
   let allChildLeafNodesInNodeList = childLeafNodes.every(child =>
     guidList?.includes(child.data._guid)
@@ -882,12 +882,13 @@ TidyTree.prototype.setColorOptions = function (newColorOptions) {
 
   if (newColorOptions.nodeColorMode === 'predicate') {
     if (!newColorOptions.predicate) {
-      throw Error('predicate must be set for nodeColorMode "predicate"');
+      console.warn('Warning: colorOptions.predicate not supplied');
     }
     if (!newColorOptions.leavesOnly) {
       newColorOptions.leavesOnly = false;
       console.warn('Warning: colorOptions.leavesOnly not supplied and defaulted to false');
     }
+    newColorOptions.nodeList = this.getNodeGUIDs(newColorOptions.leavesOnly, newColorOptions.predicate);
   } else {
     // nodeColorMode === 'none'
     if (newColorOptions.branchColorMode !== 'none') {

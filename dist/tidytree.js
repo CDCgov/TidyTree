@@ -1357,7 +1357,7 @@ var TidyTree = (function () {
    * The available color modes for rendering nodes.
    * @type {Array}
    */
-  TidyTree.validNodeColorModes = ["none", "list"]; // later, highlight on hover, or maybe color by annotation on a node/ search
+  TidyTree.validNodeColorModes = ["none", "predicate"]; // later, highlight on hover, or maybe color by annotation on a node/ search
 
   /**
    * The available color modes for rendering branches.
@@ -1623,7 +1623,7 @@ var TidyTree = (function () {
    * Finds the color of a given node based on the color options provided.
    *
    * @param {Object} node - The node for which to find the color.
-   * @param {Object} colorOptions - The color options object containing the color mode, node list, default color, and highlight color.
+   * @param {Object} colorOptions - The color options object containing the color mode, leavesOnly, predicate, default color, and highlight color.
    * @return {string} The color of the node.
    */
   function findNodeColor(node, colorOptions) {
@@ -2127,10 +2127,15 @@ var TidyTree = (function () {
     `);
     }
 
-    if (newColorOptions.nodeColorMode === 'list') {
-      if (!Array.isArray(newColorOptions.nodeList)) {
-        throw Error('nodeList must be an array for nodeColorMode "list"');
+    if (newColorOptions.nodeColorMode === 'predicate') {
+      if (!newColorOptions.predicate) {
+        console.warn('Warning: colorOptions.predicate not supplied');
       }
+      if (!newColorOptions.leavesOnly) {
+        newColorOptions.leavesOnly = false;
+        console.warn('Warning: colorOptions.leavesOnly not supplied and defaulted to false');
+      }
+      newColorOptions.nodeList = this.getNodeGUIDs(newColorOptions.leavesOnly, newColorOptions.predicate);
     } else {
       // nodeColorMode === 'none'
       if (newColorOptions.branchColorMode !== 'none') {
