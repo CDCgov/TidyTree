@@ -1632,9 +1632,9 @@ var TidyTree = (function () {
       return colorOptions.defaultNodeColor ?? "#4682B4";
     }
    
-    let nodeList = colorOptions.nodeList;
+    let guidList = colorOptions.nodeList?.map(node => node._guid);
 
-    if (nodeList && nodeList.includes(node.data._guid)) {
+    if (guidList && guidList.includes(node.data._guid)) {
       // yellowish
       return colorOptions.highlightColor ?? "#feb640";
     } else {
@@ -1658,9 +1658,10 @@ var TidyTree = (function () {
     
     let source = link.source;
     let childLeafNodes = getAllLeaves(source);
+    let guidList = colorOptions.nodeList?.map(node => node._guid);
     
     let allChildLeafNodesInNodeList = childLeafNodes.every(child =>
-      colorOptions.nodeList?.includes(child.data._guid)
+      guidList?.includes(child.data._guid)
     );
    
     if (allChildLeafNodesInNodeList) {
@@ -2491,7 +2492,7 @@ var TidyTree = (function () {
     let nodeGUIDs = [];
     for (const node of nodeList.values()) {
       if (!predicate || predicate(node)) {
-        nodeGUIDs.push(node.__data__.data._guid);
+        nodeGUIDs.push({ _guid: node.__data__.data._guid, id: node.__data__.data.id });
       }
     }
 
