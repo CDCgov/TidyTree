@@ -774,7 +774,7 @@
             defaultNodeColor: d3.select("#defaultNodeColor").node().value,
             defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
-            nodeList: tree.getNodeIDs(true)
+            nodeList: tree.getNodeGUIDs(true)
           });
         } else if (this.value === "monophyletic") {
           tree.setColorOptions({
@@ -783,7 +783,7 @@
             defaultNodeColor: d3.select("#defaultNodeColor").node().value,
             defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
-            nodeList: tree.getNodeIDs(false, isEColiOrShigellaNode)
+            nodeList: tree.getNodeGUIDs(false, isEColiOrShigellaNode)
           })
         }
       });
@@ -795,7 +795,7 @@
           defaultNodeColor: this.value,
           defaultBranchColor: d3.select("#defaultBranchColor").node().value,
           highlightColor: d3.select("#highlightColor").node().value,
-          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeIDs(false, isEColiOrShigellaNode) : tree.getNodeIDs(true)
+          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeGUIDs(false, isEColiOrShigellaNode) : tree.getNodeGUIDs(true)
         });
       });
 
@@ -806,7 +806,7 @@
           defaultNodeColor: d3.select("#defaultNodeColor").node().value,
           defaultBranchColor: this.value,
           highlightColor: d3.select("#highlightColor").node().value,
-          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeIDs(false, isEColiOrShigellaNode) : tree.getNodeIDs(true)
+          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeGUIDs(false, isEColiOrShigellaNode) : tree.getNodeGUIDs(true)
         });
       });
 
@@ -817,7 +817,7 @@
           defaultNodeColor: d3.select("#defaultNodeColor").node().value,
           defaultBranchColor: d3.select("#defaultBranchColor").node().value,
           highlightColor: this.value,
-          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeIDs(false, isEColiOrShigellaNode) : tree.getNodeIDs(true)
+          nodeList: d3.select("#highlightMode").property("value") === "monophyletic" ? tree.getNodeGUIDs(false, isEColiOrShigellaNode) : tree.getNodeGUIDs(true)
         });
       });
       
