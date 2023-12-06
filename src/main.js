@@ -386,8 +386,8 @@ function findNodeColor(node, colorOptions) {
   }
  
   let nodeList = colorOptions.nodeList;
-
-  if (nodeList && nodeList.includes(node.data._guid)) {
+  
+  if (nodeList && nodeList.includes(node.data.id)) {
     // yellowish
     return colorOptions.highlightColor ?? "#feb640";
   } else {
@@ -413,7 +413,7 @@ function findBranchColor(link, colorOptions) {
   let childLeafNodes = getAllLeaves(source);
   
   let allChildLeafNodesInNodeList = childLeafNodes.every(child =>
-    colorOptions.nodeList?.includes(child.data._guid)
+    colorOptions.nodeList?.includes(child.data.id)
   );
  
   if (allChildLeafNodesInNodeList) {
@@ -574,7 +574,7 @@ TidyTree.prototype.redraw = function () {
   let links = g
     .select("g.tidytree-links")
     .selectAll("g.tidytree-link")
-    .data(source(this.hierarchy).links(), l => l.source.data._guid + ':' + l.target.data._guid);
+    .data(source(this.hierarchy).links(), l => l.source.data.id + ':' + l.target.data.id);
 
   links.join(
     enter => {
@@ -658,7 +658,7 @@ TidyTree.prototype.redraw = function () {
   let nodes = g
     .select("g.tidytree-nodes")
     .selectAll("g.tidytree-node")
-    .data(this.hierarchy.descendants(), d => d.data._guid);
+    .data(this.hierarchy.descendants(), d => d.data.id);
   nodes.join(
     enter => {
       let nt = nodeTransformers[this.type][this.layout];
@@ -1222,13 +1222,13 @@ TidyTree.prototype.setRuler = function (show) {
 };
 
 /**
- * Retrieves the GUIDs of the nodes in the TidyTree instance.
+ * Retrieves the IDs of the nodes in the TidyTree.
  *
- * @param {boolean} leavesOnly - Whether to retrieve GUIDs only for leaf nodes.
- * @param {function} predicate - A function that returns true if the node should be included
- * @return {Array} An array of GUIDs of the nodes.
+ * @param {boolean} leavesOnly - Indicates whether to retrieve only the IDs of leaf nodes.
+ * @param {function} predicate - An optional predicate function to filter the nodes.
+ * @return {Array} An array containing the IDs of the nodes that meet the specified conditions.
  */
-TidyTree.prototype.getNodeGUIDs = function (leavesOnly, predicate) {
+TidyTree.prototype.getNodeIDs = function (leavesOnly, predicate) {
   let nodeList = this.parent
     .select("svg")
     .selectAll("g.tidytree-node-leaf circle")
@@ -1241,14 +1241,14 @@ TidyTree.prototype.getNodeGUIDs = function (leavesOnly, predicate) {
       ._groups[0];
   }
 
-  let nodeGUIDs = [];
+  let nodeIDs = [];
   for (const node of nodeList.values()) {
     if (!predicate || predicate(node)) {
-      nodeGUIDs.push(node.__data__.data._guid);
+      nodeIDs.push(node.__data__.data.id);
     }
   }
-
-  return nodeGUIDs;
+ 
+  return nodeIDs;
 }
 
 /**
