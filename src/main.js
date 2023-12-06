@@ -110,7 +110,7 @@ TidyTree.validModes = ["smooth", "square", "straight"];
  * The available color modes for rendering nodes.
  * @type {Array}
  */
-TidyTree.validNodeColorModes = ["none", "list"]; // later, highlight on hover, or maybe color by annotation on a node/ search
+TidyTree.validNodeColorModes = ["none", "predicate"]; // later, highlight on hover, or maybe color by annotation on a node/ search
 
 /**
  * The available color modes for rendering branches.
@@ -376,7 +376,7 @@ nodeTransformers.dendrogram = nodeTransformers.tree;
  * Finds the color of a given node based on the color options provided.
  *
  * @param {Object} node - The node for which to find the color.
- * @param {Object} colorOptions - The color options object containing the color mode, node list, default color, and highlight color.
+ * @param {Object} colorOptions - The color options object containing the color mode, leavesOnly, predicate, default color, and highlight color.
  * @return {string} The color of the node.
  */
 function findNodeColor(node, colorOptions) {
@@ -385,7 +385,7 @@ function findNodeColor(node, colorOptions) {
     return colorOptions.defaultNodeColor ?? "#4682B4";
   }
  
-  let guidList = colorOptions.nodeList?.map(node => node._guid);
+  let guidList = getNodeGUIDs(colorOptions.leavesOnly, colorOptions.predicate)?.map(node => node._guid);
 
   if (guidList && guidList.includes(node.data._guid)) {
     // yellowish
@@ -411,7 +411,7 @@ function findBranchColor(link, colorOptions) {
   
   let source = link.source;
   let childLeafNodes = getAllLeaves(source);
-  let guidList = colorOptions.nodeList?.map(node => node._guid);
+  let guidList = getNodeGUIDs(colorOptions.leavesOnly, colorOptions.predicate)?.map(node => node._guid);
   
   let allChildLeafNodesInNodeList = childLeafNodes.every(child =>
     guidList?.includes(child.data._guid)
@@ -880,9 +880,13 @@ TidyTree.prototype.setColorOptions = function (newColorOptions) {
     `);
   }
 
-  if (newColorOptions.nodeColorMode === 'list') {
-    if (!Array.isArray(newColorOptions.nodeList)) {
-      throw Error('nodeList must be an array for nodeColorMode "list"');
+  if (newColorOptions.nodeColorMode === 'predicate') {
+    if (!newColorOptions.predicate) {
+      throw Error('predicate must be set for nodeColorMode "predicate"');
+    }
+    if (!newColorOptions.leavesOnly) {
+      newColorOptions.leavesOnly = false;
+      console.warn('Warning: colorOptions.leavesOnly not supplied and defaulted to false');
     }
   } else {
     // nodeColorMode === 'none'
