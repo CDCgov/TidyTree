@@ -1258,7 +1258,7 @@ var TidyTree = (function () {
       layout: "vertical",
       type: "tree",
       mode: "smooth",
-      colorOptions: { colorMode: "none" },
+      colorOptions: { nodeColorMode: "none" },
       leafNodes: true,
       leafLabels: false,
       equidistantLeaves: false,
@@ -1357,7 +1357,13 @@ var TidyTree = (function () {
    * The available color modes for rendering nodes.
    * @type {Array}
    */
-  TidyTree.validColorModes = ["none", "list"]; // later, highlight on hover, or maybe color by annotation on a node/ search
+  TidyTree.validNodeColorModes = ["none", "list"]; // later, highlight on hover, or maybe color by annotation on a node/ search
+
+  /**
+   * The available color modes for rendering branches.
+   * @type {Array}
+   */
+  TidyTree.validBranchColorModes = ["none", "monophyletic"]; // later, toRoot? 
 
   /**
    * Draws a Phylogenetic on the element referred to by selector
@@ -1621,20 +1627,70 @@ var TidyTree = (function () {
    * @return {string} The color of the node.
    */
   function findNodeColor(node, colorOptions) {
-    if (colorOptions.colorMode === "none") {
+    if (colorOptions.nodeColorMode === "none") {
       // steelblue
-      return colorOptions.defaultColor ?? "#4682B4";
+      return colorOptions.defaultNodeColor ?? "#4682B4";
     }
    
     let nodeList = colorOptions.nodeList;
 
     if (nodeList && nodeList.includes(node.data._guid)) {
-      // charcoal
+      // yellowish
       return colorOptions.highlightColor ?? "#feb640";
     } else {
-      // yellowish
-      return colorOptions.defaultColor ?? "#243127";
+      // charcoal
+      return colorOptions.defaultNodeColor ?? "#243127";
     }
+  }
+
+  /**
+   * Find the color of a given link based on the provided color options.
+   *
+   * @param {string} link - The link for which to find the color.
+   * @param {object} colorOptions - The options for different link colors.
+   * @return {string} The color of the link.
+   */
+  function findBranchColor(link, colorOptions) {
+    if (colorOptions.branchColorMode === "none") {
+      // light gray
+      return colorOptions.defaultBranchColor ?? "#cccccc";
+    }
+    
+    let source = link.source;
+    let childLeafNodes = getAllLeaves(source);
+    
+    let allChildLeafNodesInNodeList = childLeafNodes.every(child =>
+      colorOptions.nodeList?.includes(child.data._guid)
+    );
+   
+    if (allChildLeafNodesInNodeList) {
+      // yellowish
+      return colorOptions.highlightColor ?? "#feb640";
+    }
+
+    return colorOptions.defaultBranchColor ?? "#cccccc";
+  }
+
+  /**
+   * Returns an array of all the child leaf nodes of the given node in a tree.
+   *
+   * @param {Object} node - A node of the tree.
+   * @param {boolean} includeSelf - Whether to include the given node itself as a leaf node. Defaults to false.
+   * @return {Array} An array of leaf nodes.
+   */
+  function getAllLeaves(node, includeSelf) {
+    includeSelf = includeSelf ?? false;
+    let leaves = [];
+
+    if (includeSelf && node.height === 0) {
+      leaves.push(node);
+    } else {
+      node.children.forEach(child => {
+        leaves.push(...getAllLeaves(child, true));
+      });
+    }
+
+    return leaves;
   }
 
   const radToDeg = 180 / Math.PI;
@@ -1775,7 +1831,7 @@ var TidyTree = (function () {
         newLinks
           .append("path")
           .attr("fill", "none")
-          .attr("stroke", "#ccc")
+          .attr("stroke", d => findBranchColor(d, this.colorOptions))
           .attr("d", linkTransformer)
           .transition()
           .duration(this.animation)
@@ -1797,11 +1853,14 @@ var TidyTree = (function () {
         let linkTransformer = linkTransformers[this.type][this.mode][this.layout];
         let paths = update.select("path");
         if (!this.animation > 0) {
-          paths.attr("d", linkTransformer);
+          paths
+          .attr("d", linkTransformer)
+          .attr("stroke", d => findBranchColor(d, this.colorOptions));
         } else {
           paths
             .transition()
             .duration(this.animation / 2)
+            .attr("stroke", d => findBranchColor(d, this.colorOptions))
             .attr("opacity", 0)
             .end()
             .then(() => {
@@ -2054,17 +2113,30 @@ var TidyTree = (function () {
    * @return {TidyTree} The TidyTree Object
    */
   TidyTree.prototype.setColorOptions = function (newColorOptions) {
-    if (!TidyTree.validColorModes.includes(newColorOptions.colorMode)) {
+    if (!TidyTree.validNodeColorModes.includes(newColorOptions.nodeColorMode)) {
       throw Error(`
-      Cannot set TidyTree to colorOptions: ${newColorOptions.colorMode}\n
-      Valid colorModes are: ${TidyTree.validColorModes.join(', ')}
+      Cannot set TidyTree colorOptions: ${newColorOptions.nodeColorMode}\n
+      Valid nodeColorModes are: ${TidyTree.validNodeColorModes.join(', ')}
     `);
     }
-    if (newColorOptions.colorMode === 'list') {
+    if (!TidyTree.validBranchColorModes.includes(newColorOptions.branchColorMode)) {
+      throw Error(`
+      Cannot set TidyTree colorOptions: ${newColorOptions.branchColorMode}\n
+      Valid branchColorModes are: ${TidyTree.validBranchColorModes.join(', ')}
+    `);
+    }
+
+    if (newColorOptions.nodeColorMode === 'list') {
       if (!Array.isArray(newColorOptions.nodeList)) {
-        throw Error('nodeList must be an array for colorMode "list"');
+        throw Error('nodeList must be an array for nodeColorMode "list"');
+      }
+    } else {
+      // nodeColorMode === 'none'
+      if (newColorOptions.branchColorMode !== 'none') {
+        throw Error('branchColorMode must be "none" for nodeColorMode "none"');
       }
     }
+
     this.colorOptions = newColorOptions;
     if (this.parent) return this.redraw();
     return this;
@@ -2400,10 +2472,10 @@ var TidyTree = (function () {
    * Retrieves the GUIDs of the nodes in the TidyTree instance.
    *
    * @param {boolean} leavesOnly - Whether to retrieve GUIDs only for leaf nodes.
+   * @param {function} predicate - A function that returns true if the node should be included
    * @return {Array} An array of GUIDs of the nodes.
    */
-  TidyTree.prototype.getNodeGUIDs = function (leavesOnly) {
-    // todo: make sure these are returned in order
+  TidyTree.prototype.getNodeGUIDs = function (leavesOnly, predicate) {
     let nodeList = this.parent
       .select("svg")
       .selectAll("g.tidytree-node-leaf circle")
@@ -2418,7 +2490,9 @@ var TidyTree = (function () {
 
     let nodeGUIDs = [];
     for (const node of nodeList.values()) {
-      nodeGUIDs.push(node.__data__.data._guid);
+      if (!predicate || predicate(node)) {
+        nodeGUIDs.push(node.__data__.data._guid);
+      }
     }
 
     return nodeGUIDs;
