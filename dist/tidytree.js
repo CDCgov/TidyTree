@@ -1313,7 +1313,7 @@ var TidyTree = (function () {
       .hierarchy(this.data, d => d.children)
       .eachBefore(d => {
         d.value =
-          (d.parent ? d.parent.value : 0) + (d.data.length ? d.data.length : 0);
+          (d.parent ? d.parent.value : 0) + (d.data.length ? Math.abs(d.data.length) : 0);
         if (d.value < this.range[0]) this.range[0] = d.value;
         if (d.value > this.range[1]) this.range[1] = d.value;
       })
