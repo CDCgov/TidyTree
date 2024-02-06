@@ -132,7 +132,7 @@ TidyTree.prototype.draw = function (selector) {
   this.width =
     parseFloat(parent.style("width")) - this.margin[1] - this.margin[3];
   this.height =
-    parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - 25;
+    parseFloat(parent.style("height")) - this.margin[0] - this.margin[2];
 
   let tree = d3.tree();
 
@@ -543,7 +543,7 @@ TidyTree.prototype.redraw = function () {
   let parent = this.parent;
 
   this.width  = (parseFloat(parent.style("width" )) - this.margin[1] - this.margin[3]     ) * this.hStretch;
-  this.height = (parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - 25) * this.vStretch;
+  this.height = (parseFloat(parent.style("height")) - this.margin[0] - this.margin[2]     ) * this.vStretch;
 
   this.scalar =
     this.layout === "horizontal" ? this.width :
