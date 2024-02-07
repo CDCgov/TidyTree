@@ -1388,6 +1388,16 @@ var TidyTree = (function () {
   TidyTree.validBranchColorModes = ["none", "monophyletic"]; // later, toRoot? 
 
   /**
+   * Private method to calculate how much vertical space to leave for the ruler
+   */
+  TidyTree.prototype._rulerOffset = function () {
+    return this.ruler &&
+      this.layout === "horizontal" &&
+      (this.type === 'weighted' || this.type === 'tree')
+      ? 25 : 0;
+  };
+
+  /**
    * Draws a Phylogenetic on the element referred to by selector
    * @param  {String} selector A CSS selector
    * @return {TidyTree}           the TidyTree object
@@ -1401,7 +1411,7 @@ var TidyTree = (function () {
     this.width =
       parseFloat(parent.style("width")) - this.margin[1] - this.margin[3];
     this.height =
-      parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - 25;
+      parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - this._rulerOffset();
 
     let tree = d3.tree();
 
@@ -1811,8 +1821,8 @@ var TidyTree = (function () {
   TidyTree.prototype.redraw = function () {
     let parent = this.parent;
 
-    this.width  = (parseFloat(parent.style("width" )) - this.margin[1] - this.margin[3]     ) * this.hStretch;
-    this.height = (parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - 25) * this.vStretch;
+    this.width  = (parseFloat(parent.style("width" )) - this.margin[1] - this.margin[3]) * this.hStretch;
+    this.height = (parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - this._rulerOffset()) * this.vStretch;
 
     this.scalar =
       this.layout === "horizontal" ? this.width :
