@@ -2100,8 +2100,8 @@ var TidyTree = (function () {
    */
   TidyTree.prototype.recenter = function () {
     let svg = this.parent.select("svg"),
-      x = this.margin[0],
-      y = this.margin[3];
+      x = this.margin[3],
+      y = this.margin[0];
     if (this.layout === "circular") {
       x += parseFloat(svg.style("width")) / 2;
       y += parseFloat(svg.style("height")) / 2;
