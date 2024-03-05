@@ -1291,6 +1291,7 @@ var TidyTree = (function () {
       vStretch: 1,
       rotation: 0,
       ruler: true,
+      interactive: true, // enable/disable pan and zoom (initialization-time only)
       animation: 500,
       margin: [50, 50, 50, 50] //CSS order: top, right, bottom, left
     };
@@ -1442,8 +1443,18 @@ var TidyTree = (function () {
       );
       updateRuler.call(this, transform);
     });
-    svg.call(this.zoom);
 
+    // Note that there is no facility to switch interactive mode on and
+    // off interactively via a toggle in the example app.
+    // This would require providing a `setInteractive` function and other
+    // issues to be solved. The approach here didn't seem to work :-(
+    // https://stackoverflow.com/a/50464280/1909761
+    if (this.interactive) {
+      svg.call(this.zoom);
+    } else {
+      svg.on('.zoom', null);
+    }
+    
     g.append("g").attr("class", "tidytree-links");
     g.append("g").attr("class", "tidytree-nodes");
 
