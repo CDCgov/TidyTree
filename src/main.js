@@ -846,6 +846,19 @@ function updateRuler(transform) {
   }
 }
 
+TidyTree.prototype.setInteractive = function (bool) {
+  this.interactive = bool;
+
+  let svg = this.parent.select("svg");
+  if (this.interactive) {
+    svg.call(this.zoom);
+  } else {
+    svg.on('.zoom', null);
+  }
+  
+  return this;
+}
+
 /**
  * Recenters the tree in the center of the view
  * @return {TidyTree} The TidyTree object
@@ -1283,7 +1296,7 @@ TidyTree.prototype.getNodeGUIDs = function (leavesOnly, predicate) {
  * @param  {Function} test A function which takes a Branch and returns a Truthy
  * or Falsy value.
  * @return {Array} The array of results
- */
+ /
 TidyTree.prototype.search = function (test) {
   if (!test) return;
   let results = this.parent
