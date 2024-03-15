@@ -1291,7 +1291,7 @@ TidyTree.prototype.getNodeGUIDs = function (leavesOnly, predicate) {
  * @param  {Function} test A function which takes a Branch and returns a Truthy
  * or Falsy value.
  * @return {Array} The array of results
- /
+ */
 TidyTree.prototype.search = function (test) {
   if (!test) return;
   let results = this.parent
