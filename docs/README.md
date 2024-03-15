@@ -456,7 +456,7 @@ Finds the color of a given node based on the color options provided.
 ### Parameters
 
 *   `node` **[Object][75]** The node for which to find the color.
-*   `colorOptions` **[Object][75]** The color options object containing the color mode, node list, default color, and highlight color.
+*   `colorOptions` **[Object][75]** The color options object containing the color mode, leavesOnly, predicate, default color, and highlight color.
 
 Returns **[string][76]** The color of the node.
 

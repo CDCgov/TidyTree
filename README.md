@@ -97,6 +97,9 @@ All comments, messages, pull requests, and other submissions received through
 CDC including this GitHub page are subject to the [Presidential Records Act](http://www.archives.gov/about/laws/presidential-records.html)
 and may be archived. Learn more at [http://www.cdc.gov/other/privacy.html](http://www.cdc.gov/other/privacy.html).
 
+In order to test your changes locally before submitting a pull request, make your changes to `src/main.js` and `app/index.html`. Then,
+use `rollup -c` from the root of the project directory. You can then open `app/index.html` in your browser to test your changes.
+
 ## Records
 
 This repository is not a source of government records, but is a copy to increase
