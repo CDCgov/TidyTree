@@ -135,6 +135,14 @@
                   >
                   <input type="file" id="source" class="d-none">
                 </div>
+                <div class="form-group mt-2">
+                  <label class="px-3" for="tree-url">Load from URL:</label>
+                  <input type="text" id="tree-url" class="px-3 form-control" placeholder="Enter Newick file URL">
+                  <button id="load-url" class="btn btn-success mt-2">Load Tree</button>
+                  <small class="px-3 form-text text-muted">
+                    Note: The URL must allow cross-origin requests (CORS) for this to work.
+                  </small>
+                </div>
                 <div class="form-group">
                   <button id="reset" class="btn btn-danger">Reset Tree</button>
                 </div>
@@ -660,7 +668,16 @@
 
       $(document).ready(function() {
         $("body").bootstrapMaterialDesign();
-        fetch("life.nwk").then(response => response.text().then(buildTree));
+        const params = new URLSearchParams(window.location.search);
+        const fileUrl = params.get("file");
+        let treeFetched;
+        if (fileUrl) {
+          d3.select("#tree-url").property("value", fileUrl);
+          treeFetched = fetchAndLoadTree(fileUrl);
+        }
+        if (!fileUrl || !treeFetched) {
+          fetch("life.nwk").then(response => response.text().then(buildTree));
+        }
       });
 
       ["layout", "mode", "type"].forEach(thing => {
@@ -678,6 +695,36 @@
         reader.onload = () => buildTree(reader.result);
         reader.readAsText(d3.event.srcElement.files[0]);
       });
+      d3.select("#load-url").on("click", async function() {
+        const url = d3.select("#tree-url").property("value").trim();
+        if (url) {
+          fetchAndLoadTree(url);
+        } else {
+          alert("Please enter a valid URL.");
+        }
+      });
+
+      function updateQueryParam(url) {
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set("file", url);
+        window.history.replaceState({}, "", newUrl);
+      }
+
+      async function fetchAndLoadTree(url) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          const text = await response.text();
+          buildTree(text);
+          updateQueryParam(url);
+          return true;
+        } catch (error) {
+          alert("Failed to load the Newick tree. Check the URL and CORS settings.");
+        }
+        return false;
+      }
 
       function buildTree(newick) {
         tree = new TidyTree(
