@@ -4,7 +4,7 @@ _Uncompromisingly Flexible Phylogenetic Trees in Javascript, powered by d3_
 
 This repository was created for use by CDC programs to collaborate on public health surveillance related projects in support of the CDC Surveillance Strategy. Github is not hosted by the CDC, but is used by CDC and its partners to share information and collaborate on software.
 
-TidyTree is both [a full-featured web application](https://CDCgov.github.io/TidyTree/demo/) for users, along with the underlying library for developers.
+TidyTree is both [a full-featured web application](https://CDCgov.github.io/TidyTree/app/) for users, along with the underlying library for developers.
 
 ## Launch the Application
 
