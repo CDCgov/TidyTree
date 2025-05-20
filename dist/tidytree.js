@@ -5,7 +5,7 @@ var TidyTree = (function () {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.patristic = {}));
-  }(undefined, (function (exports) {
+  })(undefined, (function (exports) {
     /**
      * The [SemVer](https://semver.org/) version string of the patristic library
      * @type {String} A string specifying the current version of the Patristic Library.
@@ -686,11 +686,35 @@ var TidyTree = (function () {
      * Removes a Branch and its subtree from the tree. Similar to
      * [Branch.isolate](#isolate), only it returns the root Branch of the tree
      * from which this Branch is removed.
+     * @param {Boolean} pruneAncestors - If true, removes ancestors with no remaining children as well
      * @return {Branch} The root of the remaining tree.
      */
-    Branch.prototype.remove = function() {
+    Branch.prototype.remove = function(pruneAncestors) {
       let root = this.getRoot();
       this.isolate();
+      if (pruneAncestors) {
+        this.parent?.removeIfNoChildren();
+      }
+      return root;
+    };
+
+    /**
+     * Removes the branch if it has no children. Then recursively removes all
+     * ancestors with no children.
+     *
+     * @param {Boolean} nonrecursive - If true, does not remove ancestors with no children
+     * @return {Branch} The root of the modified tree.
+     */
+    Branch.prototype.removeIfNoChildren = function(nonrecursive) {
+      let root = this.getRoot();
+
+      if (this.children.length === 0) {
+        this.remove();
+        if (!nonrecursive) {
+          this.parent.removeIfNoChildren();
+        }
+      }
+
       return root;
     };
 
@@ -1242,9 +1266,7 @@ var TidyTree = (function () {
     exports.parseNewick = parseNewick;
     exports.version = version;
 
-    Object.defineProperty(exports, '__esModule', { value: true });
-
-  })));
+  }));
 
   // import "d3";
 
@@ -1269,6 +1291,7 @@ var TidyTree = (function () {
       vStretch: 1,
       rotation: 0,
       ruler: true,
+      interactive: true, // enable/disable pan and zoom
       animation: 500,
       margin: [50, 50, 50, 50] //CSS order: top, right, bottom, left
     };
@@ -1357,13 +1380,23 @@ var TidyTree = (function () {
    * The available color modes for rendering nodes.
    * @type {Array}
    */
-  TidyTree.validNodeColorModes = ["none", "list"]; // later, highlight on hover, or maybe color by annotation on a node/ search
+  TidyTree.validNodeColorModes = ["none", "predicate"]; // later, highlight on hover, or maybe color by annotation on a node/ search
 
   /**
    * The available color modes for rendering branches.
    * @type {Array}
    */
   TidyTree.validBranchColorModes = ["none", "monophyletic"]; // later, toRoot? 
+
+  /**
+   * Private method to calculate how much vertical space to leave for the ruler
+   */
+  TidyTree.prototype._rulerOffset = function () {
+    return this.ruler &&
+      this.layout === "horizontal" &&
+      (this.type === 'weighted' || this.type === 'tree')
+      ? 25 : 0;
+  };
 
   /**
    * Draws a Phylogenetic on the element referred to by selector
@@ -1379,7 +1412,7 @@ var TidyTree = (function () {
     this.width =
       parseFloat(parent.style("width")) - this.margin[1] - this.margin[3];
     this.height =
-      parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - 25;
+      parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - this._rulerOffset();
 
     let tree = d3.tree();
 
@@ -1410,8 +1443,13 @@ var TidyTree = (function () {
       );
       updateRuler.call(this, transform);
     });
-    svg.call(this.zoom);
 
+    if (this.interactive) {
+      svg.call(this.zoom);
+    } else {
+      svg.on('.zoom', null);
+    }
+    
     g.append("g").attr("class", "tidytree-links");
     g.append("g").attr("class", "tidytree-nodes");
 
@@ -1623,7 +1661,7 @@ var TidyTree = (function () {
    * Finds the color of a given node based on the color options provided.
    *
    * @param {Object} node - The node for which to find the color.
-   * @param {Object} colorOptions - The color options object containing the color mode, node list, default color, and highlight color.
+   * @param {Object} colorOptions - The color options object containing the color mode, leavesOnly, predicate, default color, and highlight color.
    * @return {string} The color of the node.
    */
   function findNodeColor(node, colorOptions) {
@@ -1632,9 +1670,9 @@ var TidyTree = (function () {
       return colorOptions.defaultNodeColor ?? "#4682B4";
     }
    
-    let nodeList = colorOptions.nodeList;
+    let guidList = colorOptions.nodeList?.map(node => node._guid);
 
-    if (nodeList && nodeList.includes(node.data._guid)) {
+    if (guidList && guidList.includes(node.data._guid)) {
       // yellowish
       return colorOptions.highlightColor ?? "#feb640";
     } else {
@@ -1658,9 +1696,10 @@ var TidyTree = (function () {
     
     let source = link.source;
     let childLeafNodes = getAllLeaves(source);
+    let guidList = colorOptions.nodeList?.map(node => node._guid);
     
     let allChildLeafNodesInNodeList = childLeafNodes.every(child =>
-      colorOptions.nodeList?.includes(child.data._guid)
+      guidList?.includes(child.data._guid)
     );
    
     if (allChildLeafNodesInNodeList) {
@@ -1788,8 +1827,8 @@ var TidyTree = (function () {
   TidyTree.prototype.redraw = function () {
     let parent = this.parent;
 
-    this.width  = (parseFloat(parent.style("width" )) - this.margin[1] - this.margin[3]     ) * this.hStretch;
-    this.height = (parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - 25) * this.vStretch;
+    this.width  = (parseFloat(parent.style("width" )) - this.margin[1] - this.margin[3]) * this.hStretch;
+    this.height = (parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - this._rulerOffset()) * this.vStretch;
 
     this.scalar =
       this.layout === "horizontal" ? this.width :
@@ -2071,14 +2110,27 @@ var TidyTree = (function () {
     }
   }
 
+  TidyTree.prototype.setInteractive = function (bool) {
+    this.interactive = bool;
+
+    let svg = this.parent.select("svg");
+    if (this.interactive) {
+      svg.call(this.zoom);
+    } else {
+      svg.on('.zoom', null);
+    }
+    
+    return this;
+  };
+
   /**
    * Recenters the tree in the center of the view
    * @return {TidyTree} The TidyTree object
    */
   TidyTree.prototype.recenter = function () {
     let svg = this.parent.select("svg"),
-      x = this.margin[0],
-      y = this.margin[3];
+      x = this.margin[3],
+      y = this.margin[0];
     if (this.layout === "circular") {
       x += parseFloat(svg.style("width")) / 2;
       y += parseFloat(svg.style("height")) / 2;
@@ -2126,10 +2178,15 @@ var TidyTree = (function () {
     `);
     }
 
-    if (newColorOptions.nodeColorMode === 'list') {
-      if (!Array.isArray(newColorOptions.nodeList)) {
-        throw Error('nodeList must be an array for nodeColorMode "list"');
+    if (newColorOptions.nodeColorMode === 'predicate') {
+      if (!newColorOptions.predicate) {
+        console.warn('Warning: colorOptions.predicate not supplied');
       }
+      if (!newColorOptions.leavesOnly) {
+        newColorOptions.leavesOnly = false;
+        console.warn('Warning: colorOptions.leavesOnly not supplied and defaulted to false');
+      }
+      newColorOptions.nodeList = this.getNodeGUIDs(newColorOptions.leavesOnly, newColorOptions.predicate);
     } else {
       // nodeColorMode === 'none'
       if (newColorOptions.branchColorMode !== 'none') {
@@ -2491,7 +2548,7 @@ var TidyTree = (function () {
     let nodeGUIDs = [];
     for (const node of nodeList.values()) {
       if (!predicate || predicate(node)) {
-        nodeGUIDs.push(node.__data__.data._guid);
+        nodeGUIDs.push({ _guid: node.__data__.data._guid, id: node.__data__.data.id });
       }
     }
 
