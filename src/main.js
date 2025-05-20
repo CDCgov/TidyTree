@@ -145,8 +145,6 @@ TidyTree.prototype.draw = function (selector) {
   this.height =
     parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - this._rulerOffset();
 
-  let tree = d3.tree();
-
   let svg = parent
     .html(null)
     .append("svg")
@@ -162,8 +160,8 @@ TidyTree.prototype.draw = function (selector) {
     .attr("y", -5)
     .attr("fill", "white");
 
-  this.zoom = d3.zoom().on("zoom", () => {
-    let transform = (this.transform = d3.event.transform);
+  this.zoom = d3.zoom().on("zoom", e => {
+    let transform = (this.transform = e.transform);
     g.attr(
       "transform",
       `translate(${transform.x},${transform.y}) scale(${transform.k}) rotate(${
@@ -1348,5 +1346,4 @@ TidyTree.prototype.destroy = function () {
     //i.e. has already been drawn
     this.parent.html(null);
   }
-  delete this; //Go to work, GC!
 };
