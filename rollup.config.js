@@ -6,7 +6,7 @@ export default {
     file: 'dist/tidytree.js',
     format: 'iife',
     globals: {
-      'patristic': 'patristic'
+      'd3': 'd3'
     },
     name: 'TidyTree'
   },

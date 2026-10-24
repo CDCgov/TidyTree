@@ -1,4 +1,4 @@
-import "patristic";
+import * as patristic from "patristic";
 // import "d3";
 
 /**
@@ -138,7 +138,16 @@ TidyTree.prototype.draw = function (selector) {
   if (!selector && !this.parent) {
     throw Error("No valid target for drawing given! Where should the tree go?");
   }
-  let parent = (this.parent = d3.select(selector ? selector : this.parent));
+  let parent;
+  if (selector) {
+    parent = d3.select(selector);
+    if (parent.empty()) {
+      throw Error(`Invalid selector: ${selector}`);
+    }
+    this.parent = parent;
+  } else {
+    parent = this.parent;
+  }
 
   this.width =
     parseFloat(parent.style("width")) - this.margin[1] - this.margin[3];
@@ -162,8 +171,9 @@ TidyTree.prototype.draw = function (selector) {
     .attr("y", -5)
     .attr("fill", "white");
 
-  this.zoom = d3.zoom().on("zoom", () => {
-    let transform = (this.transform = d3.event.transform);
+  this.zoom = d3.zoom().on("zoom", (e) => {
+    let transform = e.transform;
+    this.transform = transform;
     g.attr(
       "transform",
       `translate(${transform.x},${transform.y}) scale(${transform.k}) rotate(${
@@ -373,6 +383,31 @@ function circularPoint(x, y) {
   return [(y = +y) * Math.cos((x -= Math.PI / 2)), y * Math.sin(x)];
 }
 
+/**
+ * Sets the position and rotation of node labels based on layout.
+ * @param {D3Selection} selection - The text selection to position.
+ * @param {String} layout - The current layout ("vertical", "horizontal", "circular").
+ */
+function setNodeLabelPosition(selection, layout) {
+  if (layout === "vertical") {
+    selection
+      .attr("text-anchor", "start")
+      .attr("x", 5)
+      .attr("transform", "rotate(90)");
+  } else if (layout === "horizontal") {
+    selection
+      .attr("text-anchor", "start")
+      .attr("x", 5)
+      .attr("transform", "rotate(0)");
+  } else {
+    // circular
+    selection
+      .attr("transform", l => `rotate(${(((l.x / Math.PI) * 180) % 180) - 90})`)
+      .attr("text-anchor", l => l.x % (2 * Math.PI) > Math.PI ? "end" : "start")
+      .attr("x", l => (l.x % (2 * Math.PI) > Math.PI ? -5 : 5));
+  }
+}
+
 let nodeTransformers = {
   tree: {
     horizontal: d => `translate(${d.y}, ${d.x})`,
@@ -547,8 +582,8 @@ labelTransformers.weighted.smooth = labelTransformers.weighted.straight;
 labelTransformers.dendrogram = labelTransformers.tree;
 
 function labeler(d) {
-  if (!d.target.data.length) return "0.000";
-  return d.target.data.length.toFixed(3);
+  // Always show branch length; leaves with no explicit length show 0.000
+  return (d.target.data.length || 0).toFixed(3);
 }
 
 /**
@@ -620,55 +655,54 @@ TidyTree.prototype.redraw = function () {
         .style("opacity", this.branchDistances ? 1 : 0);
     },
     update => {
+      // Progressive transition: update attributes smoothly without fading out
       let linkTransformer = linkTransformers[this.type][this.mode][this.layout];
       let paths = update.select("path");
       if (!this.animation > 0) {
         paths
-        .attr("d", linkTransformer)
-        .attr("stroke", d => findBranchColor(d, this.colorOptions));
+          .attr("d", linkTransformer)
+          .attr("stroke", d => findBranchColor(d, this.colorOptions))
+          .attr("opacity", 1);
       } else {
+        // Transition d (path), stroke, and opacity simultaneously over full animation duration
         paths
           .transition()
-          .duration(this.animation / 2)
+          .duration(this.animation)
+          .attr("d", linkTransformer)
           .attr("stroke", d => findBranchColor(d, this.colorOptions))
-          .attr("opacity", 0)
-          .end()
-          .then(() => {
-            paths
-              .attr("d", linkTransformer)
-              .transition()
-              .duration(this.animation / 2)
-              .attr("opacity", 1);
-          });
+          .attr("opacity", 1);
       }
 
       let labelTransformer =
         labelTransformers[this.type][this.mode][this.layout];
       let labels = update.select("text");
       if (this.animation) {
+        // Transition transform and text progressively
         labels
           .transition()
-          .duration(this.animation / 2)
-          .style("opacity", 0)
-          .end()
-          .then(() => {
-            labels.text(labeler).attr("transform", labelTransformer);
-            if (this.branchDistances) {
-            labels
-              .transition()
-              .duration(this.animation / 2)
-              .style("opacity", this.branchDistances ? 1 : 0);
-            }
-          });
+          .duration(this.animation)
+          .attr("transform", labelTransformer)
+          .text(labeler);
+        if (this.branchDistances) {
+          labels
+            .transition()
+            .duration(this.animation)
+            .style("opacity", 1);
+        } else {
+          labels
+            .transition()
+            .duration(this.animation)
+            .style("opacity", 0);
+        }
       } else {
         labels.text(labeler).attr("transform", labelTransformer);
+        labels.style("opacity", this.branchDistances ? 1 : 0);
       }
     },
     exit =>
       exit
         .transition()
         .duration(this.animation)
-        .attr("opacity", 0)
         .remove()
   );
 
@@ -710,28 +744,7 @@ TidyTree.prototype.redraw = function () {
           (!d.children && this.leafLabels) ? 1 : 0
         );
 
-      if (this.layout === "vertical") {
-        nodeLabels
-          .attr("text-anchor", "start")
-          .attr("x", 5)
-          .transition()
-          .duration(this.animation)
-          .attr("transform", "rotate(90)");
-      } else if (this.layout === "horizontal") {
-        nodeLabels
-          .attr("text-anchor", "start")
-          .attr("x", 5)
-          .transition()
-          .duration(this.animation)
-          .attr("transform", "rotate(0)");
-      } else {
-        nodeLabels
-          .transition()
-          .duration(this.animation)
-          .attr("transform", l => `rotate(${(((l.x / Math.PI) * 180) % 180) - 90})`)
-          .attr("text-anchor", l => l.x % (2 * Math.PI) > Math.PI ? "end" : "start")
-          .attr("x", l => (l.x % (2 * Math.PI) > Math.PI ? -5 : 5));
-      }
+      setNodeLabelPosition(nodeLabels, this.layout);
 
       newNodes
         .transition()
@@ -739,48 +752,50 @@ TidyTree.prototype.redraw = function () {
         .attr("opacity", 1);
     },
     update => {
+      // Progressive transition: update transform, fill, and label position smoothly
       let nodeTransformer = nodeTransformers[this.type][this.layout];
-      update
-        .transition()
-        .duration(this.animation)
-        .attr("transform", nodeTransformer);
 
-      let nodeGlyphs = update.select("circle");
-      nodeGlyphs.style("fill", d => findNodeColor(d, this.colorOptions));      
-
-      let nodeLabels = update.select("text");
-      if (this.layout === "vertical") {
-        nodeLabels
-          .attr("text-anchor", "start")
-          .attr("x", 5)
-          .transition()
-          .duration(this.animation)
-          .attr("transform", "rotate(90)");
-      } else if (this.layout === "horizontal") {
-        nodeLabels
-          .attr("text-anchor", "start")
-          .attr("x", 5)
-          .transition()
-          .duration(this.animation)
-          .attr("transform", "rotate(0)");
+      if (!this.animation > 0) {
+        // No animation: directly set attributes
+        update.attr("transform", nodeTransformer);
+        update.select("circle")
+          .style("fill", d => findNodeColor(d, this.colorOptions))
+          .style("opacity", d =>
+            (d.children && this.branchNodes) ||
+            (!d.children && this.leafNodes) ? 1 : 0
+          );
+        setNodeLabelPosition(update.select("text"), this.layout);
       } else {
-        nodeLabels
+        // Animate transform and fill, ensure opacity is restored to 1
+        update
           .transition()
           .duration(this.animation)
-          .attr("transform", l => `rotate(${(((l.x / Math.PI) * 180) % 180) - 90})`)
-          .attr("text-anchor", l => l.x % (2 * Math.PI) > Math.PI ? "end" : "start")
-          .attr("x", l => (l.x % (2 * Math.PI) > Math.PI ? -5 : 5));
+          .attr("transform", nodeTransformer)
+          .attr("opacity", 1);
+
+        let nodeGlyphs = update.select("circle");
+        nodeGlyphs
+          .transition()
+          .duration(this.animation)
+          .style("fill", d => findNodeColor(d, this.colorOptions))
+          .style("opacity", d =>
+            (d.children && this.branchNodes) ||
+            (!d.children && this.leafNodes) ? 1 : 0
+          );
+
+        let nodeLabels = update.select("text");
+        setNodeLabelPosition(nodeLabels, this.layout);
       }
     },
     exit =>
       exit
         .transition()
         .duration(this.animation)
-        .attr("opacity", 0)
         .remove()
   );
 
-  updateRuler.call(this);
+  // Pass current zoom transform so the ruler respects zoom level
+  updateRuler.call(this, this.transform || { k: 1 });
 
   return this;
 };
@@ -1264,20 +1279,17 @@ TidyTree.prototype.setRuler = function (show) {
  * @return {Array} An array of GUIDs of the nodes.
  */
 TidyTree.prototype.getNodeGUIDs = function (leavesOnly, predicate) {
-  let nodeList = this.parent
-    .select("svg")
-    .selectAll("g.tidytree-node-leaf circle")
-    ._groups[0];
+  const selector = leavesOnly
+    ? "g.tidytree-node-leaf circle"
+    : "g.tidytree-node-leaf circle, g.tidytree-node-internal circle";
 
-  if (!leavesOnly) {
-    nodeList = this.parent
-      .select("svg")
-      .selectAll("g.tidytree-node-leaf circle, g.tidytree-node-internal circle")
-      ._groups[0];
-  }
+  const nodes = this.parent
+    .select("svg")
+    .selectAll(selector)
+    .nodes();
 
   let nodeGUIDs = [];
-  for (const node of nodeList.values()) {
+  for (const node of nodes) {
     if (!predicate || predicate(node)) {
       nodeGUIDs.push({ _guid: node.__data__.data._guid, id: node.__data__.data.id });
     }
