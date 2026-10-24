@@ -7,6 +7,22 @@
     <meta name="author" content="humans.txt">
     <meta name="theme-color" content="#ffffff">
     <meta name="msapplication-TileColor" content="#2b5797">
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' https://d3js.org https://code.jquery.com https://unpkg.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
+      font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
+      connect-src 'self';
+      img-src 'self' data:;
+      manifest-src 'self';
+      frame-ancestors 'none';
+      base-uri 'self';
+      form-action 'self';
+    ">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), xr=()">
     <title>Tidy Tree</title>
     <link rel="canonical" href="https://cdcgov.github.io/TidyTree/demo/">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -719,6 +735,17 @@
 
       async function fetchAndLoadTree(url) {
         try {
+          // Validate URL before fetching (SSRF protection)
+          let urlObj;
+          try {
+            urlObj = new URL(url);
+          } catch (e) {
+            throw new Error("Invalid URL format.");
+          }
+          if (!['http:', 'https:'].includes(urlObj.protocol)) {
+            throw new Error("Only http:// or https:// URLs are allowed.");
+          }
+
           const response = await fetch(url);
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -734,6 +761,15 @@
       }
 
       function buildTree(newick) {
+        if (newick) {
+          // Validate Newick content
+          try {
+            patristic.parseNewick(newick);
+          } catch (e) {
+            alert("Invalid Newick format. Please provide a valid Newick tree string.");
+            return;
+          }
+        }
         tree = new TidyTree(
           newick ? newick : tree.data.clone(),
           {
