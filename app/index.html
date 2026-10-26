@@ -9,7 +9,7 @@
     <meta name="msapplication-TileColor" content="#2b5797">
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' 'unsafe-inline' https://d3js.org https://cdn.jsdelivr.net;
+      script-src 'self' 'unsafe-inline' https://d3js.org https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
       font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
       connect-src 'self' https://cdn.jsdelivr.net;
@@ -34,6 +34,19 @@
       integrity="sha384-TveZ4SBMG9Zwu44Pq5aK2bgL+4CaFRTtx6pSSsxmQKWhIRKoONDSRW+k+NA9A0Gk" 
       crossorigin="anonymous">
     <style>
+      :root {
+        --node-color: #2c3e50;
+        --branch-color: #bdc3c7;
+        --highlight-color: #e67e22;
+        --node-size: 3px;
+        --node-label-size: 12px;
+        --branch-label-size: 10px;
+        --branch-width: 2px;
+        --font-family: 'Inter', sans-serif;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --background-color: #ffffff;
+      }
+
       html,
       body,
       #tree {
@@ -47,7 +60,7 @@
       }
       .sidebar {
         width: 376px;
-        background-color: lightgray;
+        background-color: var(--background-color);
         overflow-y: auto;
         flex-shrink: 0;
       }
@@ -55,12 +68,13 @@
         flex: 1;
         padding: 0;
         overflow: hidden;
+        background-color: var(--background-color);
       }
       .accordion-header {
-        background-color: darkgrey;
+        background-color: var(--branch-color);
       }
       .accordion-body {
-        background-color: white;
+        background-color: var(--background-color);
       }
       .form-group {
         margin: 0.4rem;
@@ -72,7 +86,7 @@
         position: absolute;
         top: calc(50% - 10px);
         left: 357px;
-        background: lightgray;
+        background: var(--branch-color);
         border-radius: 0 5px 5px 0;
         padding: 5px;
       }
@@ -80,25 +94,26 @@
         padding: 0;
       }
       .tidytree-node circle {
-        fill: steelblue;
+        fill: var(--node-color);
         stroke: #fff;
         stroke-width: 1px;
       }
       .tidytree-link {
-        stroke-width: 2px;
+        stroke: var(--branch-color);
+        stroke-width: var(--branch-width);
       }
       #search-wrapper {
         position: absolute;
         top: -50px;
         right: 100px;
         padding: 5px;
-        background: lightgray;
-        border: 1px solid darkgray;
+        background: var(--branch-color);
+        border: 1px solid var(--node-color);
         border-radius: 5px;
       }
       #search-close {
-        background: white;
-        border: 1px solid darkgray;
+        background: var(--background-color);
+        border: 1px solid var(--node-color);
         padding: 2px 6px;
       }
       #context-menu,
@@ -108,7 +123,7 @@
         z-index: -1;
       }
       #tooltip {
-        background: lightgray;
+        background: var(--branch-color);
         border-radius: 0.25rem;
         padding: 0.25rem;
       }
@@ -404,6 +419,43 @@
           </div>
 
           <div class="card">
+            <div class="card-header" id="headingCollapse">
+              <h5 class="mb-0">
+                <button
+                  class="btn btn-link collapsed"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseCollapse"
+                  aria-expanded="false"
+                  aria-controls="collapseCollapse"
+                >
+                  Collapse / Expand
+                </button>
+              </h5>
+            </div>
+            <div
+              id="collapseCollapse"
+              class="collapse"
+              aria-labelledby="headingCollapse"
+              data-bs-parent="#accordion"
+            >
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="collapseNode">Select Node</label>
+                  <select id="collapseNode" class="form-control form-control-sm"></select>
+                </div>
+                <div class="form-group">
+                  <button id="btn-collapse" class="btn btn-outline-primary me-2">Collapse</button>
+                  <button id="btn-expand" class="btn btn-outline-primary">Expand</button>
+                </div>
+                <div class="form-group mt-2">
+                  <button id="btn-collapse-all" class="btn btn-outline-danger me-2">Collapse All</button>
+                  <button id="btn-expand-all" class="btn btn-outline-success">Expand All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
             <div class="card-header" id="headingColor">
               <h5 class="mb-0">
                 <button
@@ -648,6 +700,7 @@
                   <option selected>nwk</option>
                   <option>png</option>
                   <option>svg</option>
+                  <option>pdf</option>
                 </select>
               </div>
             </div>
@@ -674,6 +727,7 @@
     </div>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script
       src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
       integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
@@ -803,6 +857,7 @@
             hidetooltip: hideTooltip
           }
         );
+        populateCollapseNodeSelect();
       }
 
       d3.select("#reset").on("click", e => buildTree());
@@ -951,25 +1006,61 @@
         tree.setAnimation(parseFloat(this.value));
       });
 
-      d3.select("#background").on("input", function() {
-        d3.select("#tree svg").style("background-color", this.value);
+      // Collapse / Expand controls
+      function populateCollapseNodeSelect() {
+        if (!tree) return;
+        const select = d3.select("#collapseNode");
+        select.selectAll("option").remove();
+        const guids = tree.getNodeGUIDs(false, null);
+        select
+          .selectAll("option")
+          .data(guids)
+          .enter()
+          .append("option")
+          .attr("value", d => d._guid)
+          .text(d => d.id || d._guid);
+      }
+
+      d3.select("#btn-collapse").on("click", function() {
+        if (!tree) return;
+        const guid = d3.select("#collapseNode").node().value;
+        if (guid) {
+          tree.collapseNode(guid);
+          populateCollapseNodeSelect();
+        }
       });
 
-      function download(data, filename) {
-        const a = document.createElement("a");
-        if (data instanceof Blob) {
-          a.href = URL.createObjectURL(data);
-        } else {
-          a.href = data;
+      d3.select("#btn-expand").on("click", function() {
+        if (!tree) return;
+        const guid = d3.select("#collapseNode").node().value;
+        if (guid) {
+          tree.collapseNode(guid); // toggle
+          populateCollapseNodeSelect();
         }
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        if (data instanceof Blob) {
-          URL.revokeObjectURL(a.href);
-        }
-      }
+      });
+
+      d3.select("#btn-collapse-all").on("click", function() {
+        if (!tree) return;
+        // Collapse all internal nodes (nodes with children)
+        const guids = tree.getNodeGUIDs(false, null);
+        guids.forEach(g => tree.collapseNode(g._guid));
+        populateCollapseNodeSelect();
+      });
+
+      d3.select("#btn-expand-all").on("click", function() {
+        if (!tree) return;
+        // Expand all by clearing collapsed nodes
+        tree.collapsedNodes.clear();
+        if (tree.parent) tree.redraw();
+        populateCollapseNodeSelect();
+      });
+
+      // Repopulate collapse node select whenever tree is rebuilt
+      const _buildTree = buildTree;
+      buildTree = function(newick) {
+        _buildTree.call(this, newick);
+        if (tree) populateCollapseNodeSelect();
+      };
 
       d3.select("#export-download").on("click", function() {
         let format = document.getElementById("export-format").value;
@@ -992,6 +1083,24 @@
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0);
             download(canvas.toDataURL("image/png"), filename + ".png");
+            URL.revokeObjectURL(url);
+          };
+          img.src = url;
+        } else if (format === "pdf") {
+          const svg = d3.select("#tree svg").node();
+          const svgData = new XMLSerializer().serializeToString(svg);
+          const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+          const url = URL.createObjectURL(svgBlob);
+          const img = new Image();
+          img.onload = function() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+              orientation: img.width > img.height ? "l" : "p",
+              unit: "px",
+              format: [img.width, img.height]
+            });
+            pdf.addImage(url, "PNG", 0, 0, img.width, img.height);
+            pdf.save(filename + ".pdf");
             URL.revokeObjectURL(url);
           };
           img.src = url;
@@ -1117,8 +1226,9 @@
         if (!d3.select("#tooltips").node().checked) return;
         let e = event;
         e.preventDefault();
+        const content = d.length > 1 ? d[1] : d[0].data.id;
         d3.select("#tooltip")
-          .text(d[0].data.id)
+          .text(content)
           .style("top", e.pageY + "px")
           .style("left", e.pageX + 5 + "px")
           .style("z-index", 1000)

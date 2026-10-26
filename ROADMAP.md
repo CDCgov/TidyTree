@@ -27,45 +27,9 @@ function animateFrame(fn) {
 ## 2. Bug Fixes
 
 **Issues found:**
-- `getNodeGUIDs()` uses d3's private `_groups[0]` API — fragile and will break on d3 updates
-- `draw()` sets `this.parent` before validating the selector
 - Circular layout label positioning is incorrect
-- `setRotation()` recalculates transform without preserving current zoom state
 - `labeler()` returns "0.000" for leaves instead of showing actual branch lengths
 - Redundant logic in `findNodeColor` and `findBranchColor`
-
-**Fixes:**
-```javascript
-// Instead of _groups[0], use d3's public API
-TidyTree.prototype.getNodeGUIDs = function (leavesOnly, predicate) {
-  const selector = leavesOnly 
-    ? 'g.tidytree-node-leaf circle' 
-    : 'g.tidytree-node-leaf circle, g.tidytree-node-internal circle';
-  
-  return this.parent
-    .select("svg")
-    .selectAll(selector)
-    .nodes()
-    .map(node => ({
-      _guid: node.__data__.data._guid,
-      id: node.__data__.data.id
-    }))
-    .filter(predicate ? n => predicate(n) : () => true);
-};
-
-// Fix draw() to validate before setting parent
-TidyTree.prototype.draw = function (selector) {
-  if (!selector && !this.parent) {
-    throw Error("No valid target for drawing given!");
-  }
-  let parent = this.parent;
-  if (selector) {
-    parent = d3.select(selector);
-    this.parent = parent;
-  }
-  // ... rest of draw
-};
-```
 
 ## 3. Attractiveness Improvements
 
@@ -132,56 +96,6 @@ TidyTree.prototype.addAnnotation = function(nodeGuid, data) {
 // Add collapse/expand
 TidyTree.prototype.collapseNode = function(nodeGuid) {
   // Toggle subtree visibility
-};
-```
-
-## 5. Security Improvements
-
-**Current issues:**
-- PWA lacks security headers
-- No Content Security Policy
-- "Load from URL" has no URL validation (SSRF risk)
-- File loading has no Newick content validation
-
-**Recommendations:**
-```html
-<!-- Add CSP and security headers -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://d3js.org;">
-```
-
-```javascript
-// Validate URLs before loading
-TidyTree.prototype.loadFromUrl = async function(url) {
-  // Validate it's an http/https URL
-  try {
-    const urlObj = new URL(url);
-    if (!['http:', 'https:'].includes(urlObj.protocol)) {
-      throw new Error('Only http/https URLs allowed');
-    }
-    // Fetch and validate Newick content
-    const response = await fetch(url);
-    const newick = await response.text();
-    // Validate it's valid Newick
-    patristic.parseNewick(newick); // Will throw if invalid
-    this.setTree(newick);
-  } catch (e) {
-    console.error('Failed to load tree:', e);
-  }
-};
-
-// Validate uploaded files
-TidyTree.prototype.loadFromFile = function(file) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const content = e.target.result;
-    try {
-      patristic.parseNewick(content);
-      this.setTree(content);
-    } catch (e) {
-      alert('Invalid Newick format');
-    }
-  };
-  reader.readAsText(file);
 };
 ```
 

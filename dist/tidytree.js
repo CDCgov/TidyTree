@@ -2269,27 +2269,8 @@ var TidyTree = (function () {
      * @param {Object} options A Javascript object containing options to set up the tree
      */
     function TidyTree(data, options, events) {
-      let defaults = {
-        layout: "vertical",
-        type: "tree",
-        mode: "smooth",
+      let defaults = Object.assign({}, TidyTree.defaults, {
         colorOptions: { nodeColorMode: "none" },
-        leafNodes: true,
-        leafLabels: false,
-        equidistantLeaves: false,
-        branchNodes: false,
-        branchLabels: false,
-        branchDistances: false,
-        hStretch: 1,
-        vStretch: 1,
-        rotation: 0,
-        ruler: true,
-        interactive: true, // enable/disable pan and zoom
-        animation: 500,
-        margin: [50, 50, 50, 50] //CSS order: top, right, bottom, left
-      };
-      if (!options) options = {};
-      Object.assign(this, defaults, options, {
         events: {
           draw: [],
           showtooltip: [],
@@ -2299,6 +2280,14 @@ var TidyTree = (function () {
           select: []
         }
       });
+      if (!options) options = {};
+      Object.assign(this, defaults, options);
+
+      // Track collapsed node GUIDs for subtree collapse/expand
+      this.collapsedNodes = new Set();
+
+      // Track annotations (metadata) per node GUID
+      this.annotations = new Map();
 
       if(events) Object.keys(events).forEach(e => this.events[e].push(events[e]));
 
@@ -2312,6 +2301,36 @@ var TidyTree = (function () {
 
       if (this.parent) this.recenter();
     }
+    /**
+     * Default configuration options for TidyTree instances.
+     * These can be overridden by per-instance options passed to the constructor.
+     * @type {Object}
+     */
+    TidyTree.defaults = {
+      layout: "vertical",
+      type: "tree",
+      mode: "smooth",
+      colorOptions: { nodeColorMode: "none" },
+      leafNodes: true,
+      leafLabels: false,
+      equidistantLeaves: false,
+      branchNodes: false,
+      branchLabels: false,
+      branchDistances: false,
+      hStretch: 1,
+      vStretch: 1,
+      rotation: 0,
+      ruler: true,
+      interactive: true,
+      animation: 500,
+      margin: [50, 50, 50, 50],
+      nodeSize: 3,
+      nodeLabelSize: 12,
+      branchLabelSize: 10,
+      branchWidth: 2,
+      fontFamily: "'Inter', sans-serif",
+      nodeShape: "circle"
+    };
 
     /**
      * Update the TidyTree's underlying data structure
@@ -2355,7 +2374,7 @@ var TidyTree = (function () {
      * The available layouts for rendering trees.
      * @type {Array}
      */
-    TidyTree.validLayouts = ["horizontal", "vertical", "circular"];
+    TidyTree.validLayouts = ["horizontal", "vertical", "circular", "radial", "unrooted"];
 
     /**
      * The available types for rendering branches.
@@ -2373,13 +2392,28 @@ var TidyTree = (function () {
      * The available color modes for rendering nodes.
      * @type {Array}
      */
-    TidyTree.validNodeColorModes = ["none", "predicate"]; // later, highlight on hover, or maybe color by annotation on a node/ search
+    TidyTree.validNodeColorModes = ["none", "predicate", "heatmap", "gradient"]; // later, highlight on hover, or maybe color by annotation on a node/ search
 
     /**
      * The available color modes for rendering branches.
      * @type {Array}
      */
-    TidyTree.validBranchColorModes = ["none", "monophyletic"]; // later, toRoot? 
+    TidyTree.validBranchColorModes = ["none", "monophyletic", "heatmap", "gradient"]; // later, toRoot? 
+
+    /**
+     * The available node shapes for rendering nodes.
+     * @type {Array}
+     */
+    TidyTree.validNodeShapes = ["circle", "square", "diamond"];
+
+    /**
+     * Returns the CSS selector for the node glyph element based on the current nodeShape.
+     * @return {String} The selector string ("circle", "rect", or "polygon").
+     */
+    TidyTree.prototype._nodeGlyphSelector = function () {
+      const shape = this.nodeShape || "circle";
+      return shape === "circle" ? "circle" : shape === "square" ? "rect" : "polygon";
+    };
 
     /**
      * Private method to calculate how much vertical space to leave for the ruler
@@ -2479,7 +2513,15 @@ var TidyTree = (function () {
           circular: d3
             .linkRadial()
             .angle(getX)
-            .radius(getY)
+            .radius(getY),
+          radial: d3
+            .linkRadial()
+            .angle(getX)
+            .radius(getY),
+          unrooted: d3
+            .linkHorizontal()
+            .x(getY)
+            .y(getX)
         },
         straight: {
           horizontal: d =>
@@ -2505,7 +2547,29 @@ var TidyTree = (function () {
               "," +
               endRadius * y1
             );
-          }
+          },
+          radial: d => {
+            const startAngle = d.source.x - Math.PI / 2,
+              startRadius = d.source.y,
+              endAngle = d.target.x - Math.PI / 2,
+              endRadius = d.target.y;
+            const x0 = Math.cos(startAngle),
+              y0 = Math.sin(startAngle),
+              x1 = Math.cos(endAngle),
+              y1 = Math.sin(endAngle);
+            return (
+              "M" +
+              startRadius * x0 +
+              "," +
+              startRadius * y0 +
+              "L" +
+              endRadius * x1 +
+              "," +
+              endRadius * y1
+            );
+          },
+          unrooted: d =>
+            `M${d.source.y} ${d.source.x} L ${d.target.y} ${d.target.x}`
         },
         square: {
           horizontal: d =>
@@ -2543,7 +2607,41 @@ var TidyTree = (function () {
               "," +
               endRadius * y1
             );
-          }
+          },
+          radial: d => {
+            const startAngle = d.source.x - Math.PI / 2,
+              startRadius = d.source.y,
+              endAngle = d.target.x - Math.PI / 2,
+              endRadius = d.target.y;
+            const x0 = Math.cos(startAngle),
+              y0 = Math.sin(startAngle),
+              x1 = Math.cos(endAngle),
+              y1 = Math.sin(endAngle);
+            return (
+              "M" +
+              startRadius * x0 +
+              "," +
+              startRadius * y0 +
+              (endAngle === startAngle
+                ? ""
+                : "A" +
+                  startRadius +
+                  "," +
+                  startRadius +
+                  " 0 0 " +
+                  (endAngle > startAngle ? 1 : 0) +
+                  " " +
+                  startRadius * x1 +
+                  "," +
+                  startRadius * y1) +
+              "L" +
+              endRadius * x1 +
+              "," +
+              endRadius * y1
+            );
+          },
+          unrooted: d =>
+            `M${d.source.y} ${d.source.x} V ${d.target.x} H ${d.target.y}`
         }
       },
       weighted: {
@@ -2559,7 +2657,15 @@ var TidyTree = (function () {
           circular: d3
             .linkRadial()
             .angle(getX)
-            .radius(getLength)
+            .radius(getLength),
+          radial: d3
+            .linkRadial()
+            .angle(getX)
+            .radius(getLength),
+          unrooted: d3
+            .linkHorizontal()
+            .x(getLength)
+            .y(getX)
         },
         straight: {
           horizontal: d =>
@@ -2585,7 +2691,29 @@ var TidyTree = (function () {
               "," +
               endRadius * y1
             );
-          }
+          },
+          radial: d => {
+            const startAngle = d.source.x - Math.PI / 2,
+              startRadius = d.source.weight,
+              endAngle = d.target.x - Math.PI / 2,
+              endRadius = d.target.weight;
+            const x0 = Math.cos(startAngle),
+              y0 = Math.sin(startAngle),
+              x1 = Math.cos(endAngle),
+              y1 = Math.sin(endAngle);
+            return (
+              "M" +
+              startRadius * x0 +
+              "," +
+              startRadius * y0 +
+              "L" +
+              endRadius * x1 +
+              "," +
+              endRadius * y1
+            );
+          },
+          unrooted: d =>
+            `M${d.source.weight} ${d.source.x} L ${d.target.weight} ${d.target.x}`
         },
         square: {
           horizontal: d =>
@@ -2627,7 +2755,43 @@ var TidyTree = (function () {
               "," +
               endRadius * y1
             );
-          }
+          },
+          radial: d => {
+            const startAngle = d.source.x - Math.PI / 2,
+              startRadius = d.source.weight,
+              endAngle = d.target.x - Math.PI / 2,
+              endRadius = d.target.weight;
+            const x0 = Math.cos(startAngle),
+              y0 = Math.sin(startAngle),
+              x1 = Math.cos(endAngle),
+              y1 = Math.sin(endAngle);
+            return (
+              "M" +
+              startRadius * x0 +
+              "," +
+              startRadius * y0 +
+              (endAngle === startAngle
+                ? ""
+                : "A" +
+                  startRadius +
+                  "," +
+                  startRadius +
+                  " 0 0 " +
+                  (endAngle > startAngle ? 1 : 0) +
+                  " " +
+                  startRadius * x1 +
+                  "," +
+                  startRadius * y1) +
+              "L" +
+              endRadius * x1 +
+              "," +
+              endRadius * y1
+            );
+          },
+          unrooted: d =>
+            `M${d.source.weight} ${d.source.x} V ${d.target.x} H ${
+          d.target.weight
+        }`
         }
       }
     };
@@ -2656,13 +2820,13 @@ var TidyTree = (function () {
           .attr("text-anchor", "start")
           .attr("x", 5)
           .attr("transform", "rotate(90)");
-      } else if (layout === "horizontal") {
+      } else if (layout === "horizontal" || layout === "unrooted") {
         selection
           .attr("text-anchor", "start")
           .attr("x", 5)
           .attr("transform", "rotate(0)");
       } else {
-        // circular
+        // circular or radial
         selection
           .attr("transform", l => `rotate(${(((l.x / Math.PI) * 180) % 180) - 90})`)
           .attr("text-anchor", l => l.x % (2 * Math.PI) > Math.PI ? "end" : "start")
@@ -2674,12 +2838,16 @@ var TidyTree = (function () {
       tree: {
         horizontal: d => `translate(${d.y}, ${d.x})`,
         vertical: d => `translate(${d.x}, ${d.y})`,
-        circular: d => `translate(${circularPoint(d.x, d.y)})`
+        circular: d => `translate(${circularPoint(d.x, d.y)})`,
+        radial: d => `translate(${circularPoint(d.x, d.y)})`,
+        unrooted: d => `translate(${d.y}, ${d.x})`
       },
       weighted: {
         horizontal: d => `translate(${d.weight}, ${d.x})`,
         vertical: d => `translate(${d.x}, ${d.weight})`,
-        circular: d => `translate(${circularPoint(d.x, d.weight)})`
+        circular: d => `translate(${circularPoint(d.x, d.weight)})`,
+        radial: d => `translate(${circularPoint(d.x, d.weight)})`,
+        unrooted: d => `translate(${d.weight}, ${d.x})`
       }
     };
 
@@ -2694,19 +2862,51 @@ var TidyTree = (function () {
      */
     function findNodeColor(node, colorOptions) {
       if (colorOptions.nodeColorMode === "none") {
-        // steelblue
         return colorOptions.defaultNodeColor ?? "#4682B4";
       }
-     
-      let guidList = colorOptions.nodeList?.map(node => node._guid);
 
-      if (guidList && guidList.includes(node.data._guid)) {
-        // yellowish
-        return colorOptions.highlightColor ?? "#feb640";
-      } else {
-        // charcoal
-        return colorOptions.defaultNodeColor ?? "#243127";
+      if (colorOptions.nodeColorMode === "predicate") {
+        let guidList = colorOptions.nodeList?.map(n => n._guid);
+
+        if (guidList && guidList.includes(node.data._guid)) {
+          return colorOptions.highlightColor ?? "#feb640";
+        } else {
+          return colorOptions.defaultNodeColor ?? "#243127";
+        }
       }
+
+      if (colorOptions.nodeColorMode === "heatmap" || colorOptions.nodeColorMode === "gradient") {
+        // Color by branch length / depth using a heatmap gradient
+        const value = node.data.value != null ? node.data.value : 0;
+        const startColor = colorOptions.heatmapStart ?? "#2c3e50";
+        const endColor = colorOptions.heatmapEnd ?? "#e67e22";
+        return interpolateColor(startColor, endColor, value);
+      }
+
+      return colorOptions.defaultNodeColor ?? "#4682B4";
+    }
+
+    /**
+     * Interpolate between two hex colors by a factor t (0 to 1).
+     * @param {string} colorA - Starting hex color.
+     * @param {string} colorB - Ending hex color.
+     * @param {number} t - Interpolation factor between 0 and 1.
+     * @return {string} The interpolated hex color.
+     */
+    function interpolateColor(colorA, colorB, t) {
+      t = Math.max(0, Math.min(1, t));
+      const hexToRgb = hex => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return [r, g, b];
+      };
+      const [r1, g1, b1] = hexToRgb(colorA);
+      const [r2, g2, b2] = hexToRgb(colorB);
+      const r = Math.round(r1 + (r2 - r1) * t);
+      const g = Math.round(g1 + (g2 - g1) * t);
+      const b = Math.round(b1 + (b2 - b1) * t);
+      return `rgb(${r},${g},${b})`;
     }
 
     /**
@@ -2718,21 +2918,30 @@ var TidyTree = (function () {
      */
     function findBranchColor(link, colorOptions) {
       if (colorOptions.branchColorMode === "none") {
-        // light gray
         return colorOptions.defaultBranchColor ?? "#cccccc";
       }
-      
-      let source = link.source;
-      let childLeafNodes = getAllLeaves(source);
-      let guidList = colorOptions.nodeList?.map(node => node._guid);
-      
-      let allChildLeafNodesInNodeList = childLeafNodes.every(child =>
-        guidList?.includes(child.data._guid)
-      );
-     
-      if (allChildLeafNodesInNodeList) {
-        // yellowish
-        return colorOptions.highlightColor ?? "#feb640";
+
+      if (colorOptions.branchColorMode === "predicate") {
+        let source = link.source;
+        let childLeafNodes = getAllLeaves(source);
+        let guidList = colorOptions.nodeList?.map(node => node._guid);
+        
+        let allChildLeafNodesInNodeList = childLeafNodes.every(child =>
+          guidList?.includes(child.data._guid)
+        );
+       
+        if (allChildLeafNodesInNodeList) {
+          return colorOptions.highlightColor ?? "#feb640";
+        }
+
+        return colorOptions.defaultBranchColor ?? "#cccccc";
+      }
+
+      if (colorOptions.branchColorMode === "heatmap" || colorOptions.branchColorMode === "gradient") {
+        const value = link.target.data.value != null ? link.target.data.value : 0;
+        const startColor = colorOptions.heatmapStart ?? "#2c3e50";
+        const endColor = colorOptions.heatmapEnd ?? "#e67e22";
+        return interpolateColor(startColor, endColor, value);
       }
 
       return colorOptions.defaultBranchColor ?? "#cccccc";
@@ -2782,7 +2991,19 @@ var TidyTree = (function () {
               t = circularPoint(l.target.x, l.target.y);
             return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
           2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
-          }
+          },
+          radial: l => {
+            let s = circularPoint(l.source.x, l.source.y),
+              t = circularPoint(l.target.x, l.target.y);
+            return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
+          2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
+          },
+          unrooted: l =>
+            `translate(${(l.source.y + l.target.y) / 2}, ${(l.source.x +
+          l.target.x) /
+          2}) rotate(${Math.atan(
+          (l.target.x - l.source.x) / (l.target.y - l.source.y)
+        ) * radToDeg})`
         },
         square: {
           horizontal: l =>
@@ -2794,7 +3015,15 @@ var TidyTree = (function () {
             return `translate(${u[0]}, ${u[1]}) rotate(${((l.target.x * radToDeg) %
           180) -
           90})`;
-          }
+          },
+          radial: l => {
+            let u = circularPoint(l.target.x, (l.source.y + l.target.y) / 2);
+            return `translate(${u[0]}, ${u[1]}) rotate(${((l.target.x * radToDeg) %
+          180) -
+          90})`;
+          },
+          unrooted: l =>
+            `translate(${(l.source.y + l.target.y) / 2}, ${l.target.x})`
         }
       },
       weighted: {
@@ -2816,7 +3045,19 @@ var TidyTree = (function () {
               t = circularPoint(l.target.x, l.target.weight);
             return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
           2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
-          }
+          },
+          radial: l => {
+            let s = circularPoint(l.source.x, l.source.weight),
+              t = circularPoint(l.target.x, l.target.weight);
+            return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
+          2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
+          },
+          unrooted: l =>
+            `translate(${(l.source.weight + l.target.weight) / 2}, ${(l.source.x +
+          l.target.x) /
+          2}) rotate(${Math.atan(
+          (l.target.x - l.source.x) / (l.target.weight - l.source.weight)
+        ) * radToDeg})`
         },
         square: {
           horizontal: l => `
@@ -2835,7 +3076,20 @@ var TidyTree = (function () {
           translate(${u[0]}, ${u[1]})
           rotate(${((l.target.x * radToDeg) % 180) - 90})
         `;
-          }
+          },
+          radial: l => {
+            let u = circularPoint(
+              l.target.x,
+              (l.source.weight + l.target.weight) / 2
+            );
+            return `
+          translate(${u[0]}, ${u[1]})
+          rotate(${((l.target.x * radToDeg) % 180) - 90})
+        `;
+          },
+          unrooted: l => `
+        translate(${(l.source.weight + l.target.weight) / 2}, ${l.target.x})
+      `
         }
       }
     };
@@ -2844,220 +3098,331 @@ var TidyTree = (function () {
     labelTransformers.dendrogram = labelTransformers.tree;
 
     function labeler(d) {
-      // Always show branch length; leaves with no explicit length show 0.000
-      return (d.target.data.length || 0).toFixed(3);
+      // Show actual branch length; leaves without an explicit length show "—"
+      const length = d.target.data.length;
+      return length != null && length > 0 ? length.toFixed(3) : "\u2014";
     }
+
+    /**
+     * Wraps a d3 selection transition with requestAnimationFrame for smoother rendering.
+     * If animation is 0, applies attributes immediately without animation.
+     * @param {D3Selection} selection - The d3 selection to transition.
+     * @param {Object} attrs - Object of attribute/style key-value pairs to apply.
+     * @param {Function} applyFn - Optional function to apply custom transition logic.
+     * @return {D3Transition|D3Selection} The transition or selection.
+     */
+    TidyTree.prototype._transition = function (selection, attrs, applyFn) {
+      if (!this.animation || this.animation <= 0) {
+        if (applyFn) applyFn(selection);
+        else if (attrs) {
+          Object.entries(attrs).forEach(([key, value]) => {
+            if (key.startsWith("style:")) {
+              selection.style(key.slice(6), value);
+            } else {
+              selection.attr(key, value);
+            }
+          });
+        }
+        return selection;
+      }
+      let transition = selection.transition().duration(this.animation);
+      if (applyFn) applyFn(transition);
+      else if (attrs) {
+        Object.entries(attrs).forEach(([key, value]) => {
+          if (key.startsWith("style:")) {
+            transition.style(key.slice(6), value);
+          } else {
+            transition.attr(key, value);
+          }
+        });
+      }
+      return transition;
+    };
 
     /**
      * Redraws the links and relocates the nodes accordingly
      * @return {TidyTree} The TidyTree Object
      */
     TidyTree.prototype.redraw = function () {
-      let parent = this.parent;
+      let tree = this;
+      // Wrap the redraw in requestAnimationFrame for smoother rendering
+      requestAnimationFrame(() => {
+        let parent = tree.parent;
 
-      this.width  = (parseFloat(parent.style("width" )) - this.margin[1] - this.margin[3]) * this.hStretch;
-      this.height = (parseFloat(parent.style("height")) - this.margin[0] - this.margin[2] - this._rulerOffset()) * this.vStretch;
+        tree.width  = (parseFloat(parent.style("width" )) - tree.margin[1] - tree.margin[3]) * tree.hStretch;
+        tree.height = (parseFloat(parent.style("height")) - tree.margin[0] - tree.margin[2] - tree._rulerOffset()) * tree.vStretch;
 
-      this.scalar =
-        this.layout === "horizontal" ? this.width :
-        this.layout === "vertical" ? this.height :
-        Math.min(this.width, this.height) / 2;
+        tree.scalar =
+          tree.layout === "horizontal" ? tree.width :
+          tree.layout === "vertical" ? tree.height :
+          Math.min(tree.width, tree.height) / 2;
 
-      this.hierarchy.each(d => (d.weight = this.scalar * d.value));
+        tree.hierarchy.each(d => (d.weight = tree.scalar * d.value));
 
-      let g = parent.select("svg g");
+        // Build a filtered hierarchy that excludes collapsed subtrees
+        let filteredHierarchy = tree._getFilteredHierarchy();
 
-      let source = (this.type === "tree" ? d3.tree() : d3.cluster()).size(
-        this.layout === "circular"   ? [2 * Math.PI, Math.min(this.height, this.width) / 2] :
-        this.layout === "horizontal" ? [this.height, this.width] :
-        [this.width, this.height]
-      );
+        let g = parent.select("svg g");
 
-      if (this.equidistantLeaves) {
-        if (this.layout === "circular") {
-          source.separation((a,b) => 1 / a.depth);
+        let source = (tree.type === "tree" ? d3.tree() : d3.cluster()).size(
+          tree.layout === "circular"   ? [2 * Math.PI, Math.min(tree.height, tree.width) / 2] :
+          tree.layout === "radial"     ? [2 * Math.PI, Math.min(tree.height, tree.width) / 2] :
+          tree.layout === "unrooted"   ? [tree.width, tree.height] :
+          tree.layout === "horizontal" ? [tree.height, tree.width] :
+          [tree.width, tree.height]
+        );
+
+        if (tree.equidistantLeaves) {
+          if (tree.layout === "circular" || tree.layout === "radial") {
+            source.separation((a,b) => 1 / a.depth);
+          } else {
+            source.separation((a,b) => 1);
+          }
         } else {
-          source.separation((a,b) => 1);
+          if (tree.layout === "circular" || tree.layout === "radial")
+            source.separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
         }
-      } else {
-        if (this.layout === "circular")
-          source.separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
-      }
-      
-      //Note: You must render links prior to nodes in order to get correct placement!
-      let links = g
-        .select("g.tidytree-links")
-        .selectAll("g.tidytree-link")
-        .data(source(this.hierarchy).links(), l => l.source.data._guid + ':' + l.target.data._guid);
+        
+        //Note: You must render links prior to nodes in order to get correct placement!
+        let links = g
+          .select("g.tidytree-links")
+          .selectAll("g.tidytree-link")
+          .data(source(filteredHierarchy).links(), l => l.source.data._guid + ':' + l.target.data._guid);
 
-      links.join(
-        enter => {
-          let newLinks = enter.append("g").attr("class", "tidytree-link");
+        links.join(
+          enter => {
+            let newLinks = enter.append("g").attr("class", "tidytree-link");
 
-          let linkTransformer = linkTransformers[this.type][this.mode][this.layout];
-          newLinks
-            .append("path")
-            .attr("fill", "none")
-            .attr("stroke", d => findBranchColor(d, this.colorOptions))
-            .attr("d", linkTransformer)
-            .transition()
-            .duration(this.animation)
-            .attr("opacity", 1);
-
-          let labelTransformer = labelTransformers[this.type][this.mode][this.layout];
-          newLinks
-            .append("text")
-            .attr("y", 2)
-            .attr("text-anchor", "middle")
-            .style("font-size", "12px")
-            .text(labeler)
-            .attr("transform", labelTransformer)
-            .transition()
-            .duration(this.animation)
-            .style("opacity", this.branchDistances ? 1 : 0);
-        },
-        update => {
-          // Progressive transition: update attributes smoothly without fading out
-          let linkTransformer = linkTransformers[this.type][this.mode][this.layout];
-          let paths = update.select("path");
-          if (!this.animation > 0) {
-            paths
+            let linkTransformer = linkTransformers[tree.type][tree.mode][tree.layout];
+            newLinks
+              .append("path")
+              .attr("fill", "none")
+              .attr("stroke", d => findBranchColor(d, tree.colorOptions))
               .attr("d", linkTransformer)
-              .attr("stroke", d => findBranchColor(d, this.colorOptions))
-              .attr("opacity", 1);
-          } else {
-            // Transition d (path), stroke, and opacity simultaneously over full animation duration
-            paths
               .transition()
-              .duration(this.animation)
-              .attr("d", linkTransformer)
-              .attr("stroke", d => findBranchColor(d, this.colorOptions))
+              .duration(tree.animation)
               .attr("opacity", 1);
-          }
 
-          let labelTransformer =
-            labelTransformers[this.type][this.mode][this.layout];
-          let labels = update.select("text");
-          if (this.animation) {
-            // Transition transform and text progressively
-            labels
-              .transition()
-              .duration(this.animation)
+            let labelTransformer = labelTransformers[tree.type][tree.mode][tree.layout];
+            newLinks
+              .append("text")
+              .attr("y", 2)
+              .attr("text-anchor", "middle")
+              .style("font-size", tree.branchLabelSize + "px")
+              .text(labeler)
               .attr("transform", labelTransformer)
-              .text(labeler);
-            if (this.branchDistances) {
-              labels
-                .transition()
-                .duration(this.animation)
-                .style("opacity", 1);
+              .transition()
+              .duration(tree.animation)
+              .style("opacity", tree.branchDistances ? 1 : 0);
+          },
+          update => {
+            // Progressive transition: update attributes smoothly without fading out
+            let linkTransformer = linkTransformers[tree.type][tree.mode][tree.layout];
+            let paths = update.select("path");
+            if (!tree.animation > 0) {
+              paths
+                .attr("d", linkTransformer)
+                .attr("stroke", d => findBranchColor(d, tree.colorOptions))
+                .attr("opacity", 1);
             } else {
+              // Transition d (path), stroke, and opacity simultaneously over full animation duration
+              paths
+                .transition()
+                .duration(tree.animation)
+                .attr("d", linkTransformer)
+                .attr("stroke", d => findBranchColor(d, tree.colorOptions))
+                .attr("opacity", 1);
+            }
+
+            let labelTransformer =
+              labelTransformers[tree.type][tree.mode][tree.layout];
+            let labels = update.select("text");
+            if (tree.animation) {
+              // Transition transform and text progressively
               labels
                 .transition()
-                .duration(this.animation)
-                .style("opacity", 0);
+                .duration(tree.animation)
+                .attr("transform", labelTransformer)
+                .text(labeler);
+              if (tree.branchDistances) {
+                labels
+                  .transition()
+                  .duration(tree.animation)
+                  .style("opacity", 1);
+              } else {
+                labels
+                  .transition()
+                  .duration(tree.animation)
+                  .style("opacity", 0);
+              }
+            } else {
+              labels.text(labeler).attr("transform", labelTransformer);
+              labels.style("opacity", tree.branchDistances ? 1 : 0);
             }
-          } else {
-            labels.text(labeler).attr("transform", labelTransformer);
-            labels.style("opacity", this.branchDistances ? 1 : 0);
-          }
-        },
-        exit =>
-          exit
-            .transition()
-            .duration(this.animation)
-            .remove()
-      );
-
-      let nodes = g
-        .select("g.tidytree-nodes")
-        .selectAll("g.tidytree-node")
-        .data(this.hierarchy.descendants(), d => d.data._guid);
-      nodes.join(
-        enter => {
-          let nt = nodeTransformers[this.type][this.layout];
-          let newNodes = enter
-            .append("g")
-            .attr("class", "tidytree-node")
-            .classed("tidytree-node-internal", d => d.children)
-            .classed("tidytree-node-leaf", d => !d.children)
-            .attr("transform", nt);
-
-          newNodes
-            .append("circle")
-            .attr("title", d => d.data.id)
-            .style("opacity", d =>
-              (d.children && this.branchNodes) ||
-              (!d.children && this.leafNodes) ? 1 : 0
-            )
-            .style("fill", d => findNodeColor(d, this.colorOptions))
-            .on("mouseenter focusin", d => this.trigger("showtooltip", d))
-            .on("mouseout focusout", d => this.trigger("hidetooltip", d))
-            .on("contextmenu", d => this.trigger("contextmenu", d))
-            .on("click", d => this.trigger("select", d))
-            .attr("r", 2.5);
-
-          let nodeLabels = newNodes
-            .append("text")
-            .text(d => d.data.id)
-            .style("font-size", "12px")
-            .attr("y", 2)
-            .style("opacity", d =>
-              ( d.children && this.branchLabels) ||
-              (!d.children && this.leafLabels) ? 1 : 0
-            );
-
-          setNodeLabelPosition(nodeLabels, this.layout);
-
-          newNodes
-            .transition()
-            .duration(this.animation)
-            .attr("opacity", 1);
-        },
-        update => {
-          // Progressive transition: update transform, fill, and label position smoothly
-          let nodeTransformer = nodeTransformers[this.type][this.layout];
-
-          if (!this.animation > 0) {
-            // No animation: directly set attributes
-            update.attr("transform", nodeTransformer);
-            update.select("circle")
-              .style("fill", d => findNodeColor(d, this.colorOptions))
-              .style("opacity", d =>
-                (d.children && this.branchNodes) ||
-                (!d.children && this.leafNodes) ? 1 : 0
-              );
-            setNodeLabelPosition(update.select("text"), this.layout);
-          } else {
-            // Animate transform and fill, ensure opacity is restored to 1
-            update
+          },
+          exit =>
+            exit
               .transition()
-              .duration(this.animation)
-              .attr("transform", nodeTransformer)
+              .duration(tree.animation)
+              .remove()
+        );
+
+        let nodes = g
+          .select("g.tidytree-nodes")
+          .selectAll("g.tidytree-node")
+          .data(filteredHierarchy.descendants(), d => d.data._guid);
+        nodes.join(
+          enter => {
+            let nt = nodeTransformers[tree.type][tree.layout];
+            let newNodes = enter
+              .append("g")
+              .attr("class", "tidytree-node")
+              .classed("tidytree-node-internal", d => d.children)
+              .classed("tidytree-node-leaf", d => !d.children)
+              .attr("transform", nt);
+
+            const t = tree;
+            newNodes
+              .each(function(d) {
+                const node = d3.select(this);
+                const shape = t.nodeShape || "circle";
+                const size = t.nodeSize || 3;
+                if (shape === "circle") {
+                  node.append("circle")
+                    .attr("r", size)
+                    .attr("title", d.data.id);
+                } else if (shape === "square") {
+                  node.append("rect")
+                    .attr("x", -size / 2)
+                    .attr("y", -size / 2)
+                    .attr("width", size)
+                    .attr("height", size)
+                    .attr("title", d.data.id);
+                } else if (shape === "diamond") {
+                  node.append("polygon")
+                    .attr("points", `0,-${size/2} ${size/2},0 0,${size/2} ${-size/2},0`)
+                    .attr("title", d.data.id);
+                }
+              })
+              .style("opacity", d =>
+                (d.children && t.branchNodes) ||
+                (!d.children && t.leafNodes) ? 1 : 0
+              )
+              .style("fill", d => findNodeColor(d, t.colorOptions))
+              .on("mouseenter focusin", d => {
+              const content = t.tooltipFormatter ? t.tooltipFormatter(d.data) : d.data.id;
+              t.trigger("showtooltip", d, content);
+            })
+            .on("mouseout focusout", d => t.trigger("hidetooltip", d))
+              .on("contextmenu", d => t.trigger("contextmenu", d))
+              .on("click", d => t.trigger("select", d));
+
+            let nodeLabels = newNodes
+              .append("text")
+              .text(d => d.data.id)
+              .style("font-size", t.nodeLabelSize + "px")
+              .attr("y", 2)
+              .style("opacity", d =>
+                ( d.children && t.branchLabels) ||
+                (!d.children && t.leafLabels) ? 1 : 0
+              );
+
+            setNodeLabelPosition(nodeLabels, t.layout);
+
+            // Render annotations for this node
+            const annotation = t.annotations.get(d.data._guid);
+            if (annotation) {
+              newNodes.append("text")
+                .attr("class", "tidytree-node-annotation")
+                .text(d => {
+                  const ann = t.annotations.get(d.data._guid);
+                  return ann ? JSON.stringify(ann) : "";
+                })
+                .style("font-size", Math.max(8, t.nodeLabelSize - 2) + "px")
+                .attr("y", 14)
+                .style("fill", "#666")
+                .style("opacity", d =>
+                  ( d.children && t.branchLabels) ||
+                  (!d.children && t.leafLabels) ? 1 : 0
+                );
+              setNodeLabelPosition(newNodes.select("text.tidytree-node-annotation"), t.layout);
+            }
+
+            newNodes
+              .transition()
+              .duration(t.animation)
               .attr("opacity", 1);
+          },
+          update => {
+            // Progressive transition: update transform, fill, and label position smoothly
+            let nodeTransformer = nodeTransformers[t.type][t.layout];
+            const shape = t.nodeShape || "circle";
+            const glyphSelector = shape === "circle" ? "circle" : shape === "square" ? "rect" : "polygon";
 
-            let nodeGlyphs = update.select("circle");
-            nodeGlyphs
+            if (!t.animation > 0) {
+              // No animation: directly set attributes
+              update.attr("transform", nodeTransformer);
+              update.select(glyphSelector)
+                .style("fill", d => findNodeColor(d, t.colorOptions))
+                .style("opacity", d =>
+                  (d.children && t.branchNodes) ||
+                  (!d.children && t.leafNodes) ? 1 : 0
+                );
+              setNodeLabelPosition(update.select("text"), t.layout);
+              // Update annotation text
+              update.select("text.tidytree-node-annotation")
+                .text(d => {
+                  const ann = t.annotations.get(d.data._guid);
+                  return ann ? JSON.stringify(ann) : "";
+                })
+                .style("opacity", d =>
+                  ( d.children && t.branchLabels) ||
+                  (!d.children && t.leafLabels) ? 1 : 0
+                );
+              setNodeLabelPosition(update.select("text.tidytree-node-annotation"), t.layout);
+            } else {
+              // Animate transform and fill, ensure opacity is restored to 1
+              update
+                .transition()
+                .duration(t.animation)
+                .attr("transform", nodeTransformer)
+                .attr("opacity", 1);
+
+              let nodeGlyphs = update.select(glyphSelector);
+              nodeGlyphs
+                .transition()
+                .duration(t.animation)
+                .style("fill", d => findNodeColor(d, t.colorOptions))
+                .style("opacity", d =>
+                  (d.children && t.branchNodes) ||
+                  (!d.children && t.leafNodes) ? 1 : 0
+                );
+
+              let nodeLabels = update.select("text");
+              setNodeLabelPosition(nodeLabels, t.layout);
+              // Update annotation text
+              update.select("text.tidytree-node-annotation")
+                .text(d => {
+                  const ann = t.annotations.get(d.data._guid);
+                  return ann ? JSON.stringify(ann) : "";
+                })
+                .style("opacity", d =>
+                  ( d.children && t.branchLabels) ||
+                  (!d.children && t.leafLabels) ? 1 : 0
+                );
+              setNodeLabelPosition(update.select("text.tidytree-node-annotation"), t.layout);
+            }
+          },
+          exit =>
+            exit
               .transition()
-              .duration(this.animation)
-              .style("fill", d => findNodeColor(d, this.colorOptions))
-              .style("opacity", d =>
-                (d.children && this.branchNodes) ||
-                (!d.children && this.leafNodes) ? 1 : 0
-              );
+              .duration(t.animation)
+              .remove()
+        );
 
-            let nodeLabels = update.select("text");
-            setNodeLabelPosition(nodeLabels, this.layout);
-          }
-        },
-        exit =>
-          exit
-            .transition()
-            .duration(this.animation)
-            .remove()
-      );
-
-      // Pass current zoom transform so the ruler respects zoom level
-      updateRuler.call(this, this.transform || { k: 1 });
+        // Pass current zoom transform so the ruler respects zoom level
+        updateRuler.call(t, t.transform || { k: 1 });
+      });
 
       return this;
     };
@@ -3195,6 +3560,10 @@ var TidyTree = (function () {
           console.warn('Warning: colorOptions.leavesOnly not supplied and defaulted to false');
         }
         newColorOptions.nodeList = this.getNodeGUIDs(newColorOptions.leavesOnly, newColorOptions.predicate);
+      } else if (newColorOptions.nodeColorMode === 'heatmap' || newColorOptions.nodeColorMode === 'gradient') {
+        // Heatmap/gradient modes don't require a predicate or nodeList
+        if (!newColorOptions.heatmapStart) newColorOptions.heatmapStart = "#2c3e50";
+        if (!newColorOptions.heatmapEnd) newColorOptions.heatmapEnd = "#e67e22";
       } else {
         // nodeColorMode === 'none'
         if (newColorOptions.branchColorMode !== 'none') {
@@ -3317,7 +3686,7 @@ var TidyTree = (function () {
         //i.e. has already been drawn
         this.parent
           .select("svg")
-          .selectAll("g.tidytree-node-internal circle")
+          .selectAll(`g.tidytree-node-internal ${this._nodeGlyphSelector()}`)
           .transition()
           .duration(this.animation)
           .style("opacity", show ? 1 : 0);
@@ -3339,7 +3708,7 @@ var TidyTree = (function () {
         );
       this.parent
         .select("svg")
-        .selectAll("g.tidytree-node-internal circle")
+        .selectAll(`g.tidytree-node-internal ${this._nodeGlyphSelector()}`)
         .each(function (d) { styler(this, d); });
       return this;
     };
@@ -3432,7 +3801,7 @@ var TidyTree = (function () {
         //i.e. has already been drawn
         this.parent
           .select("svg")
-          .selectAll("g.tidytree-node-leaf circle")
+          .selectAll(`g.tidytree-node-leaf ${this._nodeGlyphSelector()}`)
           .transition()
           .duration(this.animation)
           .style("opacity", show ? 1 : 0);
@@ -3453,7 +3822,7 @@ var TidyTree = (function () {
       }
       this.parent
         .select("svg")
-        .selectAll("g.tidytree-node-leaf circle")
+        .selectAll(`g.tidytree-node-leaf ${this._nodeGlyphSelector()}`)
         .each(function (d) {
           styler(this, d);
         });
@@ -3534,6 +3903,157 @@ var TidyTree = (function () {
     };
 
     /**
+     * Set a custom formatter function for tooltip content.
+     * The formatter receives the node data object and should return a string
+     * to display in the tooltip. If not set, the node id is used by default.
+     * @param {Function} formatter A function that takes node data and returns a string.
+     * @return {TidyTree} The TidyTree object.
+     */
+    TidyTree.prototype.setTooltipFormatter = function (formatter) {
+      this.tooltipFormatter = formatter;
+      return this;
+    };
+
+    /**
+     * Collapse or expand a subtree rooted at the given node GUID.
+     * If the node is already collapsed, it will be expanded; otherwise it will be collapsed.
+     * @param {String} nodeGuid The GUID of the node whose subtree to collapse/expand.
+     * @return {TidyTree} The TidyTree object.
+     */
+    TidyTree.prototype.collapseNode = function (nodeGuid) {
+      if (this.collapsedNodes.has(nodeGuid)) {
+        this.collapsedNodes.delete(nodeGuid);
+      } else {
+        this.collapsedNodes.add(nodeGuid);
+      }
+      if (this.parent) return this.redraw();
+      return this;
+    };
+
+    /**
+     * Check whether a node is currently collapsed.
+     * @param {String} nodeGuid The GUID of the node to check.
+     * @return {Boolean} True if the node is collapsed, false otherwise.
+     */
+    TidyTree.prototype.isNodeCollapsed = function (nodeGuid) {
+      return this.collapsedNodes.has(nodeGuid);
+    };
+
+    /**
+     * Returns an array of all descendant GUIDs (including the node itself) for a given node GUID.
+     * @param {String} nodeGuid The GUID of the root node.
+     * @return {Array} Array of descendant GUIDs.
+     */
+    TidyTree.prototype.getDescendantGUIDs = function (nodeGuid) {
+      let result = [];
+      let found = false;
+      this.hierarchy.eachBefore(d => {
+        if (d.data._guid === nodeGuid) {
+          found = true;
+        }
+        if (found) {
+          result.push(d.data._guid);
+        }
+      });
+      return result;
+    };
+
+    /**
+     * Returns a filtered copy of the hierarchy that excludes collapsed subtrees.
+     * Nodes that are collapsed (and all their descendants) are removed from the
+     * returned hierarchy so they are not rendered.
+     * @return {Object} A filtered d3 hierarchy object.
+     */
+    TidyTree.prototype._getFilteredHierarchy = function () {
+      if (this.collapsedNodes.size === 0) {
+        return this.hierarchy;
+      }
+
+      // Collect all GUIDs to exclude (collapsed nodes + their descendants)
+      let excluded = new Set();
+      this.collapsedNodes.forEach(guid => {
+        this.getDescendantGUIDs(guid).forEach(g => excluded.add(g));
+      });
+
+      // Build a filtered hierarchy by walking the original and skipping excluded nodes
+      let root = this.hierarchy;
+      let filteredRoot = null;
+      let nodeMap = new Map();
+
+      // First pass: create filtered nodes for non-excluded nodes
+      root.eachBefore(d => {
+        if (excluded.has(d.data._guid)) return;
+        let copy = {
+          data: d.data,
+          children: [],
+          parent: null,
+          depth: d.depth,
+          height: d.height,
+          value: d.value,
+          weight: d.weight,
+          x: d.x,
+          y: d.y
+        };
+        nodeMap.set(d.data._guid, copy);
+      });
+
+      // Second pass: link parent-child relationships
+      root.eachBefore(d => {
+        if (excluded.has(d.data._guid)) return;
+        let copy = nodeMap.get(d.data._guid);
+        if (d.parent && !excluded.has(d.parent.data._guid)) {
+          let parentCopy = nodeMap.get(d.parent.data._guid);
+          copy.parent = parentCopy;
+          parentCopy.children.push(copy);
+        } else {
+          // This is a new root (its parent was collapsed)
+          copy.parent = null;
+          if (!filteredRoot) filteredRoot = copy;
+        }
+      });
+
+      // If no nodes remain, return a minimal hierarchy
+      if (!filteredRoot) {
+        filteredRoot = { data: root.data, children: [], parent: null, depth: 0, height: 0, value: 0, weight: 0, x: 0, y: 0 };
+      }
+
+      // Convert to d3 hierarchy
+      return d3.hierarchy(filteredRoot, d => d.children);
+    };
+
+    /**
+     * Add or update an annotation (metadata) for a specific node.
+     * @param {String} nodeGuid The GUID of the node to annotate.
+     * @param {Object} data The annotation data to store.
+     * @return {TidyTree} The TidyTree object.
+     */
+    TidyTree.prototype.addAnnotation = function (nodeGuid, data) {
+      this.annotations.set(nodeGuid, data);
+      if (this.parent) return this.redraw();
+      return this;
+    };
+
+    /**
+     * Retrieve the annotation data for a specific node.
+     * @param {String} nodeGuid The GUID of the node.
+     * @return {Object|undefined} The annotation data, or undefined if none exists.
+     */
+    TidyTree.prototype.getAnnotation = function (nodeGuid) {
+      return this.annotations.get(nodeGuid);
+    };
+
+    /**
+     * Remove the annotation for a specific node.
+     * @param {String} nodeGuid The GUID of the node.
+     * @return {TidyTree} The TidyTree object.
+     */
+    TidyTree.prototype.removeAnnotation = function (nodeGuid) {
+      this.annotations.delete(nodeGuid);
+      if (this.parent) return this.redraw();
+      return this;
+    };
+
+    /**
      * Retrieves the GUIDs of the nodes in the TidyTree instance.
      *
      * @param {boolean} leavesOnly - Whether to retrieve GUIDs only for leaf nodes.
@@ -3541,9 +4061,10 @@ var TidyTree = (function () {
      * @return {Array} An array of GUIDs of the nodes.
      */
     TidyTree.prototype.getNodeGUIDs = function (leavesOnly, predicate) {
+      const glyph = this._nodeGlyphSelector();
       const selector = leavesOnly
-        ? "g.tidytree-node-leaf circle"
-        : "g.tidytree-node-leaf circle, g.tidytree-node-internal circle";
+        ? `g.tidytree-node-leaf ${glyph}`
+        : `g.tidytree-node-leaf ${glyph}, g.tidytree-node-internal ${glyph}`;
 
       const nodes = this.parent
         .select("svg")

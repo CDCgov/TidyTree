@@ -10,7 +10,9 @@
     "demo": "npx http-server",
     "dev": "npm run demo & npm run watch",
     "doc": "npx documentation build src/main.js -f md -o docs/README.md",
+    "lint": "eslint src/",
     "minify": "npx terser dist/tidytree.js --compress > dist/tidytree.min.js",
+    "test": "vitest run",
     "version": "npm version patch",
     "watch": "rollup -c --watch"
   },
@@ -26,6 +28,8 @@
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.3.1",
-    "rollup": "^4.64.5"
+    "eslint": "^8.57.0",
+    "rollup": "^4.64.5",
+    "vitest": "^1.6.0"
   }
 }
