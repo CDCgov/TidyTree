@@ -9,29 +9,30 @@
     <meta name="msapplication-TileColor" content="#2b5797">
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' 'unsafe-inline' https://d3js.org https://code.jquery.com https://unpkg.com;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
+      script-src 'self' 'unsafe-inline' https://d3js.org https://cdn.jsdelivr.net;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
       font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
-      connect-src 'self';
+      connect-src 'self' https://cdn.jsdelivr.net;
       img-src 'self' data:;
       manifest-src 'self';
-      frame-ancestors 'none';
       base-uri 'self';
       form-action 'self';
     ">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    <meta http-equiv="X-Frame-Options" content="DENY">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), xr=()">
     <title>Tidy Tree</title>
-    <link rel="canonical" href="https://cdcgov.github.io/TidyTree/demo/">
+    <link rel="canonical" href="https://aaboyles.github.io/TidyTree/demo/">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="manifest" href="site.webmanifest">
     <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
-    <link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@materialstyle/materialstyle@3.1.1/dist/css/materialstyle.min.css" 
+      integrity="sha384-TveZ4SBMG9Zwu44Pq5aK2bgL+4CaFRTtx6pSSsxmQKWhIRKoONDSRW+k+NA9A0Gk" 
+      crossorigin="anonymous">
     <style>
       html,
       body,
@@ -39,9 +40,21 @@
         height: 100%;
         overflow: hidden;
       }
-      #options {
-        height: 100%;
+      .layout-container {
+        height: 100vh;
+        display: flex;
+        overflow: hidden;
+      }
+      .sidebar {
+        width: 376px;
         background-color: lightgray;
+        overflow-y: auto;
+        flex-shrink: 0;
+      }
+      .tree-content {
+        flex: 1;
+        padding: 0;
+        overflow: hidden;
       }
       .accordion-header {
         background-color: darkgrey;
@@ -112,25 +125,26 @@
     </style>
   </head>
   <body>
-    <header class="bmd-layout-header">
-      <div class="navbar navbar-light bg-faded">
-        <a class="navbar-brand" data-toggle="modal" data-target="#aboutModal">TidyTree</a>
-        <form class="form-inline my-2 my-lg-0">
-          <input id="search" class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+    <header class="navbar navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" data-bs-toggle="modal" data-bs-target="#aboutModal">TidyTree</a>
+        <button id="toggle-options" class="btn btn-outline-secondary me-2">></button>
+        <form class="d-flex">
+          <input id="search" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
         </form>
       </div>
     </header>
 
-    <div class="bmd-layout-container bmd-drawer-f-l bmd-drawer-in">
-      <div id="dw-s1" class="bmd-layout-drawer bg-faded">
+    <div class="layout-container d-flex">
+      <div id="options-sidebar" class="sidebar">
         <div id="accordion">
           <div class="card">
             <div class="card-header" id="headingSourceData">
               <h5 class="mb-0">
                 <button
                   class="btn btn-link"
-                  data-toggle="collapse"
-                  data-target="#collapseSourceData"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseSourceData"
                   aria-expanded="false"
                   aria-controls="collapseSourceData"
                 >
@@ -142,7 +156,7 @@
               id="collapseSourceData"
               class="collapse"
               aria-labelledby="headingSourceData"
-              data-parent="#accordion"
+              data-bs-parent="#accordion"
             >
               <div class="card-body">
                 <div class="form-group">
@@ -171,8 +185,8 @@
               <h5 class="mb-0">
                 <button
                   class="btn btn-link collapsed"
-                  data-toggle="collapse"
-                  data-target="#collapseLayout"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseLayout"
                   aria-expanded="false"
                   aria-controls="collapseLayout"
                 >
@@ -184,7 +198,7 @@
               id="collapseLayout"
               class="collapse"
               aria-labelledby="headingLayout"
-              data-parent="#accordion"
+              data-bs-parent="#accordion"
             >
               <div class="card-body">
                 <div class="form-group">
@@ -236,8 +250,8 @@
               <h5 class="mb-0">
                 <button
                   class="btn btn-link collapsed"
-                  data-toggle="collapse"
-                  data-target="#collapseBranches"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseBranches"
                   aria-expanded="false"
                   aria-controls="collapseBranches"
                 >
@@ -249,7 +263,7 @@
               id="collapseBranches"
               class="collapse"
               aria-labelledby="headingBranches"
-              data-parent="#accordion"
+              data-bs-parent="#accordion"
             >
               <div class="card-body">
                 <div class="form-group">
@@ -323,8 +337,8 @@
               <h5 class="mb-0">
                 <button
                   class="btn btn-link"
-                  data-toggle="collapse"
-                  data-target="#collapseLeaves"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseLeaves"
                   aria-expanded="false"
                   aria-controls="collapseLeaves"
                 >
@@ -336,7 +350,7 @@
               id="collapseLeaves"
               class="collapse"
               aria-labelledby="headingLeaves"
-              data-parent="#accordion"
+              data-bs-parent="#accordion"
             >
               <div class="card-body">
                 <div class="form-group">
@@ -394,8 +408,8 @@
               <h5 class="mb-0">
                 <button
                   class="btn btn-link collapsed"
-                  data-toggle="collapse"
-                  data-target="#collapseColor"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseColor"
                   aria-expanded="false"
                   aria-controls="collapseColor"
                 >
@@ -407,7 +421,7 @@
               id="collapseColor"
               class="collapse"
               aria-labelledby="headingColor"
-              data-parent="#accordion"
+              data-bs-parent="#accordion"
             >
               <div class="card-body">
                 <div class="form-group">
@@ -454,8 +468,8 @@
               <h5 class="mb-0">
                 <button
                   class="btn btn-link collapsed"
-                  data-toggle="collapse"
-                  data-target="#collapseMeta"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseMeta"
                   aria-expanded="false"
                   aria-controls="collapseMeta"
                 >
@@ -467,7 +481,7 @@
               id="collapseMeta"
               class="collapse"
               aria-labelledby="headingMeta"
-              data-parent="#accordion"
+              data-bs-parent="#accordion"
             >
               <div class="card-body">
                 <div class="form-group">
@@ -518,11 +532,11 @@
         </div>
       </div>
 
-      <main id="tree" class="bmd-layout-content"></main>
+      <main id="tree" class="tree-content"></main>
     </div>
 
-    <div id="context-menu" class="btn-group">
-      <div class="dropdown-menu dropdown-menu-left show">
+    <div id="context-menu" class="dropdown">
+      <div class="dropdown-menu dropdown-menu-end show">
         <button id="reroot" class="dropdown-item">Set As Root</button>
         <button id="rotate" class="dropdown-item">Rotate</button>
         <button id="flip" class="dropdown-item">Flip</button>
@@ -542,22 +556,19 @@
       class="modal fade"
       id="aboutModal"
       tabindex="-1"
-      role="dialog"
       aria-labelledby="aboutModalLabel"
       aria-hidden="true"
     >
-      <div class="modal-dialog" role="document">
+      <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="aboutModalLabel">About TidyTree</h5>
             <button
               type="button"
-              class="close"
-              data-dismiss="modal"
+              class="btn-close"
+              data-bs-dismiss="modal"
               aria-label="Close"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
+            ></button>
           </div>
           <div class="modal-body">
             <p>
@@ -584,7 +595,7 @@
             <button
               type="button"
               class="btn btn-secondary"
-              data-dismiss="modal"
+              data-bs-dismiss="modal"
             >
               Got it!
             </button>
@@ -596,9 +607,9 @@
     <button
       id="export"
       type="button"
-      class="btn btn-primary bmd-btn-fab"
-      data-toggle="modal"
-      data-target="#exportModal"
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#exportModal"
     >
       <i class="material-icons">save_alt</i>
     </button>
@@ -607,46 +618,45 @@
       class="modal fade"
       id="exportModal"
       tabindex="-1"
-      role="dialog"
       aria-labelledby="exportModalLabel"
       aria-hidden="true"
     >
-      <div class="modal-dialog" role="document">
+      <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="exportModalLabel">Export</h5>
             <button
               type="button"
-              class="close"
-              data-dismiss="modal"
+              class="btn-close"
+              data-bs-dismiss="modal"
               aria-label="Close"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
+            ></button>
           </div>
-          <div class="modal-body row">
-            <div class="form-group col">
-              <label for="export-filename">Filename</label>
-              <input
-                type="text"
-                id="export-filename"
-                class="form-control skip"
-             >
-            </div>
-            <div class="form-group col">
-              <label for="export-format">Format</label>
-              <select id="export-format" class="form-control form-control-sm skip">
-                <option selected>nwk</option>
-                <option>png</option>
-                <option>svg</option>
-              </select>
+          <div class="modal-body">
+            <div class="row">
+              <div class="form-group col">
+                <label for="export-filename">Filename</label>
+                <input
+                  type="text"
+                  id="export-filename"
+                  class="form-control skip"
+               >
+              </div>
+              <div class="form-group col">
+                <label for="export-format">Format</label>
+                <select id="export-format" class="form-select form-select-sm skip">
+                  <option selected>nwk</option>
+                  <option>png</option>
+                  <option>svg</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
             <button
               type="button"
               class="btn btn-secondary"
-              data-dismiss="modal"
+              data-bs-dismiss="modal"
             >
               Cancel
             </button>
@@ -654,7 +664,7 @@
               type="button"
               id="export-download"
               class="btn btn-primary"
-              data-dismiss="modal"
+              data-bs-dismiss="modal"
             >
               Export
             </button>
@@ -665,22 +675,15 @@
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script
-      src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
-      integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+      integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
       crossorigin="anonymous"
     ></script>
     <script
-      src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js"
-      integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U"
+      src="https://cdn.jsdelivr.net/npm/@materialstyle/materialstyle@3.1.1/dist/js/materialstyle.min.js"
+      integrity="sha384-rqhP61M9WSmzd7+ssgyoWP2I+R68vVHx7o+UmmIs6/Nxe8Lt1DoF6+0CKptZIXC0"
       crossorigin="anonymous"
     ></script>
-    <script
-      src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js"
-      integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9"
-      crossorigin="anonymous"
-    ></script>
-    <script src="https://unpkg.com/file-saver@2.0.0/dist/FileSaver.min.js"></script>
-    <script src="https://unpkg.com/save-svg-as-png/lib/saveSvgAsPng.js"></script>
     <script src="tidytree.js"></script>
     <script>
       var tree, original;
@@ -689,8 +692,7 @@
         navigator.serviceWorker.register("sw.js");
       }
 
-      $(document).ready(function() {
-        $("body").bootstrapMaterialDesign();
+      document.addEventListener("DOMContentLoaded", function() {
         const params = new URLSearchParams(window.location.search);
         const fileUrl = params.get("file");
         let treeFetched;
@@ -713,10 +715,10 @@
           .text(d => d);
       });
 
-      d3.select("#source").on("input", function() {
+      d3.select("#source").on("input", function(event) {
         let reader = new FileReader();
         reader.onload = () => buildTree(reader.result);
-        reader.readAsText(d3.event.srcElement.files[0]);
+        reader.readAsText(event.srcElement.files[0]);
       });
       d3.select("#load-url").on("click", async function() {
         const url = d3.select("#tree-url").property("value").trim();
@@ -764,7 +766,7 @@
         if (newick) {
           // Validate Newick content
           try {
-            patristic.parseNewick(newick);
+            TidyTree.patristic.parseNewick(newick);
           } catch (e) {
             alert("Invalid Newick format. Please provide a valid Newick tree string.");
             return;
@@ -953,21 +955,49 @@
         d3.select("#tree svg").style("background-color", this.value);
       });
 
+      function download(data, filename) {
+        const a = document.createElement("a");
+        if (data instanceof Blob) {
+          a.href = URL.createObjectURL(data);
+        } else {
+          a.href = data;
+        }
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        if (data instanceof Blob) {
+          URL.revokeObjectURL(a.href);
+        }
+      }
+
       d3.select("#export-download").on("click", function() {
         let format = document.getElementById("export-format").value;
         let filename = document.getElementById("export-filename").value;
         if (format === "nwk") {
-          saveAs(
-            new Blob([tree.data.toNewick()], {
-              type: "text/plain;charset=utf-8"
-            }),
+          download(
+            new Blob([tree.data.toNewick()], { type: "text/plain;charset=utf-8" }),
             filename + "." + format
           );
         } else if (format === "png") {
-          saveSvgAsPng(d3.select("#tree svg").node(), filename + ".png", {});
+          const svg = d3.select("#tree svg").node();
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          const img = new Image();
+          const svgData = new XMLSerializer().serializeToString(svg);
+          const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+          const url = URL.createObjectURL(svgBlob);
+          img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            download(canvas.toDataURL("image/png"), filename + ".png");
+            URL.revokeObjectURL(url);
+          };
+          img.src = url;
         } else {
           prepareSvg(d3.select("#tree svg").node(), {}, function(svg) {
-            saveAs(
+            download(
               new Blob([svg], { type: "image/svg+xml" }),
               filename + ".svg"
             );
@@ -978,7 +1008,7 @@
       d3.select("#toggle-options").on("click", function() {
         var that = d3.select(this);
         if (that.text() === "<") {
-          d3.select("#options")
+          d3.select("#options-sidebar")
             .transition()
             .duration(400)
             .style("width", "0px");
@@ -988,9 +1018,9 @@
             .duration(400)
             .style("left", "15px")
             .end()
-            .then(() => tree.redraw());
+            .then(() => { if (tree) tree.redraw(); });
         } else {
-          d3.select("#options")
+          d3.select("#options-sidebar")
             .transition()
             .duration(400)
             .style("width", "376px");
@@ -1000,7 +1030,7 @@
             .duration(400)
             .style("left", "376px")
             .end()
-            .then(() => tree.redraw());
+            .then(() => { if (tree) tree.redraw(); });
         }
       });
 
@@ -1024,15 +1054,15 @@
         }
       });
 
-      d3.select("#search").on("input", () => {
-        if (!d3.event.target.value.length)
+      d3.select("#search").on("input", (event) => {
+        if (!event.target.value.length)
           return tree.parent.selectAll("circle").style("fill", "steelblue");
         tree
-          .search(d => !d.data.id.includes(d3.event.target.value))
+          .search(d => !d.data.id.includes(event.target.value))
           .selectAll("circle")
           .style("fill", "steelblue");
         tree
-          .search(d => d.data.id.includes(d3.event.target.value))
+          .search(d => d.data.id.includes(event.target.value))
           .selectAll("circle")
           .style("fill", "red");
       });
@@ -1044,8 +1074,8 @@
           .style("top", "-50px");
       });
 
-      function contextMenu(d) {
-        let e = d3.event;
+      function contextMenu(d, event) {
+        let e = event;
         if (!e) return;
         e.preventDefault();
         hideTooltip();
@@ -1083,9 +1113,9 @@
         );
       }
 
-      function showTooltip(d) {
+      function showTooltip(d, event) {
         if (!d3.select("#tooltips").node().checked) return;
-        let e = d3.event;
+        let e = event;
         e.preventDefault();
         d3.select("#tooltip")
           .text(d[0].data.id)
@@ -1108,7 +1138,7 @@
       });
 
       d3.select(window).on("resize", function() {
-        tree.redraw();
+        if (tree) tree.redraw();
       });
     </script>
   </body>

@@ -2,6 +2,12 @@ import * as patristic from "patristic";
 // import "d3";
 
 /**
+ * The patristic library, bundled with TidyTree.
+ * @type {Object}
+ */
+TidyTree.patristic = patristic;
+
+/**
  * This class function creates a TidyTree object.
  * @param {String} newick A valid newick string
  * @param {Object} options A Javascript object containing options to set up the tree

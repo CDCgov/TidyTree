@@ -8,6 +8,7 @@ var TidyTree = (function () {
      * @example
      * console.log(patristic.version);
      */
+    const version = "0.7.1";
     // No parent, child or sibling.
     const NONE = -1;
     // The parent of a slot whose Branch has moved to another Store.
@@ -1593,6 +1594,509 @@ var TidyTree = (function () {
         return sign + whole + fraction + "0".repeat(e - fraction.length);
     }
     /**
+     * Parses a hierarchical JSON string (or Object) as a Branch object.
+     * @param  {(String|Object)} json A json string (or Javascript Object)
+     * representing hierarchical data.
+     * @param  {String} [idLabel="id"] The key used in the objects of `json` to
+     * indicate their identifiers.
+     * @param  {String} [lengthLabel='length'] The key used in the objects of `json`
+     * to indicate their length.
+     * @param  {String} [childrenLabel=`children`] The key used in the objects of
+     * `json` to indicate their children.
+     * @return {Branch} The Branch representing the root of the hierarchy
+     * represented by `json`.
+     */
+    function parseJSON(json, idLabel, lengthLabel, childrenLabel) {
+        if (!idLabel)
+            idLabel = "id";
+        if (!lengthLabel)
+            lengthLabel = "length";
+        if (!childrenLabel)
+            childrenLabel = "children";
+        if (typeof json === "string")
+            json = JSON.parse(json);
+        let store = new Store();
+        let stack = [[json, NONE]];
+        while (stack.length) {
+            let [node, parent] = stack.pop();
+            let i = store.add(node[idLabel] ?? "", node[lengthLabel] ?? 0);
+            if (parent !== NONE)
+                store.link(i, parent, NONE);
+            let children = node[childrenLabel];
+            if (children instanceof Array) {
+                for (let k = children.length - 1; k >= 0; k--) {
+                    if (k in children)
+                        stack.push([children[k], i]);
+                }
+            }
+        }
+        return store.view(0).fixDistances();
+    }
+    /**
+     * Builds a tree from a matrix of distances and returns its root Branch.
+     *
+     * By default this is neighbor joining, with RapidNJ's search, adapted from
+     * Maciej Korzepa's [neighbor-joining](https://github.com/biosustain/neighbor-joining),
+     * which is released for modification under the [MIT License](https://opensource.org/licenses/MIT).
+     * The `method` option chooses another algorithm:
+     * - `"bionj"`: BIONJ (Gascuel 1997), which joins the same way but computes
+     *   the new node's distances to reduce their variance, and is usually more
+     *   accurate than neighbor joining when distances are noisy.
+     * - `"upgma"`: UPGMA, which builds a rooted tree with every leaf the same
+     *   distance from the root (assuming a molecular clock).
+     *
+     * Neighbor joining and BIONJ trees are unrooted at heart; they're rooted
+     * where the last two nodes are joined.
+     * @param  {Array} matrix An array of `n` arrays of length `n`. Only the lower
+     * triangle is read, and the diagonal is taken to be zero.
+     * @param  {Array} labels An array of `n` strings, each corresponding to the
+     * values in `matrix`.
+     * @param  {Object} [options] See ParseMatrixOptions: `method` picks the
+     * algorithm, and `{ float32: true }` stores distances in half the memory, at
+     * single precision.
+     * @return {Branch} A Branch object representing the root Branch of the tree
+     * inferred from `matrix`.
+     */
+    function parseMatrix(matrix, labels, options) {
+        let N = matrix.length;
+        if (!labels)
+            labels = [...Array(N).keys()];
+        let method = options?.method ?? "nj";
+        let float32 = options?.float32 ?? false;
+        if (N === 0)
+            throw new Error("parseMatrix needs at least one taxon.");
+        if (method === "upgma")
+            return upgma(matrix, labels, float32);
+        if (method !== "nj" && method !== "bionj") {
+            throw new Error(`Unknown parseMatrix method "${method}"; use "nj", "bionj" or "upgma".`);
+        }
+        if (N === 1) {
+            let store = new Store(1);
+            store.add(labels[0], 0);
+            return store.view(0);
+        }
+        let nj = new NeighborJoining(matrix, float32, method === "bionj");
+        // currIndexToLabel maps each row to the label of the taxon or joined node
+        // it holds; labels from N up are joined nodes, in the order they were made.
+        let currIndexToLabel = new Int32Array(N);
+        for (let i = 0; i < N; i++)
+            currIndexToLabel[i] = i;
+        // The tree is built in one Store; labelToNode maps labels to its slots.
+        let store = new Store(2 * N);
+        let labelToNode = new Int32Array(2 * N);
+        let nextIndex = N;
+        function setUpNode(labelIndex, distance) {
+            let node;
+            if (labelIndex < N) {
+                node = store.add(labels[labelIndex], distance);
+                labelToNode[labelIndex] = node;
+            }
+            else {
+                node = labelToNode[labelIndex];
+                store.length[node] = distance;
+            }
+            return node;
+        }
+        function join(node1, node2) {
+            let node = store.add("", 0);
+            store.link(node1, node, NONE);
+            store.link(node2, node, NONE);
+            return node;
+        }
+        let minI, minJ, d1, d2;
+        while (nj.cN > 2) {
+            [minI, minJ] = nj.search();
+            let dIJ = nj.distance(minI, minJ);
+            d1 =
+                0.5 * dIJ +
+                    (nj.rowSums[minI] - nj.rowSums[minJ]) / (2 * nj.cN - 4);
+            d2 = dIJ - d1;
+            let node1 = setUpNode(currIndexToLabel[minI], d1);
+            let node2 = setUpNode(currIndexToLabel[minJ], d2);
+            nj.join(minI, minJ, d1, d2);
+            labelToNode[nextIndex] = join(node1, node2);
+            currIndexToLabel[minI] = -1;
+            currIndexToLabel[minJ] = nextIndex++;
+        }
+        // Join the last two rows (in index order) at the root.
+        [minI, minJ] = nj.remaining();
+        d1 = d2 = nj.distance(minI, minJ) / 2;
+        let node1 = setUpNode(currIndexToLabel[minI], d1);
+        let node2 = setUpNode(currIndexToLabel[minJ], d2);
+        return store.view(join(node1, node2)).fixDistances();
+    }
+    /**
+     * @private
+     * The distance matrix and search structures of a neighbor-joining run, after
+     * RapidNJ (Simonsen, Mailund & Pedersen, 2008): each row keeps its distances
+     * sorted, so the search for the pair to join can stop scanning a row once
+     * no later entry can beat the best pair found so far.
+     *
+     * When two rows are joined, the first is removed and the second is reused for
+     * the new node. Sorted rows aren't updated for the new node's column (only its
+     * own row is re-sorted), so other rows hold stale values for it; every pair
+     * is still found with its current distance in the row of whichever of its two
+     * nodes was made last.
+     */
+    class NeighborJoining {
+        constructor(matrix, float32, bionj) {
+            this.rowSumMax = 0;
+            let N = (this.N = this.cN = matrix.length);
+            let Floats = float32 ? Float32Array : Float64Array;
+            this.rowStart = new Float64Array(N);
+            for (let i = 0; i < N; i++)
+                this.rowStart[i] = (i * (i - 1)) / 2;
+            // Distances given as strings (e.g. read from a CSV file) become numbers.
+            let D = (this.D = new Floats((N * (N - 1)) / 2));
+            for (let i = 0; i < N; i++) {
+                let row = matrix[i], start = this.rowStart[i];
+                for (let j = 0; j < i; j++)
+                    D[start + j] = Number(row[j]);
+            }
+            // BIONJ starts with the variances equal to the distances.
+            this.V = bionj ? D.slice() : null;
+            this.removed = new Uint8Array(N);
+            this.newRow = new Float64Array(N);
+            this.rowChange = new Float64Array(N);
+            this.sorter = new ArgSorter(N);
+            this.sortedValues = new Array(N);
+            this.sortedColumns = new Array(N);
+            this.sortedLength = new Int32Array(N);
+            for (let i = 0; i < N; i++) {
+                this.sortedValues[i] = new Floats(N - 1);
+                this.sortedColumns[i] = new Int32Array(N - 1);
+                this.sortRow(i);
+            }
+            this.rowSums = new Float64Array(N);
+            for (let i = 0; i < N; i++) {
+                let sum = 0;
+                for (let j = 0; j < N; j++)
+                    if (j !== i)
+                        sum += this.distance(i, j);
+                this.rowSums[i] = sum;
+                if (sum > this.rowSumMax)
+                    this.rowSumMax = sum;
+            }
+        }
+        /** The distance between rows i and j. */
+        distance(i, j) {
+            if (i > j)
+                return this.D[this.rowStart[i] + j];
+            if (j > i)
+                return this.D[this.rowStart[j] + i];
+            return 0;
+        }
+        /** The first two rows (in index order) that haven't been joined. */
+        remaining() {
+            let found = [];
+            for (let i = 0; found.length < 2; i++)
+                if (!this.removed[i])
+                    found.push(i);
+            return [found[0], found[1]];
+        }
+        /** Sorts row r's distances to the other rows not yet joined. */
+        sortRow(r) {
+            let { removed, sorter } = this, keys = sorter.keys, columns = sorter.items, m = 0;
+            for (let k = 0; k < this.N; k++) {
+                if (removed[k] || k === r)
+                    continue;
+                columns[m] = k;
+                keys[m++] = this.distance(r, k);
+            }
+            sorter.sort(m);
+            this.sortedValues[r].set(keys.subarray(0, m));
+            this.sortedColumns[r].set(columns.subarray(0, m));
+            this.sortedLength[r] = m;
+        }
+        /** Finds the pair of rows that minimizes the neighbor-joining criterion. */
+        search() {
+            let qMin = Infinity, n2 = this.cN - 2, { removed, rowSums, sortedValues, sortedColumns, sortedLength } = this, uMax = this.rowSumMax, q, minI = -1, minJ = -1, c2;
+            // Initial guess for qMin: each row's nearest neighbor.
+            for (let r = 0; r < this.N; r++) {
+                if (removed[r] || sortedLength[r] === 0)
+                    continue;
+                c2 = sortedColumns[r][0];
+                if (removed[c2])
+                    continue;
+                q = this.distance(r, c2) * n2 - rowSums[r] - rowSums[c2];
+                if (q < qMin) {
+                    qMin = q;
+                    minI = r;
+                    minJ = c2;
+                }
+            }
+            for (let r = 0; r < this.N; r++) {
+                if (removed[r])
+                    continue;
+                let values = sortedValues[r], columns = sortedColumns[r], length = sortedLength[r], rowSum = rowSums[r];
+                for (let c = 0; c < length; c++) {
+                    c2 = columns[c];
+                    if (removed[c2])
+                        continue;
+                    if (values[c] * n2 - rowSum - uMax > qMin)
+                        break;
+                    q = this.distance(r, c2) * n2 - rowSum - rowSums[c2];
+                    if (q < qMin) {
+                        qMin = q;
+                        minI = r;
+                        minJ = c2;
+                    }
+                }
+            }
+            return [minI, minJ];
+        }
+        /**
+         * Joins rows i and j: removes row i and reuses row j for the new node,
+         * whose branches to i and j have lengths d1 and d2.
+         */
+        join(joinedIndex1, joinedIndex2, d1, d2) {
+            if (this.V) {
+                this.joinBIONJ(joinedIndex1, joinedIndex2, d1, d2, this.V);
+                return;
+            }
+            let { D, rowStart, removed, rowSums, newRow, rowChange } = this, n = this.N, sum = 0, aux, newMax = 0;
+            let aux2 = this.distance(joinedIndex1, joinedIndex2);
+            removed[joinedIndex1] = 1;
+            for (let i = 0; i < n; i++) {
+                if (removed[i])
+                    continue;
+                aux = this.distance(joinedIndex1, i) + this.distance(joinedIndex2, i);
+                newRow[i] = 0.5 * (aux - aux2);
+                sum += newRow[i];
+                rowChange[i] = -0.5 * (aux + aux2);
+            }
+            for (let i = 0; i < n; i++) {
+                if (removed[i])
+                    continue;
+                if (i !== joinedIndex2) {
+                    if (i > joinedIndex2)
+                        D[rowStart[i] + joinedIndex2] = newRow[i];
+                    else
+                        D[rowStart[joinedIndex2] + i] = newRow[i];
+                }
+                // This includes row joinedIndex2 itself, whose sum is replaced below;
+                // the original implementation counted this interim value towards the
+                // maximum, and the search's results depend on that bound.
+                rowSums[i] += rowChange[i];
+                if (rowSums[i] > newMax)
+                    newMax = rowSums[i];
+            }
+            rowSums[joinedIndex1] = 0;
+            rowSums[joinedIndex2] = sum;
+            if (sum > newMax)
+                newMax = sum;
+            this.rowSumMax = newMax;
+            this.sortRow(joinedIndex2);
+            this.sortedLength[joinedIndex1] = 0;
+            this.cN--;
+        }
+        /**
+         * BIONJ's join (Gascuel 1997). The new node's distance to each row k is
+         * lambda * (D[i][k] - d1) + (1 - lambda) * (D[j][k] - d2), where lambda
+         * (clamped to [0, 1]) minimizes the variance of those distances; the
+         * variances V are updated alongside. With lambda = 1/2 this is neighbor
+         * joining's join.
+         */
+        joinBIONJ(i, j, d1, d2, V) {
+            let { D, rowStart, removed, rowSums, newRow, rowChange } = this, n = this.N, r = this.cN;
+            let variance = (a, b) => a > b ? V[rowStart[a] + b] : V[rowStart[b] + a];
+            let vij = variance(i, j);
+            let lambda = 0.5;
+            if (vij !== 0) {
+                let sum = 0;
+                for (let k = 0; k < n; k++) {
+                    if (removed[k] || k === i || k === j)
+                        continue;
+                    sum += variance(j, k) - variance(i, k);
+                }
+                lambda = Math.min(1, Math.max(0, 0.5 + sum / (2 * (r - 2) * vij)));
+            }
+            let newVariance = new Float64Array(n), sum = 0, newMax = 0;
+            removed[i] = 1;
+            for (let k = 0; k < n; k++) {
+                if (removed[k] || k === j)
+                    continue;
+                let dik = this.distance(i, k), djk = this.distance(j, k);
+                newRow[k] = lambda * (dik - d1) + (1 - lambda) * (djk - d2);
+                newVariance[k] =
+                    lambda * variance(i, k) +
+                        (1 - lambda) * variance(j, k) -
+                        lambda * (1 - lambda) * vij;
+                sum += newRow[k];
+                rowChange[k] = newRow[k] - dik - djk;
+            }
+            for (let k = 0; k < n; k++) {
+                if (removed[k] || k === j)
+                    continue;
+                let at = k > j ? rowStart[k] + j : rowStart[j] + k;
+                D[at] = newRow[k];
+                V[at] = newVariance[k];
+                rowSums[k] += rowChange[k];
+                if (rowSums[k] > newMax)
+                    newMax = rowSums[k];
+            }
+            rowSums[i] = 0;
+            rowSums[j] = sum;
+            if (sum > newMax)
+                newMax = sum;
+            this.rowSumMax = newMax;
+            this.sortRow(j);
+            this.sortedLength[i] = 0;
+            this.cN--;
+        }
+    }
+    /**
+     * Builds a tree by UPGMA: repeatedly merges the two closest clusters into a
+     * node at half their distance (so every leaf ends up equally far from the
+     * root), and takes the merged cluster's distance to each other cluster to be
+     * the size-weighted mean of its parts'. Each row remembers its nearest
+     * neighbor, so finding the closest pair is O(n) per merge.
+     */
+    function upgma(matrix, labels, float32) {
+        let N = matrix.length;
+        let rowStart = new Float64Array(N);
+        for (let i = 0; i < N; i++)
+            rowStart[i] = (i * (i - 1)) / 2;
+        let D = new (float32 ? Float32Array : Float64Array)((N * (N - 1)) / 2);
+        for (let i = 0; i < N; i++) {
+            let row = matrix[i];
+            for (let j = 0; j < i; j++)
+                D[rowStart[i] + j] = Number(row[j]);
+        }
+        let at = (a, b) => (a > b ? rowStart[a] + b : rowStart[b] + a);
+        let store = new Store(2 * N);
+        let node = new Int32Array(N), size = new Int32Array(N).fill(1), height = new Float64Array(N), removed = new Uint8Array(N), nearest = new Int32Array(N), nearestDistance = new Float64Array(N);
+        for (let i = 0; i < N; i++)
+            node[i] = store.add(labels[i], 0);
+        // Finds row i's nearest other row (the lowest-numbered, on ties).
+        function findNearest(i) {
+            let best = Infinity, bestRow = -1;
+            for (let k = 0; k < N; k++) {
+                if (removed[k] || k === i)
+                    continue;
+                let d = D[at(i, k)];
+                if (d < best) {
+                    best = d;
+                    bestRow = k;
+                }
+            }
+            nearest[i] = bestRow;
+            nearestDistance[i] = best;
+        }
+        for (let i = 0; i < N; i++)
+            findNearest(i);
+        for (let left = N; left > 1; left--) {
+            // The closest pair, taking the lowest-numbered row on ties.
+            let i = -1;
+            for (let k = 0; k < N; k++) {
+                if (removed[k])
+                    continue;
+                if (i === -1 || nearestDistance[k] < nearestDistance[i])
+                    i = k;
+            }
+            let a = Math.min(i, nearest[i]), b = Math.max(i, nearest[i]);
+            let h = D[at(a, b)] / 2;
+            store.length[node[a]] = h - height[a];
+            store.length[node[b]] = h - height[b];
+            let parent = store.add("", 0);
+            store.link(node[a], parent, NONE);
+            store.link(node[b], parent, NONE);
+            // Row a becomes the merged cluster; row b goes.
+            for (let k = 0; k < N; k++) {
+                if (removed[k] || k === a || k === b)
+                    continue;
+                D[at(a, k)] =
+                    (size[a] * D[at(a, k)] + size[b] * D[at(b, k)]) / (size[a] + size[b]);
+            }
+            removed[b] = 1;
+            size[a] += size[b];
+            height[a] = h;
+            node[a] = parent;
+            findNearest(a);
+            for (let k = 0; k < N; k++) {
+                if (removed[k] || k === a)
+                    continue;
+                if (nearest[k] === a || nearest[k] === b) {
+                    findNearest(k);
+                }
+                else {
+                    let d = D[at(a, k)];
+                    if (d < nearestDistance[k] || (d === nearestDistance[k] && a < nearest[k])) {
+                        nearest[k] = a;
+                        nearestDistance[k] = d;
+                    }
+                }
+            }
+        }
+        // Each join keeps the lower-numbered row, so row 0 holds the root.
+        return store.view(node[0]).fixDistances();
+    }
+    /**
+     * @private
+     * Sorts items (column indices) by their keys (distances), stably: items with
+     * equal keys stay in the order given. A bottom-up merge sort on typed arrays,
+     * which avoids Array.prototype.sort's comparator calls.
+     */
+    class ArgSorter {
+        constructor(capacity) {
+            this.keys = new Float64Array(capacity);
+            this.items = new Int32Array(capacity);
+            this.keyBuffer = new Float64Array(capacity);
+            this.itemBuffer = new Int32Array(capacity);
+        }
+        /** Sorts the first n keys and items in place. */
+        sort(n) {
+            let keys = this.keys, items = this.items;
+            // Insertion sort runs of 16.
+            const RUN = 16;
+            for (let start = 0; start < n; start += RUN) {
+                let end = Math.min(start + RUN, n);
+                for (let i = start + 1; i < end; i++) {
+                    let key = keys[i], item = items[i], j = i - 1;
+                    while (j >= start && keys[j] > key) {
+                        keys[j + 1] = keys[j];
+                        items[j + 1] = items[j];
+                        j--;
+                    }
+                    keys[j + 1] = key;
+                    items[j + 1] = item;
+                }
+            }
+            // Merge runs, alternating between the arrays and the buffers.
+            let fromKeys = keys, fromItems = items, toKeys = this.keyBuffer, toItems = this.itemBuffer;
+            for (let width = RUN; width < n; width *= 2) {
+                for (let left = 0; left < n; left += 2 * width) {
+                    let middle = Math.min(left + width, n), right = Math.min(left + 2 * width, n), i = left, j = middle, k = left;
+                    while (i < middle && j < right) {
+                        // Take from the right only when strictly smaller, for stability.
+                        if (fromKeys[j] < fromKeys[i]) {
+                            toKeys[k] = fromKeys[j];
+                            toItems[k++] = fromItems[j++];
+                        }
+                        else {
+                            toKeys[k] = fromKeys[i];
+                            toItems[k++] = fromItems[i++];
+                        }
+                    }
+                    while (i < middle) {
+                        toKeys[k] = fromKeys[i];
+                        toItems[k++] = fromItems[i++];
+                    }
+                    while (j < right) {
+                        toKeys[k] = fromKeys[j];
+                        toItems[k++] = fromItems[j++];
+                    }
+                }
+                [fromKeys, toKeys] = [toKeys, fromKeys];
+                [fromItems, toItems] = [toItems, fromItems];
+            }
+            if (fromKeys !== keys) {
+                keys.set(fromKeys.subarray(0, n));
+                items.set(fromItems.subarray(0, n));
+            }
+        }
+    }
+    /**
      * Parses a Newick String and returns a Branch object representing the root
      * of the output Tree.
      *
@@ -1732,7 +2236,32 @@ var TidyTree = (function () {
         return store.view(0).fixDistances();
     }
 
+    var patristic = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        Branch: Branch,
+        parseJSON: parseJSON,
+        parseMatrix: parseMatrix,
+        parseNewick: parseNewick,
+        version: version
+    });
+
+    var patristic$1 = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        Branch: Branch,
+        default: patristic,
+        parseJSON: parseJSON,
+        parseMatrix: parseMatrix,
+        parseNewick: parseNewick,
+        version: version
+    });
+
     // import "d3";
+
+    /**
+     * The patristic library, bundled with TidyTree.
+     * @type {Object}
+     */
+    TidyTree.patristic = patristic$1;
 
     /**
      * This class function creates a TidyTree object.
