@@ -6,13 +6,12 @@
     <meta name="description" content="TidyTree is a client-side renderer for Phylogenetic Trees, based on the TidyTree Javascript Library.">
     <meta name="author" content="humans.txt">
     <meta name="theme-color" content="#ffffff">
-    <meta name="msapplication-TileColor" content="#2b5797">
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       script-src 'self' 'unsafe-inline' https://d3js.org https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
       font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
-      connect-src 'self' https://cdn.jsdelivr.net;
+      connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
       img-src 'self' data:;
       manifest-src 'self';
       base-uri 'self';
@@ -22,1234 +21,1516 @@
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), xr=()">
     <title>Tidy Tree</title>
-    <link rel="canonical" href="https://aaboyles.github.io/TidyTree/demo/">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="manifest" href="site.webmanifest">
     <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
-    <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@materialstyle/materialstyle@3.1.1/dist/css/materialstyle.min.css" 
-      integrity="sha384-TveZ4SBMG9Zwu44Pq5aK2bgL+4CaFRTtx6pSSsxmQKWhIRKoONDSRW+k+NA9A0Gk" 
-      crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+      /* ========================================================================
+         Modern CSS Variables & Base Reset
+         ======================================================================== */
       :root {
-        --node-color: #2c3e50;
-        --branch-color: #bdc3c7;
-        --highlight-color: #e67e22;
-        --node-size: 3px;
-        --node-label-size: 12px;
-        --branch-label-size: 10px;
-        --branch-width: 2px;
-        --font-family: 'Inter', sans-serif;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        --background-color: #ffffff;
+        --color-bg: #f8fafc;
+        --color-surface: #ffffff;
+        --color-primary: #2563eb;
+        --color-primary-hover: #1d4ed8;
+        --color-secondary: #64748b;
+        --color-accent: #0ea5e9;
+        --color-success: #10b981;
+        --color-warning: #f59e0b;
+        --color-danger: #ef4444;
+        --color-text: #0f172a;
+        --color-text-muted: #64748b;
+        --color-border: #e2e8f0;
+        --color-border-hover: #94a3b8;
+        --color-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --color-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        --sidebar-width: 340px;
+        --header-height: 64px;
+        --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
 
-      html,
-      body,
-      #tree {
-        height: 100%;
-        overflow: hidden;
-      }
-      .layout-container {
-        height: 100vh;
-        display: flex;
-        overflow: hidden;
-      }
-      .sidebar {
-        width: 376px;
-        background-color: var(--background-color);
-        overflow-y: auto;
-        flex-shrink: 0;
-      }
-      .tree-content {
-        flex: 1;
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
         padding: 0;
+      }
+
+      html {
+        font-family: var(--font-family);
+        font-size: 16px;
+        line-height: 1.5;
+        color: var(--color-text);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body {
+        height: 100vh;
         overflow: hidden;
-        background-color: var(--background-color);
+        background-color: var(--color-bg);
       }
-      .accordion-header {
-        background-color: var(--branch-color);
+
+      a {
+        color: var(--color-primary);
+        text-decoration: none;
+        transition: var(--transition);
       }
-      .accordion-body {
-        background-color: var(--background-color);
+
+      a:hover {
+        color: var(--color-primary-hover);
       }
-      .form-group {
-        margin: 0.4rem;
+
+      /* ========================================================================
+         Layout
+         ======================================================================== */
+      .app-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
       }
-      [type="range"] {
+
+      .app-header {
+        height: var(--header-height);
+        background: var(--color-surface);
+        border-bottom: 1px solid var(--color-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.5rem;
+        flex-shrink: 0;
+        z-index: 100;
+        box-shadow: var(--color-shadow);
         width: 100%;
       }
-      #toggle-options {
-        position: absolute;
-        top: calc(50% - 10px);
-        left: 357px;
-        background: var(--branch-color);
-        border-radius: 0 5px 5px 0;
-        padding: 5px;
+
+      .app-body {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
       }
+
+      .app-header .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--color-text);
+      }
+
+      .app-header .brand-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+      }
+
+      .app-header .search-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+        max-width: 400px;
+        margin: 0 2rem;
+      }
+
+      .app-header input[type="search"] {
+        width: 100%;
+        padding: 0.625rem 1rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: inherit;
+        font-size: 0.9375rem;
+        transition: var(--transition);
+      }
+
+      .app-header input[type="search"]:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        background: var(--color-surface);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      .app-header .actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      /* ========================================================================
+         Sidebar
+         ======================================================================== */
+      .app-sidebar {
+        width: var(--sidebar-width);
+        background: var(--color-surface);
+        border-right: 1px solid var(--color-border);
+        overflow-y: auto;
+        flex-shrink: 0;
+        z-index: 50;
+        transition: var(--transition);
+      }
+
+      .sidebar-toggle {
+        position: absolute;
+        top: calc(var(--header-height) / 2 - 12px);
+        right: -14px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        padding: 0.5rem;
+        cursor: pointer;
+        box-shadow: var(--color-shadow);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        z-index: 101;
+      }
+
+      .sidebar-toggle:hover {
+        border-color: var(--color-primary);
+        background: var(--color-primary);
+        color: white;
+      }
+
+      .sidebar-toggle svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .sidebar-content {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .sidebar-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .sidebar-section h3 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-text-muted);
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .sidebar-section input[type="checkbox"] {
+        display: none;
+      }
+
+      .sidebar-section.collapsible h3 {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: var(--transition);
+      }
+
+      .sidebar-section.collapsible h3:hover {
+        color: var(--color-primary);
+      }
+
+      .sidebar-section.collapsible h3::after {
+        content: '';
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--color-text-muted);
+        border-top: none;
+        border-right: none;
+        transform: rotate(-45deg);
+        transition: var(--transition);
+      }
+
+      .sidebar-section input[type="checkbox"]:checked ~ .panel-content {
+        display: flex;
+      }
+
+      .sidebar-section input[type="checkbox"]:not(:checked) ~ .panel-content {
+        display: none;
+      }
+
+      .sidebar-section input[type="checkbox"]:checked ~ label h3::after {
+        transform: rotate(45deg);
+      }
+
+      .panel-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      /* ========================================================================
+         Form Controls
+         ======================================================================== */
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .form-group label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--color-text-muted);
+      }
+
+      .form-group select,
+      .form-group input[type="text"],
+      .form-group input[type="color"] {
+        padding: 0.625rem 0.875rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: inherit;
+        font-size: 0.9375rem;
+        transition: var(--transition);
+        appearance: none;
+      }
+
+      .form-group select:focus,
+      .form-group input[type="text"]:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        background: var(--color-surface);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      .form-group input[type="color"] {
+        padding: 0.5rem;
+        height: 40px;
+        cursor: pointer;
+      }
+
+      .form-group input[type="range"] {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--color-border);
+        outline: none;
+        -webkit-appearance: none;
+      }
+
+      .form-group input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        background: var(--color-primary);
+        border-radius: 50%;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .form-group input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+      }
+
+      .form-group input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        background: var(--color-primary);
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+      }
+
+      .toggle-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        padding: 0.625rem 0.875rem;
+        border-radius: var(--radius-md);
+        transition: var(--transition);
+      }
+
+      .toggle-group:hover {
+        background: rgba(37, 99, 235, 0.05);
+      }
+
+      .toggle-group input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--color-primary);
+        cursor: pointer;
+      }
+
+      .toggle-group span {
+        font-size: 0.9375rem;
+        color: var(--color-text);
+        flex: 1;
+      }
+
+      /* ========================================================================
+         Buttons
+         ======================================================================== */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        font-family: inherit;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        border: none;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        background: var(--color-primary);
+        color: white;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: var(--color-primary-hover);
+        transform: translateY(-1px);
+        box-shadow: var(--color-shadow);
+      }
+
+      .btn-secondary {
+        background: var(--color-surface);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        border-color: var(--color-primary);
+        background: rgba(37, 99, 235, 0.05);
+      }
+
+      .btn-outline {
+        background: transparent;
+        color: var(--color-primary);
+        border: 1px solid var(--color-primary);
+      }
+
+      .btn-outline:hover:not(:disabled) {
+        background: var(--color-primary);
+        color: white;
+      }
+
+      .btn-danger {
+        background: var(--color-danger);
+        color: white;
+      }
+
+      .btn-danger:hover:not(:disabled) {
+        background: #dc2626;
+      }
+
+      .btn-sm {
+        padding: 0.5rem 0.875rem;
+        font-size: 0.875rem;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .btn-group .btn {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* ========================================================================
+         Tree Area
+         ======================================================================== */
+      .app-main {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: var(--color-bg);
+      }
+
       #tree {
+        width: 100%;
+        height: 100%;
         padding: 0;
       }
-      .tidytree-node circle {
-        fill: var(--node-color);
-        stroke: #fff;
-        stroke-width: 1px;
+
+      /* ========================================================================
+         Floating Controls
+         ======================================================================== */
+      .floating-btn {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 200;
       }
-      .tidytree-link {
-        stroke: var(--branch-color);
-        stroke-width: var(--branch-width);
+
+      .floating-btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
       }
-      #search-wrapper {
-        position: absolute;
-        top: -50px;
-        right: 100px;
-        padding: 5px;
-        background: var(--branch-color);
-        border: 1px solid var(--node-color);
-        border-radius: 5px;
+
+      /* ========================================================================
+         Modals & Overlays
+         ======================================================================== */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
       }
-      #search-close {
-        background: var(--background-color);
-        border: 1px solid var(--node-color);
-        padding: 2px 6px;
+
+      .modal-overlay.open {
+        display: flex;
       }
+
+      .modal {
+        background: var(--color-surface);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--color-shadow-lg);
+        width: 100%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalSlide 0.2s ease-out;
+      }
+
+      @keyframes modalSlide {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .modal-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--color-text);
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        line-height: 1;
+        padding: 0.25rem;
+      }
+
+      .modal-close:hover {
+        color: var(--color-text);
+      }
+
+      .modal-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+
+      .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--color-border);
+        background: rgba(248, 250, 252, 0.5);
+      }
+
+      /* ========================================================================
+         Context Menu & Tooltip
+         ======================================================================== */
       #context-menu,
       #tooltip {
         position: absolute;
         display: none;
-        z-index: -1;
+        z-index: 1000;
       }
+
+      #context-menu {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--color-shadow-lg);
+        min-width: 160px;
+        padding: 0.5rem 0;
+      }
+
+      #context-menu button {
+        display: block;
+        width: 100%;
+        padding: 0.625rem 1rem;
+        border: none;
+        background: none;
+        text-align: left;
+        font-family: inherit;
+        font-size: 0.9375rem;
+        color: var(--color-text);
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      #context-menu button:hover {
+        background: rgba(37, 99, 235, 0.05);
+        color: var(--color-primary);
+      }
+
+      #context-menu .divider {
+        height: 1px;
+        background: var(--color-border);
+        margin: 0.5rem 0;
+      }
+
       #tooltip {
-        background: var(--branch-color);
-        border-radius: 0.25rem;
-        padding: 0.25rem;
+        background: var(--color-text);
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        box-shadow: var(--color-shadow);
+        pointer-events: none;
+        white-space: nowrap;
       }
-      #export {
-        position: fixed;
-        bottom: 30px;
-        right: 10px;
-        z-index: 1001;
+
+      /* ========================================================================
+         Tree Styles
+         ======================================================================== */
+      .tidytree-node circle {
+        fill: var(--node-color);
+        stroke: #fff;
+        stroke-width: 1.5px;
       }
-      #export-format {
-        height: 33px;
-        padding: 7px 0;
+
+      .tidytree-node rect {
+        fill: var(--node-color);
+        stroke: #fff;
+        stroke-width: 1.5px;
+      }
+
+      .tidytree-node polygon {
+        fill: var(--node-color);
+        stroke: #fff;
+        stroke-width: 1.5px;
+      }
+
+      .tidytree-link {
+        stroke: var(--branch-color);
+        stroke-width: var(--branch-width);
+      }
+
+      .tidytree-temporal-bar {
+        stroke: #fff;
+        stroke-width: 1px;
+        cursor: pointer;
+      }
+
+      .tidytree-temporal-bar:hover {
+        opacity: 1 !important;
+        filter: brightness(1.2);
+      }
+
+      /* ========================================================================
+         Utilities
+         ======================================================================== */
+      .hidden {
+        display: none !important;
+      }
+
+      .text-muted {
+        color: var(--color-text-muted);
+      }
+
+      .text-small {
+        font-size: 0.875rem;
+      }
+
+      .mt-2 { margin-top: 0.5rem; }
+      .mb-2 { margin-bottom: 0.5rem; }
+      .d-flex { display: flex; }
+      .flex-column { flex-direction: column; }
+      .gap-2 { gap: 0.5rem; }
+      .items-center { align-items: center; }
+      .justify-between { justify-content: space-between; }
+      .w-full { width: 100%; }
+
+      /* ========================================================================
+         Responsive
+         ======================================================================== */
+      @media (max-width: 768px) {
+        .app-sidebar {
+          position: absolute;
+          top: var(--header-height);
+          height: calc(100vh - var(--header-height));
+          transform: translateX(-100%);
+          box-shadow: var(--color-shadow-lg);
+        }
+
+        .app-sidebar.open {
+          transform: translateX(0);
+        }
+
+        .sidebar-toggle {
+          right: auto;
+          left: 10px;
+          border-radius: var(--radius-md);
+        }
+
+        .app-header .search-wrapper {
+          display: none;
+        }
+
+        .app-header .actions {
+          margin-left: auto;
+        }
       }
     </style>
   </head>
   <body>
-    <header class="navbar navbar-light bg-light">
-      <div class="container-fluid">
-        <a class="navbar-brand" data-bs-toggle="modal" data-bs-target="#aboutModal">TidyTree</a>
-        <button id="toggle-options" class="btn btn-outline-secondary me-2">></button>
-        <form class="d-flex">
-          <input id="search" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-        </form>
-      </div>
-    </header>
-
-    <div class="layout-container d-flex">
-      <div id="options-sidebar" class="sidebar">
-        <div id="accordion">
-          <div class="card">
-            <div class="card-header" id="headingSourceData">
-              <h5 class="mb-0">
-                <button
-                  class="btn btn-link"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseSourceData"
-                  aria-expanded="false"
-                  aria-controls="collapseSourceData"
-                >
-                  Source Data
-                </button>
-              </h5>
-            </div>
-            <div
-              id="collapseSourceData"
-              class="collapse"
-              aria-labelledby="headingSourceData"
-              data-bs-parent="#accordion"
-            >
-              <div class="card-body">
-                <div class="form-group">
-                  <label for="source" class="btn btn-primary"
-                    >Load Newick Tree</label
-                  >
-                  <input type="file" id="source" class="d-none">
-                </div>
-                <div class="form-group mt-2">
-                  <label class="px-3" for="tree-url">Load from URL:</label>
-                  <input type="text" id="tree-url" class="px-3 form-control" placeholder="Enter Newick file URL">
-                  <button id="load-url" class="btn btn-success mt-2">Load Tree</button>
-                  <small class="px-3 form-text text-muted">
-                    Note: The URL must allow cross-origin requests (CORS) for this to work.
-                  </small>
-                </div>
-                <div class="form-group">
-                  <button id="reset" class="btn btn-danger">Reset Tree</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header" id="headingLayout">
-              <h5 class="mb-0">
-                <button
-                  class="btn btn-link collapsed"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseLayout"
-                  aria-expanded="false"
-                  aria-controls="collapseLayout"
-                >
-                  Layout
-                </button>
-              </h5>
-            </div>
-            <div
-              id="collapseLayout"
-              class="collapse"
-              aria-labelledby="headingLayout"
-              data-bs-parent="#accordion"
-            >
-              <div class="card-body">
-                <div class="form-group">
-                  <label for="layout">Layout</label>
-                  <select id="layout" class="form-control form-control-sm"></select>
-                </div>
-                <div class="form-group">
-                  <label for="hStretch">Horizontal Stretch</label>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="3.0"
-                    value="1"
-                    step="0.1"
-                    id="hStretch"
-                 >
-                </div>
-                <div class="form-group">
-                  <label for="vStretch">Vertical Stretch</label>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="3.0"
-                    value="1"
-                    step="0.1"
-                    id="vStretch"
-                 >
-                </div>
-                <div class="form-group">
-                  <label for="rotation">Rotation</label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="360"
-                    value="0"
-                    id="rotation"
-                 >
-                </div>
-                <div class="form-group">
-                  <label for="type">Type</label>
-                  <select id="type" class="form-control form-control-sm"></select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header" id="headingBranches">
-              <h5 class="mb-0">
-                <button
-                  class="btn btn-link collapsed"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseBranches"
-                  aria-expanded="false"
-                  aria-controls="collapseBranches"
-                >
-                  Branches
-                </button>
-              </h5>
-            </div>
-            <div
-              id="collapseBranches"
-              class="collapse"
-              aria-labelledby="headingBranches"
-              data-bs-parent="#accordion"
-            >
-              <div class="card-body">
-                <div class="form-group">
-                  <label for="mode">Mode</label>
-                  <select id="mode" class="form-control form-control-sm"></select>
-                </div>
-                <div class="form-group">
-                  <div class="switch">
-                    <label>
-                      <input id="branchNodes" type="checkbox"> Branch Nodes
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label> Branch Node Size </label>
-                  <input
-                    id="branchNodeSize"
-                    class="skip"
-                    type="range"
-                    min="0.5"
-                    max="10"
-                    value="2.5"
-                    step="0.5"
-                 >
-                </div>
-                <div class="form-group">
-                  <div class="switch">
-                    <label>
-                      <input id="branchLabels" type="checkbox"> Branch Labels
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Branch Label Size</label>
-                  <input
-                    id="branchLabelSize"
-                    class="skip"
-                    type="range"
-                    min="1"
-                    max="32"
-                    value="6"
-                    step="1"
-                 >
-                </div>
-                <div class="form-group">
-                  <div class="switch">
-                    <label>
-                      <input id="branchDistances" type="checkbox"> Branch
-                      Distances
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Branch Distance Size</label>
-                  <input
-                    id="branchDistanceSize"
-                    class="skip"
-                    type="range"
-                    min="1"
-                    max="32"
-                    value="12"
-                    step="1"
-                 >
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header" id="headingLeaves">
-              <h5 class="mb-0">
-                <button
-                  class="btn btn-link"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseLeaves"
-                  aria-expanded="false"
-                  aria-controls="collapseLeaves"
-                >
-                  Leaves
-                </button>
-              </h5>
-            </div>
-            <div
-              id="collapseLeaves"
-              class="collapse"
-              aria-labelledby="headingLeaves"
-              data-bs-parent="#accordion"
-            >
-              <div class="card-body">
-                <div class="form-group">
-                  <div class="switch">
-                    <label>
-                      <input id="leafNodes" type="checkbox" checked> Leaf
-                      Nodes
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Leaf Node Size</label>
-                  <input
-                    id="leafNodeSize"
-                    class="skip"
-                    type="range"
-                    min="0.5"
-                    max="10"
-                    value="2.5"
-                    step="0.5"
-                 >
-                </div>
-                <div class="form-group">
-                  <div class="switch">
-                    <label>
-                      <input id="leafLabels" type="checkbox"> Leaf Labels
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Leaf Label Size</label>
-                  <input
-                    id="leafLabelSize"
-                    class="skip"
-                    type="range"
-                    min="1"
-                    max="32"
-                    value="12"
-                    step="1"
-                 >
-                </div>
-                <div class="form-group">
-                  <div class="switch">
-                    <label>
-                      <input id="equidistantLeaves" type="checkbox" checked> Equidistant Leaves
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header" id="headingCollapse">
-              <h5 class="mb-0">
-                <button
-                  class="btn btn-link collapsed"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseCollapse"
-                  aria-expanded="false"
-                  aria-controls="collapseCollapse"
-                >
-                  Collapse / Expand
-                </button>
-              </h5>
-            </div>
-            <div
-              id="collapseCollapse"
-              class="collapse"
-              aria-labelledby="headingCollapse"
-              data-bs-parent="#accordion"
-            >
-              <div class="card-body">
-                <div class="form-group">
-                  <label for="collapseNode">Select Node</label>
-                  <select id="collapseNode" class="form-control form-control-sm"></select>
-                </div>
-                <div class="form-group">
-                  <button id="btn-collapse" class="btn btn-outline-primary me-2">Collapse</button>
-                  <button id="btn-expand" class="btn btn-outline-primary">Expand</button>
-                </div>
-                <div class="form-group mt-2">
-                  <button id="btn-collapse-all" class="btn btn-outline-danger me-2">Collapse All</button>
-                  <button id="btn-expand-all" class="btn btn-outline-success">Expand All</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header" id="headingColor">
-              <h5 class="mb-0">
-                <button
-                  class="btn btn-link collapsed"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseColor"
-                  aria-expanded="false"
-                  aria-controls="collapseColor"
-                >
-                  Color
-                </button>
-              </h5>
-            </div>
-            <div
-              id="collapseColor"
-              class="collapse"
-              aria-labelledby="headingColor"
-              data-bs-parent="#accordion"
-            >
-              <div class="card-body">
-                <div class="form-group">
-                  <label for="highlightMode">Highlighting Example</label>
-                  <select id="highlightMode" class="form-control form-control-sm skip">
-                    <option value="none">No highlighting</option>
-                    <option value="leaves">Highlight leaf nodes</option>
-                    <option value="monophyletic">Highlight E. coli and Shigella branches+nodes</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Default Node Color</label>
-                  <input
-                    type="color"
-                    id="defaultNodeColor"
-                    class="skip"
-                    value="#4682B4"
-                 >
-                </div>
-                <div class="form-group">
-                  <label>Default Branch Color</label>
-                  <input
-                    type="color"
-                    id="defaultBranchColor"
-                    class="skip"
-                    value="#cccccc"
-                 >
-                </div>
-                <div class="form-group">
-                  <label>Highlight Color</label>
-                  <input
-                    type="color"
-                    id="highlightColor"
-                    class="skip"
-                    value="#feb640"
-                 >
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header" id="headingMeta">
-              <h5 class="mb-0">
-                <button
-                  class="btn btn-link collapsed"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseMeta"
-                  aria-expanded="false"
-                  aria-controls="collapseMeta"
-                >
-                  Meta
-                </button>
-              </h5>
-            </div>
-            <div
-              id="collapseMeta"
-              class="collapse"
-              aria-labelledby="headingMeta"
-              data-bs-parent="#accordion"
-            >
-              <div class="card-body">
-                <div class="form-group">
-                  <div class="switch">
-                    <label>
-                      <input id="ruler" type="checkbox" checked> Ruler
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Background</label>
-                  <input
-                    type="color"
-                    id="background"
-                    class="skip"
-                    value="#ffffff"
-                 >
-                </div>
-                <div class="form-group">
-                  <div class="switch">
-                    <label>
-                      <input id="tooltips" type="checkbox" class="skip">
-                      Tooltips
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <div class="switch">
-                    <label>
-                      <input id="interactive" type="checkbox" checked> Pan & Zoom
-                    </label>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Animation Time</label>
-                  <input
-                    id="animation"
-                    type="range"
-                    min="0"
-                    max="2000"
-                    value="0"
-                    step="10"
-                 >
-                </div>
-              </div>
-            </div>
-          </div>
+    <div class="app-container">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="brand">
+          <div class="brand-icon">T</div>
+          <span>TidyTree</span>
         </div>
-      </div>
-
-      <main id="tree" class="tree-content"></main>
-    </div>
-
-    <div id="context-menu" class="dropdown">
-      <div class="dropdown-menu dropdown-menu-end show">
-        <button id="reroot" class="dropdown-item">Set As Root</button>
-        <button id="rotate" class="dropdown-item">Rotate</button>
-        <button id="flip" class="dropdown-item">Flip</button>
-        <button id="sort" class="dropdown-item">Sort</button>
-        <div class="dropdown-divider"></div>
-        <button id="remove" class="dropdown-item">Remove</button>
-        <button id="isolate" class="dropdown-item">Isolate</button>
-        <button id="excise" class="dropdown-item">Excise</button>
-        <button id="simplify" class="dropdown-item">Simplify</button>
-        <button id="consolidate" class="dropdown-item">Consolidate</button>
-      </div>
-    </div>
-
-    <div id="tooltip"></div>
-
-    <div
-      class="modal fade"
-      id="aboutModal"
-      tabindex="-1"
-      aria-labelledby="aboutModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="aboutModalLabel">About TidyTree</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <p>
-              TidyTree is a web application for rendering Phylogenetic Trees
-              in-browser. No analysis performed by TidyTree is ever transmitted
-              over the internet, making it safe for use with trees that contain
-              Personally-Identifiable Information.
-            </p>
-            <p>
-              TidyTree was built by the Molecular Epidemiology and Bionformatics
-              Team at the CDC in Atlanta.
-            </p>
-            <p>
-              <a
-                href="https://cdcgov.github.io/MEBT"
-                target="_blank"
-                rel="noreferrer noopener"
-                class="ifOnline"
-                >Click Here to See MEBT's Other Tools</a
-              >
-            </p>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Got it!
-            </button>
-          </div>
+        <div class="search-wrapper">
+          <input id="search" type="search" placeholder="Search nodes..." aria-label="Search">
         </div>
-      </div>
-    </div>
+      </header>
 
-    <button
-      id="export"
-      type="button"
-      class="btn btn-primary"
-      data-bs-toggle="modal"
-      data-bs-target="#exportModal"
-    >
-      <i class="material-icons">save_alt</i>
-    </button>
+      <div class="app-body">
 
-    <div
-      class="modal fade"
-      id="exportModal"
-      tabindex="-1"
-      aria-labelledby="exportModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="exportModalLabel">Export</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <div class="row">
-              <div class="form-group col">
-                <label for="export-filename">Filename</label>
-                <input
-                  type="text"
-                  id="export-filename"
-                  class="form-control skip"
-               >
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="options-sidebar">
+        <button class="sidebar-toggle" id="close-sidebar" aria-label="Close sidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        <div class="sidebar-content">
+          <!-- Source Data -->
+          <div class="sidebar-section collapsible" id="section-source">
+            <input type="checkbox" id="accordion-source" class="accordion-checkbox skip" hidden>
+            <label for="accordion-source">
+            <h3>Source Data</h3>
+            </label>
+            <div class="panel-content">
+              <div class="form-group">
+                <label for="source">Load Newick Tree</label>
+                <div style="position: relative;">
+                  <input type="file" id="source" class="hidden">
+                  <button type="button" class="btn btn-primary btn-sm w-full" onclick="document.getElementById('source').click()">
+                    Choose File
+                  </button>
+                </div>
               </div>
-              <div class="form-group col">
-                <label for="export-format">Format</label>
-                <select id="export-format" class="form-select form-select-sm skip">
-                  <option selected>nwk</option>
-                  <option>png</option>
-                  <option>svg</option>
-                  <option>pdf</option>
+              <div class="form-group">
+                <label for="tree-url">Load from URL</label>
+                <input type="text" id="tree-url" placeholder="https://example.com/tree.nwk">
+                <div class="mt-2">
+                  <button id="load-url" class="btn btn-primary btn-sm w-full">Load Tree</button>
+                </div>
+                <small class="text-small text-muted">
+                  URL must allow cross-origin requests (CORS).
+                </small>
+              </div>
+              <div class="form-group mt-2">
+                <button id="reset" class="btn btn-danger btn-sm w-full">Reset Tree</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Layout -->
+          <div class="sidebar-section collapsible" id="section-layout">
+            <input type="checkbox" id="accordion-layout" class="accordion-checkbox skip" hidden>
+            <label for="accordion-layout">
+            <h3>Layout</h3>
+            </label>
+            <div class="panel-content">
+              <div class="form-group">
+                <label for="layout">Layout</label>
+                <select id="layout" class="w-full"></select>
+              </div>
+              <div class="form-group">
+                <label for="hStretch">Horizontal Stretch</label>
+                <input type="range" min="0.1" max="3.0" value="1" step="0.1" id="hStretch">
+              </div>
+              <div class="form-group">
+                <label for="vStretch">Vertical Stretch</label>
+                <input type="range" min="0.1" max="3.0" value="1" step="0.1" id="vStretch">
+              </div>
+              <div class="form-group">
+                <label for="rotation">Rotation (°)</label>
+                <input type="range" min="0" max="360" value="0" id="rotation">
+              </div>
+              <div class="form-group">
+                <label for="type">Tree Type</label>
+                <select id="type" class="w-full"></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Branches -->
+          <div class="sidebar-section collapsible" id="section-branches">
+            <input type="checkbox" id="accordion-branches" class="accordion-checkbox skip" hidden>
+            <label for="accordion-branches">
+            <h3>Branches</h3>
+            </label>
+            <div class="panel-content">
+              <div class="form-group">
+                <label for="mode">Branch Mode</label>
+                <select id="mode" class="w-full"></select>
+              </div>
+              <div class="toggle-group">
+                <input type="checkbox" id="branchNodes">
+                <span>Show Branch Nodes</span>
+              </div>
+              <div class="form-group">
+                <label>Branch Node Size</label>
+                <input id="branchNodeSize" type="range" min="0.5" max="10" value="2.5" step="0.5">
+              </div>
+              <div class="toggle-group">
+                <input type="checkbox" id="branchLabels">
+                <span>Show Branch Labels</span>
+              </div>
+              <div class="form-group">
+                <label>Branch Label Size</label>
+                <input id="branchLabelSize" type="range" min="1" max="32" value="6" step="1">
+              </div>
+              <div class="toggle-group">
+                <input type="checkbox" id="branchDistances">
+                <span>Show Branch Distances</span>
+              </div>
+              <div class="form-group">
+                <label>Branch Distance Size</label>
+                <input id="branchDistanceSize" type="range" min="1" max="32" value="12" step="1">
+              </div>
+            </div>
+          </div>
+
+          <!-- Leaves -->
+          <div class="sidebar-section collapsible" id="section-leaves">
+            <input type="checkbox" id="accordion-leaves" class="accordion-checkbox skip" hidden>
+            <label for="accordion-leaves">
+            <h3>Leaves</h3>
+            </label>
+            <div class="panel-content">
+              <div class="toggle-group">
+                <input type="checkbox" id="leafNodes" checked>
+                <span>Show Leaf Nodes</span>
+              </div>
+              <div class="form-group">
+                <label>Leaf Node Size</label>
+                <input id="leafNodeSize" type="range" min="0.5" max="10" value="2.5" step="0.5">
+              </div>
+              <div class="toggle-group">
+                <input type="checkbox" id="leafLabels">
+                <span>Show Leaf Labels</span>
+              </div>
+              <div class="form-group">
+                <label>Leaf Label Size</label>
+                <input id="leafLabelSize" type="range" min="1" max="32" value="12" step="1">
+              </div>
+              <div class="toggle-group">
+                <input type="checkbox" id="equidistantLeaves" checked>
+                <span>Equidistant Leaves</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Collapse / Expand -->
+          <div class="sidebar-section collapsible" id="section-collapse">
+            <input type="checkbox" id="accordion-collapse" class="accordion-checkbox skip" hidden>
+            <label for="accordion-collapse">
+            <h3>Collapse / Expand</h3>
+            </label>
+            <div class="panel-content">
+              <div class="form-group">
+                <label for="collapseNode">Select Node</label>
+                <select id="collapseNode" class="w-full skip"></select>
+              </div>
+              <div class="btn-group">
+                <button id="btn-collapse" class="btn btn-outline btn-sm">Collapse</button>
+                <button id="btn-expand" class="btn btn-outline btn-sm">Expand</button>
+              </div>
+              <div class="btn-group mt-2">
+                <button id="btn-collapse-all" class="btn btn-outline btn-sm">Collapse All</button>
+                <button id="btn-expand-all" class="btn btn-outline btn-sm">Expand All</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Color -->
+          <div class="sidebar-section collapsible" id="section-color">
+            <input type="checkbox" id="accordion-color" class="accordion-checkbox skip" hidden>
+            <label for="accordion-color">
+            <h3>Color</h3>
+            </label>
+            <div class="panel-content">
+              <div class="form-group">
+                <label for="highlightMode">Highlighting</label>
+                <select id="highlightMode" class="w-full skip">
+                  <option value="none">No highlighting</option>
+                  <option value="leaves">Highlight leaf nodes</option>
+                  <option value="monophyletic">Highlight E. coli and Shigella</option>
                 </select>
               </div>
+              <div class="form-group">
+                <label>Default Node Color</label>
+                <input type="color" id="defaultNodeColor" value="#4682B4">
+              </div>
+              <div class="form-group">
+                <label>Default Branch Color</label>
+                <input type="color" id="defaultBranchColor" value="#cccccc">
+              </div>
+              <div class="form-group">
+                <label>Highlight Color</label>
+                <input type="color" id="highlightColor" value="#feb640">
+              </div>
+            </div>
+          </div>
+
+          <!-- Meta -->
+          <div class="sidebar-section collapsible" id="section-meta">
+            <input type="checkbox" id="accordion-meta" class="accordion-checkbox skip" hidden>
+            <label for="accordion-meta">
+            <h3>Meta</h3>
+            </label>
+            <div class="panel-content">
+              <div class="toggle-group">
+                <input type="checkbox" id="ruler" checked>
+                <span>Show Ruler</span>
+              </div>
+              <div class="form-group">
+                <label>Background</label>
+                <input type="color" id="background" value="#ffffff">
+              </div>
+              <div class="toggle-group">
+                <input type="checkbox" id="tooltips">
+                <span>Enable Tooltips</span>
+              </div>
+              <div class="toggle-group">
+                <input type="checkbox" id="interactive" checked>
+                <span>Pan & Zoom</span>
+              </div>
+              <div class="form-group">
+                <label>Animation Time (ms)</label>
+                <input id="animation" type="range" min="0" max="2000" value="0" step="10">
+              </div>
+            </div>
+          </div>
+
+          <!-- Temporal Annotations -->
+          <div class="sidebar-section collapsible" id="section-temporal">
+            <input type="checkbox" id="accordion-temporal" class="accordion-checkbox skip" hidden>
+            <label for="accordion-temporal">
+            <h3>Temporal Annotations</h3>
+            </label>
+            <div class="panel-content">
+              <div class="toggle-group">
+                <input type="checkbox" id="showTemporal" checked>
+                <span>Show Temporal Bars</span>
+              </div>
+              <div class="form-group">
+                <label for="temporalGuid">Node GUID</label>
+                <input type="text" id="temporalGuid" placeholder="Enter node GUID">
+              </div>
+              <div class="form-group">
+                <label for="temporalStart">Start Time</label>
+                <input type="number" id="temporalStart" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="temporalEnd">End Time</label>
+                <input type="number" id="temporalEnd" placeholder="100">
+              </div>
+              <div class="form-group">
+                <label for="temporalLabel">Label</label>
+                <input type="text" id="temporalLabel" placeholder="Optional label">
+              </div>
+              <div class="form-group">
+                <label for="temporalColor">Color</label>
+                <input type="color" id="temporalColor" value="#e67e22">
+              </div>
+              <div class="btn-group mt-2">
+                <button id="btn-add-temporal" class="btn btn-primary btn-sm w-full">Add Temporal Annotation</button>
+              </div>
+              <div class="btn-group mt-2">
+                <button id="btn-clear-temporal" class="btn btn-outline btn-sm w-full">Clear All</button>
+              </div>
+              <div class="mt-2">
+                <small class="text-small text-muted">
+                  Temporal bars overlay branches to show time intervals.
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+        <!-- Main Tree Area -->
+        <main class="app-main" id="tree"></main>
+      </div>
+
+      <!-- Context Menu -->
+      <div id="context-menu">
+        <button id="reroot">Set As Root</button>
+        <button id="rotate">Rotate</button>
+        <button id="flip">Flip</button>
+        <button id="sort">Sort</button>
+        <div class="divider"></div>
+        <button id="remove">Remove</button>
+        <button id="isolate">Isolate</button>
+        <button id="excise">Excise</button>
+        <button id="simplify">Simplify</button>
+        <button id="consolidate">Consolidate</button>
+      </div>
+
+      <!-- Tooltip -->
+      <div id="tooltip"></div>
+
+      <!-- Floating Export Button -->
+      <div class="floating-btn floating-btn-group">
+        <button id="export" class="btn btn-primary btn-sm" title="Export">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Export Modal -->
+      <div class="modal-overlay" id="exportModalOverlay">
+        <div class="modal">
+          <div class="modal-header">
+            <span class="modal-title">Export</span>
+            <button class="modal-close" onclick="closeExportModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="export-filename">Filename</label>
+              <input type="text" id="export-filename" class="w-full" value="tidy-tree">
+            </div>
+            <div class="form-group">
+              <label for="export-format">Format</label>
+              <select id="export-format" class="w-full">
+                <option selected>nwk</option>
+                <option>png</option>
+                <option>svg</option>
+                <option>pdf</option>
+              </select>
             </div>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              id="export-download"
-              class="btn btn-primary"
-              data-bs-dismiss="modal"
-            >
-              Export
-            </button>
+            <button class="btn btn-secondary btn-sm" onclick="closeExportModal()">Cancel</button>
+            <button id="export-download" class="btn btn-primary btn-sm">Export</button>
           </div>
         </div>
       </div>
-    </div>
 
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-      integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/@materialstyle/materialstyle@3.1.1/dist/js/materialstyle.min.js"
-      integrity="sha384-rqhP61M9WSmzd7+ssgyoWP2I+R68vVHx7o+UmmIs6/Nxe8Lt1DoF6+0CKptZIXC0"
-      crossorigin="anonymous"
-    ></script>
-    <script src="tidytree.js"></script>
-    <script>
-      var tree, original;
+      <!-- About Modal -->
+      <div class="modal-overlay" id="aboutModalOverlay">
+        <div class="modal">
+          <div class="modal-header">
+            <span class="modal-title">About TidyTree</span>
+            <button class="modal-close" onclick="closeAboutModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>TidyTree is a web application for rendering Phylogenetic Trees in-browser. No analysis performed by TidyTree is ever transmitted over the internet, making it safe for use with trees that contain Personally-Identifiable Information.</p>
+            <p>TidyTree was built by the Molecular Epidemiology and Bioinformatics Team at the CDC in Atlanta.</p>
+            <p>
+              <a href="https://cdcgov.github.io/MEBT" target="_blank" rel="noreferrer noopener">See MEBT's Other Tools</a>
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary btn-sm" onclick="closeAboutModal()">Got it!</button>
+          </div>
+        </div>
+      </div>
 
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("sw.js");
-      }
+      <script src="https://d3js.org/d3.v7.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+      <script src="tidytree.js?v=0.7.0"></script>
+      <script>
+        var tree, original;
 
-      document.addEventListener("DOMContentLoaded", function() {
-        const params = new URLSearchParams(window.location.search);
-        const fileUrl = params.get("file");
-        let treeFetched;
-        if (fileUrl) {
-          d3.select("#tree-url").property("value", fileUrl);
-          treeFetched = fetchAndLoadTree(fileUrl);
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("sw.js");
         }
-        if (!fileUrl || !treeFetched) {
-          fetch("life.nwk").then(response => response.text().then(buildTree));
+
+        document.addEventListener("DOMContentLoaded", function() {
+          const params = new URLSearchParams(window.location.search);
+          const fileUrl = params.get("file");
+          let treeFetched;
+          if (fileUrl) {
+            d3.select("#tree-url").property("value", fileUrl);
+            treeFetched = fetchAndLoadTree(fileUrl);
+          }
+          if (!fileUrl || !treeFetched) {
+            fetch("life.nwk").then(response => response.text().then(buildTree));
+          }
+        });
+
+        ["layout", "mode", "type"].forEach(thing => {
+          var title = "valid" + thing[0].toUpperCase() + thing.slice(1) + "s";
+          d3.select("#" + thing)
+            .selectAll("option")
+            .data(TidyTree[title])
+            .enter()
+            .append("option")
+            .text(d => d);
+        });
+
+        d3.select("#source").on("input", function(event) {
+          let reader = new FileReader();
+          reader.onload = () => buildTree(reader.result);
+          reader.readAsText(event.srcElement.files[0]);
+        });
+        d3.select("#load-url").on("click", async function() {
+          const url = d3.select("#tree-url").property("value").trim();
+          if (url) {
+            fetchAndLoadTree(url);
+          } else {
+            alert("Please enter a valid URL.");
+          }
+        });
+
+        function updateQueryParam(url) {
+          const newUrl = new URL(window.location);
+          newUrl.searchParams.set("file", url);
+          window.history.replaceState({}, "", newUrl);
         }
-      });
 
-      ["layout", "mode", "type"].forEach(thing => {
-        var title = "valid" + thing[0].toUpperCase() + thing.slice(1) + "s";
-        d3.select("#" + thing)
-          .selectAll("option")
-          .data(TidyTree[title])
-          .enter()
-          .append("option")
-          .text(d => d);
-      });
-
-      d3.select("#source").on("input", function(event) {
-        let reader = new FileReader();
-        reader.onload = () => buildTree(reader.result);
-        reader.readAsText(event.srcElement.files[0]);
-      });
-      d3.select("#load-url").on("click", async function() {
-        const url = d3.select("#tree-url").property("value").trim();
-        if (url) {
-          fetchAndLoadTree(url);
-        } else {
-          alert("Please enter a valid URL.");
-        }
-      });
-
-      function updateQueryParam(url) {
-        const newUrl = new URL(window.location);
-        newUrl.searchParams.set("file", url);
-        window.history.replaceState({}, "", newUrl);
-      }
-
-      async function fetchAndLoadTree(url) {
-        try {
-          // Validate URL before fetching (SSRF protection)
-          let urlObj;
+        async function fetchAndLoadTree(url) {
           try {
-            urlObj = new URL(url);
-          } catch (e) {
-            throw new Error("Invalid URL format.");
-          }
-          if (!['http:', 'https:'].includes(urlObj.protocol)) {
-            throw new Error("Only http:// or https:// URLs are allowed.");
-          }
+            let urlObj;
+            try {
+              urlObj = new URL(url);
+            } catch (e) {
+              throw new Error("Invalid URL format.");
+            }
+            if (!['http:', 'https:'].includes(urlObj.protocol)) {
+              throw new Error("Only http:// or https:// URLs are allowed.");
+            }
 
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const text = await response.text();
+            buildTree(text);
+            updateQueryParam(url);
+            return true;
+          } catch (error) {
+            alert("Failed to load the Newick tree. Check the URL and CORS settings.");
           }
-          const text = await response.text();
-          buildTree(text);
-          updateQueryParam(url);
-          return true;
-        } catch (error) {
-          alert("Failed to load the Newick tree. Check the URL and CORS settings.");
+          return false;
         }
-        return false;
-      }
 
-      function buildTree(newick) {
-        if (newick) {
-          // Validate Newick content
-          try {
-            TidyTree.patristic.parseNewick(newick);
-          } catch (e) {
-            alert("Invalid Newick format. Please provide a valid Newick tree string.");
-            return;
+        function buildTree(newick) {
+          if (newick) {
+            try {
+              TidyTree.patristic.parseNewick(newick);
+            } catch (e) {
+              alert("Invalid Newick format. Please provide a valid Newick tree string.");
+              return;
+            }
+          }
+          tree = new TidyTree(
+            newick ? newick : tree.data.clone(),
+            {
+              parent: "#tree",
+              layout: d3.select("#layout").node().value,
+              mode: d3.select("#mode").node().value,
+              type: d3.select("#type").node().value,
+              colorOptions: 
+              { 
+                nodeColorMode: "list",
+                branchColorMode: "monophyletic",
+                defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+                defaultBranchColor: d3.select("#defaultBranchColor").node().value,
+                highlightColor: d3.select("#highlightColor").node().value,
+              },
+              leafNodes: d3.select("#leafNodes").node().checked,
+              branchNodes: d3.select("#branchNodes").node().checked,
+              leafLabels: d3.select("#leafLabels").node().checked,
+              equidistantLeaves: d3.select("#equidistantLeaves").node().checked,
+              branchLabels: d3.select("#branchLabels").node().checked,
+              branchDistances: d3.select("#branchDistances").node().checked,
+              ruler: d3.select("#ruler").node().checked,
+              animation: parseFloat(d3.select("#animation").node().value),
+              margin: [10, 10, 70, 30]
+            },
+            {
+              contextmenu: contextMenu,
+              showtooltip: showTooltip,
+              hidetooltip: hideTooltip
+            }
+          );
+          populateCollapseNodeSelect();
+        }
+
+        d3.select("#reset").on("click", e => buildTree());
+
+        d3.selectAll("select")
+          .filter(":not(.skip)")
+          .on("change", function() {
+            var thing = this.id[0].toUpperCase() + this.id.slice(1);
+            tree["set" + thing](this.value);
+            tree.recenter();
+          });
+
+        d3.selectAll("input")
+          .filter('[type="checkbox"]:not(.skip)')
+          .on("change", function() {
+            var thing = this.id[0].toUpperCase() + this.id.slice(1);
+            tree["set" + thing](this.checked);
+          });
+
+        d3.selectAll("input")
+          .filter('[type="range"]:not(.skip)')
+          .on("input", function() {
+            var cached = tree.animation;
+            tree.setAnimation(0);
+            var thing = this.id[0].toUpperCase() + this.id.slice(1);
+            tree["set" + thing](parseFloat(this.value));
+            tree.setAnimation(cached);
+          });
+
+        isEColiOrShigellaNode = function(node) {
+          let nodeData = node.__data__ ? node.__data__.data : node;
+         
+          if (nodeData.children.length === 0) {
+            return nodeData.id.includes("Escherichia_coli") || nodeData.id.includes("Shigella");
+          } else {
+            return nodeData.children.every(isEColiOrShigellaNode);
           }
         }
-        tree = new TidyTree(
-          newick ? newick : tree.data.clone(),
-          {
-            parent: "#tree",
-            layout: d3.select("#layout").node().value,
-            mode: d3.select("#mode").node().value,
-            type: d3.select("#type").node().value,
-            colorOptions: 
-            { 
-              nodeColorMode: "list",
+
+        d3.select("#highlightMode").on("input", function() {
+          if (this.value === "none") {
+            tree.setColorOptions({
+              nodeColorMode: "none",
+              branchColorMode: "none",
+              defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+              defaultBranchColor: d3.select("#defaultBranchColor").node().value,
+              highlightColor: d3.select("#highlightColor").node().value
+            });
+          } else if (this.value === "leaves") {
+            tree.setColorOptions({
+              nodeColorMode: "predicate",
+              branchColorMode: "none",
+              defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+              defaultBranchColor: d3.select("#defaultBranchColor").node().value,
+              highlightColor: d3.select("#highlightColor").node().value,
+              leavesOnly: true,
+            });
+          } else if (this.value === "monophyletic") {
+            tree.setColorOptions({
+              nodeColorMode: "predicate",
               branchColorMode: "monophyletic",
               defaultNodeColor: d3.select("#defaultNodeColor").node().value,
               defaultBranchColor: d3.select("#defaultBranchColor").node().value,
               highlightColor: d3.select("#highlightColor").node().value,
-            },
-            leafNodes: d3.select("#leafNodes").node().checked,
-            branchNodes: d3.select("#branchNodes").node().checked,
-            leafLabels: d3.select("#leafLabels").node().checked,
-            equidistantLeaves: d3.select("#equidistantLeaves").node().checked,
-            branchLabels: d3.select("#branchLabels").node().checked,
-            branchDistances: d3.select("#branchDistances").node().checked,
-            ruler: d3.select("#ruler").node().checked,
-            animation: parseFloat(d3.select("#animation").node().value),
-            margin: [10, 10, 70, 30]
-          },
-          {
-            contextmenu: contextMenu,
-            showtooltip: showTooltip,
-            hidetooltip: hideTooltip
+              leavesOnly: false,
+              predicate: isEColiOrShigellaNode
+            })
           }
-        );
-        populateCollapseNodeSelect();
-      }
-
-      d3.select("#reset").on("click", e => buildTree());
-
-      d3.selectAll("select")
-        .filter(":not(.skip)")
-        .on("change", function() {
-          var thing = this.id[0].toUpperCase() + this.id.slice(1);
-          tree["set" + thing](this.value);
-          tree.recenter();
         });
 
-      d3.selectAll("input")
-        .filter('[type="checkbox"]:not(.skip)')
-        .on("change", function() {
-          var thing = this.id[0].toUpperCase() + this.id.slice(1);
-          tree["set" + thing](this.checked);
-        });
-
-      d3.selectAll("input")
-        .filter('[type="range"]:not(.skip)')
-        .on("input", function() {
-          var cached = tree.animation;
-          tree.setAnimation(0);
-          var thing = this.id[0].toUpperCase() + this.id.slice(1);
-          tree["set" + thing](parseFloat(this.value));
-          tree.setAnimation(cached);
-        });
-
-      // Checks if the given node, or all of its leaves, is an E. Coli or Shigella node.
-      //
-      // Parameters:
-      // - node: The node to check.
-      //
-      // Returns:
-      // - true if the node, or all of its leaves, is an E. Coli or Shigella node, false otherwise.
-      isEColiOrShigellaNode = function(node) {
-        // this bc its recursive and the children are organized differently
-        let nodeData = node.__data__ ? node.__data__.data : node;
-       
-        if (nodeData.children.length === 0) {
-          return nodeData.id.includes("Escherichia_coli") || nodeData.id.includes("Shigella");
-        } else {
-          return nodeData.children.every(isEColiOrShigellaNode);
-        }
-      }
-
-      d3.select("#highlightMode").on("input", function() {
-        if (this.value === "none") {
-          tree.setColorOptions({
-            nodeColorMode: "none",
-            branchColorMode: "none",
-            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-            highlightColor: d3.select("#highlightColor").node().value
-          });
-        } else if (this.value === "leaves") {
-          tree.setColorOptions({
-            nodeColorMode: "predicate",
-            branchColorMode: "none",
-            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+        d3.select("#defaultNodeColor").on("input", function() {
+          tree.setColorOptions({ 
+            nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "predicate",
+            branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
+            defaultNodeColor: this.value,
             defaultBranchColor: d3.select("#defaultBranchColor").node().value,
             highlightColor: d3.select("#highlightColor").node().value,
-            leavesOnly: true,
+            leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
+            predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
           });
-        } else if (this.value === "monophyletic") {
-          tree.setColorOptions({
-            nodeColorMode: "predicate",
-            branchColorMode: "monophyletic",
+        });
+
+        d3.select("#defaultBranchColor").on("input", function() {
+          tree.setColorOptions({ 
+            nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
+            branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
+            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+            defaultBranchColor: this.value,
+            highlightColor: d3.select("#highlightColor").node().value,
+            leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
+            predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
+          });
+        });
+
+        d3.select("#highlightColor").on("input", function() {
+          tree.setColorOptions({ 
+            nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
+            branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
             defaultNodeColor: d3.select("#defaultNodeColor").node().value,
             defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-            highlightColor: d3.select("#highlightColor").node().value,
-            leavesOnly: false,
-            predicate: isEColiOrShigellaNode
-          })
+            highlightColor: this.value,
+            leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
+            predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
+          });
+        });
+        
+        d3.select("#branchNodeSize").on("input", function() {
+          tree.eachBranchNode((node, data) => {
+            d3.select(node).attr("r", this.value);
+          });
+        });
+
+        d3.select("#branchLabelSize").on("input", function() {
+          tree.eachBranchLabel((label, data) => {
+            d3.select(label).style("font-size", this.value + "px");
+          });
+        });
+
+        d3.select("#branchDistanceSize").on("input", function() {
+          tree.eachBranchDistance((label, data) => {
+            d3.select(label).style("font-size", this.value + "px");
+          });
+        });
+
+        d3.select("#leafNodeSize").on("input", function() {
+          tree.eachLeafNode((node, data) => {
+            d3.select(node).attr("r", this.value);
+          });
+        });
+
+        d3.select("#leafLabelSize").on("input", function() {
+          tree.eachLeafLabel((label, data) => {
+            d3.select(label).style("font-size", this.value + "px");
+          });
+        });
+
+        d3.select("#animation").on("input", function() {
+          tree.setAnimation(parseFloat(this.value));
+        });
+
+        // Collapse / Expand controls
+        function populateCollapseNodeSelect() {
+          if (!tree) return;
+          const select = d3.select("#collapseNode");
+          select.selectAll("option").remove();
+          const guids = tree.getNodeGUIDs(false, null);
+          select
+            .selectAll("option")
+            .data(guids)
+            .enter()
+            .append("option")
+            .attr("value", d => d._guid)
+            .text(d => d.id || d._guid);
         }
-      });
 
-      d3.select("#defaultNodeColor").on("input", function() {
-        tree.setColorOptions({ 
-          nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "predicate",
-          branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
-          defaultNodeColor: this.value,
-          defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-          highlightColor: d3.select("#highlightColor").node().value,
-          leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
-          predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
+        d3.select("#btn-collapse").on("click", function() {
+          if (!tree) return;
+          const guid = d3.select("#collapseNode").node().value;
+          if (guid) {
+            tree.collapseNode(guid);
+            populateCollapseNodeSelect();
+          }
         });
-      });
 
-      d3.select("#defaultBranchColor").on("input", function() {
-        tree.setColorOptions({ 
-          nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
-          branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
-          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-          defaultBranchColor: this.value,
-          highlightColor: d3.select("#highlightColor").node().value,
-          leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
-          predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
+        d3.select("#btn-expand").on("click", function() {
+          if (!tree) return;
+          const guid = d3.select("#collapseNode").node().value;
+          if (guid) {
+            tree.collapseNode(guid);
+            populateCollapseNodeSelect();
+          }
         });
-      });
 
-      d3.select("#highlightColor").on("input", function() {
-        tree.setColorOptions({ 
-          nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
-          branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
-          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-          defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-          highlightColor: this.value,
-          leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
-          predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
-        });
-      });
-      
-      d3.select("#branchNodeSize").on("input", function() {
-        tree.eachBranchNode((node, data) => {
-          d3.select(node).attr("r", this.value);
-        });
-      });
-
-      d3.select("#branchLabelSize").on("input", function() {
-        tree.eachBranchLabel((label, data) => {
-          d3.select(label).style("font-size", this.value + "px");
-        });
-      });
-
-      d3.select("#branchDistanceSize").on("input", function() {
-        tree.eachBranchDistance((label, data) => {
-          d3.select(label).style("font-size", this.value + "px");
-        });
-      });
-
-      d3.select("#leafNodeSize").on("input", function() {
-        tree.eachLeafNode((node, data) => {
-          d3.select(node).attr("r", this.value);
-        });
-      });
-
-      d3.select("#leafLabelSize").on("input", function() {
-        tree.eachLeafLabel((label, data) => {
-          d3.select(label).style("font-size", this.value + "px");
-        });
-      });
-
-      d3.select("#animation").on("input", function() {
-        tree.setAnimation(parseFloat(this.value));
-      });
-
-      // Collapse / Expand controls
-      function populateCollapseNodeSelect() {
-        if (!tree) return;
-        const select = d3.select("#collapseNode");
-        select.selectAll("option").remove();
-        const guids = tree.getNodeGUIDs(false, null);
-        select
-          .selectAll("option")
-          .data(guids)
-          .enter()
-          .append("option")
-          .attr("value", d => d._guid)
-          .text(d => d.id || d._guid);
-      }
-
-      d3.select("#btn-collapse").on("click", function() {
-        if (!tree) return;
-        const guid = d3.select("#collapseNode").node().value;
-        if (guid) {
-          tree.collapseNode(guid);
+        d3.select("#btn-collapse-all").on("click", function() {
+          if (!tree) return;
+          const guids = tree.getNodeGUIDs(false, null);
+          guids.forEach(g => tree.collapseNode(g._guid));
           populateCollapseNodeSelect();
-        }
-      });
+        });
 
-      d3.select("#btn-expand").on("click", function() {
-        if (!tree) return;
-        const guid = d3.select("#collapseNode").node().value;
-        if (guid) {
-          tree.collapseNode(guid); // toggle
+        d3.select("#btn-expand-all").on("click", function() {
+          if (!tree) return;
+          tree.collapsedNodes.clear();
+          if (tree.parent) tree.redraw();
           populateCollapseNodeSelect();
-        }
-      });
+        });
 
-      d3.select("#btn-collapse-all").on("click", function() {
-        if (!tree) return;
-        // Collapse all internal nodes (nodes with children)
-        const guids = tree.getNodeGUIDs(false, null);
-        guids.forEach(g => tree.collapseNode(g._guid));
-        populateCollapseNodeSelect();
-      });
+        const _buildTree = buildTree;
+        buildTree = function(newick) {
+          _buildTree.call(this, newick);
+          if (tree) populateCollapseNodeSelect();
+        };
 
-      d3.select("#btn-expand-all").on("click", function() {
-        if (!tree) return;
-        // Expand all by clearing collapsed nodes
-        tree.collapsedNodes.clear();
-        if (tree.parent) tree.redraw();
-        populateCollapseNodeSelect();
-      });
-
-      // Repopulate collapse node select whenever tree is rebuilt
-      const _buildTree = buildTree;
-      buildTree = function(newick) {
-        _buildTree.call(this, newick);
-        if (tree) populateCollapseNodeSelect();
-      };
-
-      d3.select("#export-download").on("click", function() {
-        let format = document.getElementById("export-format").value;
-        let filename = document.getElementById("export-filename").value;
-        if (format === "nwk") {
-          download(
-            new Blob([tree.data.toNewick()], { type: "text/plain;charset=utf-8" }),
-            filename + "." + format
-          );
-        } else if (format === "png") {
-          const svg = d3.select("#tree svg").node();
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          const img = new Image();
-          const svgData = new XMLSerializer().serializeToString(svg);
-          const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-          const url = URL.createObjectURL(svgBlob);
-          img.onload = function() {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            download(canvas.toDataURL("image/png"), filename + ".png");
-            URL.revokeObjectURL(url);
-          };
-          img.src = url;
-        } else if (format === "pdf") {
-          const svg = d3.select("#tree svg").node();
-          const svgData = new XMLSerializer().serializeToString(svg);
-          const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-          const url = URL.createObjectURL(svgBlob);
-          const img = new Image();
-          img.onload = function() {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-              orientation: img.width > img.height ? "l" : "p",
-              unit: "px",
-              format: [img.width, img.height]
-            });
-            pdf.addImage(url, "PNG", 0, 0, img.width, img.height);
-            pdf.save(filename + ".pdf");
-            URL.revokeObjectURL(url);
-          };
-          img.src = url;
-        } else {
-          prepareSvg(d3.select("#tree svg").node(), {}, function(svg) {
+        d3.select("#export-download").on("click", function() {
+          let format = document.getElementById("export-format").value;
+          let filename = document.getElementById("export-filename").value;
+          if (format === "nwk") {
             download(
-              new Blob([svg], { type: "image/svg+xml" }),
-              filename + ".svg"
+              new Blob([tree.data.toNewick()], { type: "text/plain;charset=utf-8" }),
+              filename + "." + format
             );
-          });
+          } else if (format === "png") {
+            const svg = d3.select("#tree svg").node();
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+            const url = URL.createObjectURL(svgBlob);
+            img.onload = function() {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              ctx.drawImage(img, 0, 0);
+              download(canvas.toDataURL("image/png"), filename + ".png");
+              URL.revokeObjectURL(url);
+            };
+            img.src = url;
+          } else if (format === "pdf") {
+            const svg = d3.select("#tree svg").node();
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+            const url = URL.createObjectURL(svgBlob);
+            const img = new Image();
+            img.onload = function() {
+              const { jsPDF } = window.jspdf;
+              const pdf = new jsPDF({
+                orientation: img.width > img.height ? "l" : "p",
+                unit: "px",
+                format: [img.width, img.height]
+              });
+              pdf.addImage(url, "PNG", 0, 0, img.width, img.height);
+              pdf.save(filename + ".pdf");
+              URL.revokeObjectURL(url);
+            };
+            img.src = url;
+          } else {
+            prepareSvg(d3.select("#tree svg").node(), {}, function(svg) {
+              download(
+                new Blob([svg], { type: "image/svg+xml" }),
+                filename + ".svg"
+              );
+            });
+          }
+          closeExportModal();
+        });
+
+        // Modal helpers
+        function closeExportModal() {
+          d3.select("#exportModalOverlay").classed("open", false);
         }
-      });
 
-      d3.select("#toggle-options").on("click", function() {
-        var that = d3.select(this);
-        if (that.text() === "<") {
-          d3.select("#options-sidebar")
-            .transition()
-            .duration(400)
-            .style("width", "0px");
-          that
-            .text(">")
-            .transition()
-            .duration(400)
-            .style("left", "15px")
-            .end()
-            .then(() => { if (tree) tree.redraw(); });
-        } else {
-          d3.select("#options-sidebar")
-            .transition()
-            .duration(400)
-            .style("width", "376px");
-          that
-            .text("<")
-            .transition()
-            .duration(400)
-            .style("left", "376px")
-            .end()
-            .then(() => { if (tree) tree.redraw(); });
+        function closeAboutModal() {
+          d3.select("#aboutModalOverlay").classed("open", false);
         }
-      });
 
-      window.addEventListener("keydown", function(e) {
-        if (e.keyCode === 114 || (e.ctrlKey && e.keyCode === 70)) {
-          e.preventDefault();
-          d3.select("#search-wrapper")
-            .transition()
-            .duration(300)
-            .style("top", "5px");
-          d3.select("#search")
-            .node()
-            .focus();
+        d3.select("#export").on("click", function() {
+          d3.select("#exportModalOverlay").classed("open", true);
+        });
+
+        // Context menu
+        function contextMenu(event, d) {
+          event.preventDefault();
+          const menu = d3.select("#context-menu");
+          menu.style("display", "block")
+            .style("left", (event.pageX + 5) + "px")
+            .style("top", (event.pageY + 5) + "px");
         }
-        if (e.keyCode === 27) {
-          e.preventDefault();
-          d3.select("#search-wrapper")
-            .transition()
-            .duration(300)
-            .style("top", "-50px");
+
+        d3.select(window).on("click", function() {
+          d3.select("#context-menu").style("display", "none");
+        });
+
+        // Tooltip
+        function showTooltip(event, d, content) {
+          const tooltip = d3.select("#tooltip");
+          tooltip.html(content)
+            .style("display", "block")
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY + 10) + "px");
         }
-      });
 
-      d3.select("#search").on("input", (event) => {
-        if (!event.target.value.length)
-          return tree.parent.selectAll("circle").style("fill", "steelblue");
-        tree
-          .search(d => !d.data.id.includes(event.target.value))
-          .selectAll("circle")
-          .style("fill", "steelblue");
-        tree
-          .search(d => d.data.id.includes(event.target.value))
-          .selectAll("circle")
-          .style("fill", "red");
-      });
+        function hideTooltip() {
+          d3.select("#tooltip").style("display", "none");
+        }
 
-      d3.select("#search-close").on("click", () => {
-        d3.select("#search-wrapper")
-          .transition()
-          .duration(300)
-          .style("top", "-50px");
-      });
+        // Temporal Annotations
+        d3.select("#btn-add-temporal").on("click", function() {
+          if (!tree) return;
+          const guid = d3.select("#temporalGuid").node().value;
+          const start = parseFloat(d3.select("#temporalStart").node().value);
+          const end = parseFloat(d3.select("#temporalEnd").node().value);
+          const label = d3.select("#temporalLabel").node().value || undefined;
+          const color = d3.select("#temporalColor").node().value;
+          if (guid && !isNaN(start) && !isNaN(end)) {
+            tree.addTemporalAnnotation(guid, start, end, label, color);
+            // Clear inputs
+            d3.select("#temporalGuid").node().value = "";
+            d3.select("#temporalStart").node().value = "";
+            d3.select("#temporalEnd").node().value = "";
+            d3.select("#temporalLabel").node().value = "";
+          }
+        });
 
-      function contextMenu(d, event) {
-        let e = event;
-        if (!e) return;
-        e.preventDefault();
-        hideTooltip();
-        d3.select("#context-menu")
-          .style("top", e.pageY + "px")
-          .style("left", e.pageX + "px")
-          .style("z-index", 1000)
-          .style("display", "block");
-        d3.select("#reroot").on("click", c =>
-          tree.setData(d[0].data.reroot())
-        );
-        d3.select("#rotate").on("click", c =>
-          tree.setData(d[0].data.rotate().getRoot())
-        );
-        d3.select("#flip").on("click", c =>
-          tree.setData(d[0].data.flip().getRoot())
-        );
-        d3.select("#sort").on("click", c =>
-          tree.setData(d[0].data.sort().getRoot())
-        );
-        d3.select("#remove").on("click", c =>
-          tree.setData(d[0].data.remove())
-        );
-        d3.select("#isolate").on("click", c =>
-          tree.setData(d[0].data.isolate())
-        );
-        d3.select("#excise").on("click", c =>
-          tree.setData(d[0].data.excise().getRoot())
-        );
-        d3.select("#simplify").on("click", c =>
-          tree.setData(d[0].data.simplify().getRoot())
-        );
-        d3.select("#consolidate").on("click", c =>
-          tree.setData(d[0].data.consolidate().getRoot())
-        );
-      }
+        d3.select("#btn-clear-temporal").on("click", function() {
+          if (!tree) return;
+          tree.temporalAnnotations.clear();
+          if (tree.parent) tree.redraw();
+        });
 
-      function showTooltip(d, event) {
-        if (!d3.select("#tooltips").node().checked) return;
-        let e = event;
-        e.preventDefault();
-        const content = d.length > 1 ? d[1] : d[0].data.id;
-        d3.select("#tooltip")
-          .text(content)
-          .style("top", e.pageY + "px")
-          .style("left", e.pageX + 5 + "px")
-          .style("z-index", 1000)
-          .style("display", "block");
-      }
-
-      function hideTooltip() {
-        d3.selectAll("#tooltip")
-          .style("z-index", -1)
-          .style("display", "none");
-      }
-
-      d3.select("body").on("click", function() {
-        d3.selectAll("#context-menu, #tooltip")
-          .style("z-index", -1)
-          .style("display", "none");
-      });
-
-      d3.select(window).on("resize", function() {
-        if (tree) tree.redraw();
-      });
-    </script>
+        d3.select("#showTemporal").on("change", function() {
+          if (!tree) return;
+          tree.setShowTemporalAnnotations(this.checked);
+        });
+      </script>
   </body>
 </html>
