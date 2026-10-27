@@ -17,11 +17,11 @@ It's designed to replicate much of the functionality of [FigTree](http://tree.bi
 First import the library:
 
 ```HTML
-<script src="https://d3js.org/d3.v5.min.js"></script>
-<script src="https://unpkg.com/tidytree@0.5.0/dist/tidytree.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://unpkg.com/tidytree@0.7.0/dist/tidytree.min.js"></script>
 ```
 
-(It requires [d3](https://d3js.org/)!)
+(It requires [d3](https://d3js.org/) v7!)
 
 Then stick this in an HTML `script` tag:
 
@@ -32,9 +32,43 @@ let tree = new TidyTree(newick, { parent: "body" });
 
 [And Voila!](https://codepen.io/AABoyles/pen/PVvOOx) Your `body` will be populated by a phylogenetic tree.
 
+### TypeScript / ES Modules
+
+TidyTree is written in TypeScript and published as ES modules. You can also import it directly:
+
+```typescript
+import TidyTree from 'tidytree';
+
+const newick = "(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);";
+const tree = new TidyTree(newick, { parent: "body" });
+```
+
+## Features
+
+TidyTree supports the following features:
+
+- **Layouts**: horizontal, vertical, circular, radial, unrooted
+- **Tree types**: tree, weighted, dendrogram
+- **Branch modes**: smooth, square, straight
+- **Node shapes**: circle, square, diamond
+- **Color modes**: none, predicate, heatmap, gradient (nodes and branches)
+- **Collapse/expand subtrees**
+- **Annotations**: metadata per node via `addAnnotation()`
+- **Temporal annotations**: time-interval bars overlaid on branches via `addTemporalAnnotation()`
+- **Tooltips**: customizable via `setTooltipFormatter()`
+- **Virtualization**: render only visible nodes for large trees (1000+ nodes)
+- **Export**: PNG, SVG, PDF, and Newick formats
+- **Interactivity**: pan & zoom, search, context menu, node selection
+
 ## Developer Documentation
 
 [...is available here.](https://CDCgov.github.io/TidyTree/docs/)
+
+The documentation is auto-generated from the TypeScript source using `documentation.js`. To regenerate locally:
+
+```bash
+npm run doc
+```
 
 ## Shoutouts
 
@@ -97,7 +131,7 @@ All comments, messages, pull requests, and other submissions received through
 CDC including this GitHub page are subject to the [Presidential Records Act](http://www.archives.gov/about/laws/presidential-records.html)
 and may be archived. Learn more at [http://www.cdc.gov/other/privacy.html](http://www.cdc.gov/other/privacy.html).
 
-In order to test your changes locally before submitting a pull request, make your changes to `src/main.js` and `app/index.html`. Then,
+In order to test your changes locally before submitting a pull request, make your changes to `src/main.ts` and `app/index.html`. Then,
 use `rollup -c` from the root of the project directory. You can then open `app/index.html` in your browser to test your changes.
 
 ## Records

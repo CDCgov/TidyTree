@@ -7,16 +7,16 @@
   "scripts": {
     "all": "npm run build && npm run minify && npm run doc",
     "build": "rollup -c",
-    "demo": "npx http-server",
+    "demo": "http-server",
     "dev": "npm run demo & npm run watch",
-    "doc": "npx documentation build src/main.js -f md -o docs/README.md",
+    "doc": "documentation build src/main.ts -f md -o docs/README.md",
     "lint": "eslint src/",
     "minify": "npx terser dist/tidytree.js --compress > dist/tidytree.min.js",
     "test": "vitest run",
     "version": "npm version patch",
     "watch": "rollup -c --watch"
   },
-  "author": "Tony Boyles <tony@ephemer.ai>",
+  "author": "Tony Boyles <aaboyles@gmail.com>",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -28,8 +28,14 @@
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.3.1",
+    "@rollup/plugin-typescript": "^12.3.1",
+    "@types/d3": "^7.4.3",
+    "documentation": "^14.0.3",
     "eslint": "^8.57.0",
+    "http-server": "^14.1.1",
     "rollup": "^4.64.5",
-    "vitest": "^1.6.0"
+    "tslib": "^2.8.1",
+    "typescript": "^5.5.4",
+    "vitest": "^5.0.5"
   }
 }

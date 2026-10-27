@@ -1,16 +1,15 @@
 import resolve from '@rollup/plugin-node-resolve';
+import typescript from '@rollup/plugin-typescript';
 
 export default {
-  input: 'src/main.js',
+  input: 'src/main.ts',
   output: {
     file: 'dist/tidytree.js',
     format: 'iife',
-    globals: {
-      'd3': 'd3'
-    },
     name: 'TidyTree'
   },
   plugins: [
-    resolve()
+    resolve(),
+    typescript()
   ]
 };

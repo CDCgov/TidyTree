@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import TidyTree from "../src/main.js";
+import TidyTree from "../src/main.ts";
 
 describe("TidyTree", () => {
   describe("constructor", () => {
