@@ -9439,6 +9439,7 @@ var TidyTree = (function () {
        * @return The TidyTree Object
        */
       redraw() {
+          // eslint-disable-next-line @typescript-eslint/no-this-alias -- d3 .each(function) callbacks below rebind `this` to the DOM element
           const tree$1 = this;
           // Wrap the redraw in requestAnimationFrame for smoother rendering
           requestAnimationFrame(() => {
@@ -10044,7 +10045,7 @@ var TidyTree = (function () {
   const getX = (d) => d.x;
   const getY = (d) => d.y;
   const getLength = (d) => d.weight;
-  let linkTransformers = {
+  const linkTransformers = {
       tree: {
           smooth: {
               horizontal: linkHorizontal()
@@ -10311,7 +10312,7 @@ var TidyTree = (function () {
               .attr("x", (l) => (l.x % (2 * Math.PI) > Math.PI ? -5 : 5));
       }
   }
-  let nodeTransformers = {
+  const nodeTransformers = {
       tree: {
           horizontal: (d) => `translate(${d.y}, ${d.x})`,
           vertical: (d) => `translate(${d.x}, ${d.y})`,
@@ -10328,7 +10329,7 @@ var TidyTree = (function () {
       }
   };
   nodeTransformers.dendrogram = nodeTransformers.tree;
-  let labelTransformers = {
+  const labelTransformers = {
       tree: {
           straight: {
               horizontal: (l) => `translate(${(l.source.y + l.target.y) / 2}, ${(l.source.x +

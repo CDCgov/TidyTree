@@ -1204,6 +1204,7 @@ export default class TidyTree {
    * @return The TidyTree Object
    */
   redraw(): TidyTree {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- d3 .each(function) callbacks below rebind `this` to the DOM element
     const tree = this;
     // Wrap the redraw in requestAnimationFrame for smoother rendering
     requestAnimationFrame(() => {
@@ -1835,7 +1836,7 @@ const getX = (d: any) => d.x;
 const getY = (d: any) => d.y;
 const getLength = (d: any) => d.weight;
 
-let linkTransformers: Record<string, Record<string, Record<string, (d: any) => string>>> = {
+const linkTransformers: Record<string, Record<string, Record<string, (d: any) => string>>> = {
   tree: {
     smooth: {
       horizontal: (d3
@@ -2196,7 +2197,7 @@ function setNodeLabelPosition(selection: d3.Selection<any, any, any, any>, layou
   }
 }
 
-let nodeTransformers: Record<string, Record<string, (d: any) => string>> = {
+const nodeTransformers: Record<string, Record<string, (d: any) => string>> = {
   tree: {
     horizontal: (d: any) => `translate(${d.y}, ${d.x})`,
     vertical: (d: any) => `translate(${d.x}, ${d.y})`,
@@ -2215,7 +2216,7 @@ let nodeTransformers: Record<string, Record<string, (d: any) => string>> = {
 
 nodeTransformers.dendrogram = nodeTransformers.tree;
 
-let labelTransformers: Record<string, Record<string, Record<string, (l: any) => string>>> = {
+const labelTransformers: Record<string, Record<string, Record<string, (l: any) => string>>> = {
   tree: {
     straight: {
       horizontal: (l: any) =>
