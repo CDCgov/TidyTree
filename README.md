@@ -18,7 +18,7 @@ First import the library:
 
 ```HTML
 <script src="https://d3js.org/d3.v7.min.js"></script>
-<script src="https://unpkg.com/tidytree@0.7.0/dist/tidytree.min.js"></script>
+<script src="https://unpkg.com/tidytree@0.8.0/dist/tidytree.min.js"></script>
 ```
 
 (It requires [d3](https://d3js.org/) v7!)

@@ -93,21 +93,37 @@
 *   [redraw][89]
 *   [setInteractive][90]
     *   [Parameters][91]
-*   [recenter][92]
-*   [findNodeColor][93]
-    *   [Parameters][94]
-*   [interpolateColor][95]
-    *   [Parameters][96]
-*   [findBranchColor][97]
-    *   [Parameters][98]
-*   [getAllLeaves][99]
-    *   [Parameters][100]
-*   [circularPoint][101]
-    *   [Parameters][102]
-*   [setNodeLabelPosition][103]
-    *   [Parameters][104]
-*   [updateRuler][105]
-    *   [Parameters][106]
+*   [setBranchNodeSize][92]
+    *   [Parameters][93]
+*   [setBranchLabelSize][94]
+    *   [Parameters][95]
+*   [setBranchDistanceSize][96]
+    *   [Parameters][97]
+*   [setLeafNodeSize][98]
+    *   [Parameters][99]
+*   [setLeafLabelSize][100]
+    *   [Parameters][101]
+*   [setTooltips][102]
+    *   [Parameters][103]
+*   [setShowTemporal][104]
+    *   [Parameters][105]
+*   [setBackground][106]
+    *   [Parameters][107]
+*   [recenter][108]
+*   [findNodeColor][109]
+    *   [Parameters][110]
+*   [interpolateColor][111]
+    *   [Parameters][112]
+*   [findBranchColor][113]
+    *   [Parameters][114]
+*   [getAllLeaves][115]
+    *   [Parameters][116]
+*   [circularPoint][117]
+    *   [Parameters][118]
+*   [setNodeLabelPosition][119]
+    *   [Parameters][120]
+*   [updateRuler][121]
+    *   [Parameters][122]
 
 ## constructor
 
@@ -115,7 +131,7 @@ This class function creates a TidyTree object.
 
 ### Parameters
 
-*   `data` **([string][107] | patristic.Branch)** A valid newick string or patristic.Branch object
+*   `data` **([string][123] | patristic.Branch)** A valid newick string or patristic.Branch object
 *   `options` **TidyTreeOptions?** A Javascript object containing options to set up the tree
 *   `events` **TidyTreeEvents?** Event handlers
 
@@ -141,7 +157,7 @@ There are two contexts in which you should call this:
 
 ### Parameters
 
-*   `newick` **[string][107]** A valid newick string
+*   `newick` **[string][123]** A valid newick string
 
 Returns **TidyTree** the TidyTree object
 
@@ -149,13 +165,13 @@ Returns **TidyTree** the TidyTree object
 
 Returns the CSS selector for the node glyph element based on the current nodeShape.
 
-Returns **[string][107]** The selector string ("circle", "rect", or "polygon").
+Returns **[string][123]** The selector string ("circle", "rect", or "polygon").
 
 ## \_rulerOffset
 
 Private method to calculate how much vertical space to leave for the ruler
 
-Returns **[number][108]**&#x20;
+Returns **[number][124]**&#x20;
 
 ## draw
 
@@ -163,7 +179,7 @@ Draws a Phylogenetic on the element referred to by selector
 
 ### Parameters
 
-*   `selector` **([string][107] | d3.Selection\<any, any, any, any>)** A CSS selector
+*   `selector` **([string][123] | d3.Selection\<any, any, any, any>)** A CSS selector
 
 Returns **TidyTree** the TidyTree object
 
@@ -213,7 +229,7 @@ Set the TidyTree's rotation
 
 ### Parameters
 
-*   `degrees` **[number][108]** The new number of degrees by which to rotate the tree
+*   `degrees` **[number][124]** The new number of degrees by which to rotate the tree
 
 Returns **TidyTree** the TidyTree object
 
@@ -223,7 +239,7 @@ Set the TidyTree's Horizontal Stretch
 
 ### Parameters
 
-*   `proportion` **[number][108]** The new proportion by which to stretch the tree
+*   `proportion` **[number][124]** The new proportion by which to stretch the tree
 
 Returns **TidyTree** the TidyTree object
 
@@ -233,7 +249,7 @@ Set the TidyTree's Vertical Stretch
 
 ### Parameters
 
-*   `proportion` **[number][108]** The new proportion by which to stretch the tree
+*   `proportion` **[number][124]** The new proportion by which to stretch the tree
 
 Returns **TidyTree** the TidyTree object
 
@@ -244,7 +260,7 @@ redraw.
 
 ### Parameters
 
-*   `time` **[number][108]** The desired duration of an animation, in ms. Set to 0
+*   `time` **[number][124]** The desired duration of an animation, in ms. Set to 0
     to turn animations off completely.
 
 Returns **TidyTree** The TidyTree object
@@ -255,7 +271,7 @@ Shows or hides the Branch Nodes
 
 ### Parameters
 
-*   `show` **[boolean][109]** Should Branch nodes be shown?
+*   `show` **[boolean][125]** Should Branch nodes be shown?
 
 Returns **TidyTree** the TidyTree object
 
@@ -265,7 +281,7 @@ Restyles Leaf Nodes
 
 ### Parameters
 
-*   `styler` **function (node: [Element][110], datum: any): void** A function that restyles each node. `styler`
+*   `styler` **function (node: [Element][126], datum: any): void** A function that restyles each node. `styler`
     receives a reference to the DOM node to be styled, and an associated data
     object.
 
@@ -277,7 +293,7 @@ Set the TidyTree's branchLabels
 
 ### Parameters
 
-*   `show` **[boolean][109]** Should the TidyTree show branchLabels?
+*   `show` **[boolean][125]** Should the TidyTree show branchLabels?
 
 Returns **TidyTree** the TidyTree Object
 
@@ -287,7 +303,7 @@ Restyles Branch Label
 
 ### Parameters
 
-*   `styler` **function (node: [Element][110], datum: any): void** A function that restyles each node. `styler`
+*   `styler` **function (node: [Element][126], datum: any): void** A function that restyles each node. `styler`
     receives a reference to the DOM node to be styled, and an associated data
     object.
 
@@ -299,7 +315,7 @@ Shows or hides the TidyTree's branch labels
 
 ### Parameters
 
-*   `show` **[boolean][109]** Should the TidyTree show branch distances?
+*   `show` **[boolean][125]** Should the TidyTree show branch distances?
 
 Returns **TidyTree** The TidyTree Object
 
@@ -309,7 +325,7 @@ Restyles Branch Distances
 
 ### Parameters
 
-*   `styler` **function (node: [Element][110], datum: any): void** A function that restyles each node. `styler`
+*   `styler` **function (node: [Element][126], datum: any): void** A function that restyles each node. `styler`
     receives a reference to the DOM node to be styled, and an associated data
     object.
 
@@ -321,7 +337,7 @@ Shows or Hides the Leaf Nodes
 
 ### Parameters
 
-*   `show` **[boolean][109]** Should leaf nodes be visible?
+*   `show` **[boolean][125]** Should leaf nodes be visible?
 
 Returns **TidyTree** The TidyTree Object
 
@@ -331,7 +347,7 @@ Restyles Leaf Nodes
 
 ### Parameters
 
-*   `styler` **function (node: [Element][110], datum: any): void** A function that restyles each node. `styler`
+*   `styler` **function (node: [Element][126], datum: any): void** A function that restyles each node. `styler`
     receives a reference to the DOM node to be styled, and an associated data
     object.
 
@@ -343,7 +359,7 @@ Set the TidyTree's leaves to be equidistant
 
 ### Parameters
 
-*   `isEquidistant` **[boolean][109]**&#x20;
+*   `isEquidistant` **[boolean][125]**&#x20;
 
 Returns **TidyTree**&#x20;
 
@@ -353,7 +369,7 @@ Shows or Hides the TidyTree's Leaf Labels
 
 ### Parameters
 
-*   `show` **[boolean][109]** Should the TidyTree show leafLabels?
+*   `show` **[boolean][125]** Should the TidyTree show leafLabels?
 
 Returns **TidyTree** the TidyTree Object
 
@@ -363,7 +379,7 @@ Restyles Leaf Labels
 
 ### Parameters
 
-*   `styler` **function (node: [Element][110], datum: any): void** A function that restyles each node. `styler`
+*   `styler` **function (node: [Element][126], datum: any): void** A function that restyles each node. `styler`
     receives a reference to the DOM node to be styled, and an associated data
     object.
 
@@ -375,7 +391,7 @@ Shows or hides the TidyTree's branch labels
 
 ### Parameters
 
-*   `show` **[boolean][109]** Should the TidyTree show branchLabels?
+*   `show` **[boolean][125]** Should the TidyTree show branchLabels?
 
 Returns **TidyTree** The TidyTree Object
 
@@ -387,7 +403,7 @@ to display in the tooltip. If not set, the node id is used by default.
 
 ### Parameters
 
-*   `formatter` **function (data: any): [string][107]** A function that takes node data and returns a string.
+*   `formatter` **function (data: any): [string][123]** A function that takes node data and returns a string.
 
 Returns **TidyTree** The TidyTree object.
 
@@ -398,7 +414,7 @@ If the node is already collapsed, it will be expanded; otherwise it will be coll
 
 ### Parameters
 
-*   `nodeGuid` **[string][107]** The GUID of the node whose subtree to collapse/expand.
+*   `nodeGuid` **[string][123]** The GUID of the node whose subtree to collapse/expand.
 
 Returns **TidyTree** The TidyTree object.
 
@@ -408,9 +424,9 @@ Check whether a node is currently collapsed.
 
 ### Parameters
 
-*   `nodeGuid` **[string][107]** The GUID of the node to check.
+*   `nodeGuid` **[string][123]** The GUID of the node to check.
 
-Returns **[boolean][109]** True if the node is collapsed, false otherwise.
+Returns **[boolean][125]** True if the node is collapsed, false otherwise.
 
 ## getDescendantGUIDs
 
@@ -418,9 +434,9 @@ Returns an array of all descendant GUIDs (including the node itself) for a given
 
 ### Parameters
 
-*   `nodeGuid` **[string][107]** The GUID of the root node.
+*   `nodeGuid` **[string][123]** The GUID of the root node.
 
-Returns **[Array][111]<[string][107]>** Array of descendant GUIDs.
+Returns **[Array][127]<[string][123]>** Array of descendant GUIDs.
 
 ## \_getFilteredHierarchy
 
@@ -447,7 +463,7 @@ Add or update an annotation (metadata) for a specific node.
 
 ### Parameters
 
-*   `nodeGuid` **[string][107]** The GUID of the node to annotate.
+*   `nodeGuid` **[string][123]** The GUID of the node to annotate.
 *   `data` **any** The annotation data to store.
 
 Returns **TidyTree** The TidyTree object.
@@ -458,9 +474,9 @@ Retrieve the annotation data for a specific node.
 
 ### Parameters
 
-*   `nodeGuid` **[string][107]** The GUID of the node.
+*   `nodeGuid` **[string][123]** The GUID of the node.
 
-Returns **(any | [undefined][112])** The annotation data, or undefined if none exists.
+Returns **(any | [undefined][128])** The annotation data, or undefined if none exists.
 
 ## removeAnnotation
 
@@ -468,7 +484,7 @@ Remove the annotation for a specific node.
 
 ### Parameters
 
-*   `nodeGuid` **[string][107]** The GUID of the node.
+*   `nodeGuid` **[string][123]** The GUID of the node.
 
 Returns **TidyTree** The TidyTree object.
 
@@ -480,11 +496,11 @@ represent time intervals (e.g., divergence dates, sampling dates).
 
 ### Parameters
 
-*   `guid` **[string][107]** The GUID of the node to annotate.
-*   `start` **[number][108]** Start time value.
-*   `end` **[number][108]** End time value.
-*   `label` **[string][107]?** Optional label to display.
-*   `color` **[string][107]?** Optional color for the temporal bar.
+*   `guid` **[string][123]** The GUID of the node to annotate.
+*   `start` **[number][124]** Start time value.
+*   `end` **[number][124]** End time value.
+*   `label` **[string][123]?** Optional label to display.
+*   `color` **[string][123]?** Optional color for the temporal bar.
 
 Returns **TidyTree** The TidyTree object.
 
@@ -494,9 +510,9 @@ Retrieve the temporal annotation for a specific node.
 
 ### Parameters
 
-*   `guid` **[string][107]** The GUID of the node.
+*   `guid` **[string][123]** The GUID of the node.
 
-Returns **(TemporalAnnotation | [undefined][112])** The temporal annotation data, or undefined if none exists.
+Returns **(TemporalAnnotation | [undefined][128])** The temporal annotation data, or undefined if none exists.
 
 ## removeTemporalAnnotation
 
@@ -504,7 +520,7 @@ Remove the temporal annotation for a specific node.
 
 ### Parameters
 
-*   `guid` **[string][107]** The GUID of the node.
+*   `guid` **[string][123]** The GUID of the node.
 
 Returns **TidyTree** The TidyTree object.
 
@@ -514,7 +530,7 @@ Set whether temporal annotations are visible.
 
 ### Parameters
 
-*   `show` **[boolean][109]** Whether to show temporal annotations.
+*   `show` **[boolean][125]** Whether to show temporal annotations.
 
 Returns **TidyTree** The TidyTree object.
 
@@ -524,10 +540,10 @@ Retrieves the GUIDs of the nodes in the TidyTree instance.
 
 ### Parameters
 
-*   `leavesOnly` **[boolean][109]** Whether to retrieve GUIDs only for leaf nodes.
-*   `predicate` **function (node: [Element][110]): [boolean][109]?** A function that returns true if the node should be included
+*   `leavesOnly` **[boolean][125]** Whether to retrieve GUIDs only for leaf nodes.
+*   `predicate` **function (node: [Element][126]): [boolean][125]?** A function that returns true if the node should be included
 
-Returns **[Array][111]<{\_guid: [string][107], id: [string][107]}>** An array of GUIDs of the nodes.
+Returns **[Array][127]<{\_guid: [string][123], id: [string][123]}>** An array of GUIDs of the nodes.
 
 ## search
 
@@ -535,10 +551,10 @@ Searches the tree, returns Search Results
 
 ### Parameters
 
-*   `test` **function (d: any): [boolean][109]** A function which takes a Branch and returns a Truthy
+*   `test` **function (d: any): [boolean][125]** A function which takes a Branch and returns a Truthy
     or Falsy value.
 
-Returns **(d3.Selection\<any, any, any, any> | [undefined][112])** The array of results
+Returns **(d3.Selection\<any, any, any, any> | [undefined][128])** The array of results
 
 ## on
 
@@ -547,8 +563,8 @@ Please note that this is not yet functioning.
 
 ### Parameters
 
-*   `events` **[string][107]** A space-delimited list of event names
-*   `callback` **function (...args: [Array][111]\<any>): void** The function to run when one of the `events` occurs.
+*   `events` **[string][123]** A space-delimited list of event names
+*   `callback` **function (...args: [Array][127]\<any>): void** The function to run when one of the `events` occurs.
 
 Returns **TidyTree** The TidyTree on which this method was called.
 
@@ -558,7 +574,7 @@ Removes all event listeners from the given events
 
 ### Parameters
 
-*   `events` **[string][107]** A space-delimited list of event names
+*   `events` **[string][123]** A space-delimited list of event names
 
 Returns **TidyTree** The TidyTree on which this method was called.
 
@@ -568,11 +584,11 @@ Forces the tree to respond as though an `event` has occurred
 
 ### Parameters
 
-*   `events` **[string][107]** space-delimited list of names of events to trigger.
-*   `args` **...[Array][111]\<any>** Any arguments which should be passed to the event
+*   `events` **[string][123]** space-delimited list of names of events to trigger.
+*   `args` **...[Array][127]\<any>** Any arguments which should be passed to the event
     handler(s).
 
-Returns **[Array][111]\<any>** The output of the callback run on `event`
+Returns **[Array][127]\<any>** The output of the callback run on `event`
 
 ## destroy
 
@@ -588,7 +604,7 @@ If animation is 0, applies attributes immediately without animation.
 ### Parameters
 
 *   `selection` **d3.Selection\<any, any, any, any>** The d3 selection to transition.
-*   `attrs` **Record<[string][107], ([string][107] | [number][108])>?** Object of attribute/style key-value pairs to apply.
+*   `attrs` **Record<[string][123], ([string][123] | [number][124])>?** Object of attribute/style key-value pairs to apply.
 *   `applyFn` **function (transition: d3.Transition\<any, any, any, any>): void?** Optional function to apply custom transition logic.
 
 Returns **(d3.Selection\<any, any, any, any> | d3.Transition\<any, any, any, any>)** The transition or selection.
@@ -605,9 +621,89 @@ Set the TidyTree's interactivity
 
 ### Parameters
 
-*   `bool` **[boolean][109]** Whether the tree should be interactive
+*   `bool` **[boolean][125]** Whether the tree should be interactive
 
 Returns **TidyTree** The TidyTree object
+
+## setBranchNodeSize
+
+Set the branch node size.
+
+### Parameters
+
+*   `size` **[number][124]** The size of branch nodes.
+
+Returns **TidyTree** The TidyTree object.
+
+## setBranchLabelSize
+
+Set the branch label size.
+
+### Parameters
+
+*   `size` **[number][124]** The font size for branch labels.
+
+Returns **TidyTree** The TidyTree object.
+
+## setBranchDistanceSize
+
+Set the branch distance size.
+
+### Parameters
+
+*   `size` **[number][124]** The font size for branch distance labels.
+
+Returns **TidyTree** The TidyTree object.
+
+## setLeafNodeSize
+
+Set the leaf node size.
+
+### Parameters
+
+*   `size` **[number][124]** The size of leaf nodes.
+
+Returns **TidyTree** The TidyTree object.
+
+## setLeafLabelSize
+
+Set the leaf label size.
+
+### Parameters
+
+*   `size` **[number][124]** The font size for leaf labels.
+
+Returns **TidyTree** The TidyTree object.
+
+## setTooltips
+
+Set whether tooltips are enabled.
+
+### Parameters
+
+*   `enabled` **[boolean][125]** Whether tooltips should be shown.
+
+Returns **TidyTree** The TidyTree object.
+
+## setShowTemporal
+
+Set whether temporal annotations are visible.
+
+### Parameters
+
+*   `show` **[boolean][125]** Whether to show temporal annotations.
+
+Returns **TidyTree** The TidyTree object.
+
+## setBackground
+
+Set the background color of the tree container.
+
+### Parameters
+
+*   `color` **[string][123]** A CSS color string.
+
+Returns **TidyTree** The TidyTree object.
 
 ## recenter
 
@@ -624,7 +720,7 @@ Finds the color of a given node based on the color options provided.
 *   `node` **any** The node for which to find the color.
 *   `colorOptions` **ColorOptions** The color options object containing the color mode, leavesOnly, predicate, default color, and highlight color.
 
-Returns **[string][107]** The color of the node.
+Returns **[string][123]** The color of the node.
 
 ## interpolateColor
 
@@ -632,11 +728,11 @@ Interpolate between two hex colors by a factor t (0 to 1).
 
 ### Parameters
 
-*   `colorA` **[string][107]** Starting hex color.
-*   `colorB` **[string][107]** Ending hex color.
-*   `t` **[number][108]** Interpolation factor between 0 to 1.
+*   `colorA` **[string][123]** Starting hex color.
+*   `colorB` **[string][123]** Ending hex color.
+*   `t` **[number][124]** Interpolation factor between 0 to 1.
 
-Returns **[string][107]** The interpolated hex color.
+Returns **[string][123]** The interpolated hex color.
 
 ## findBranchColor
 
@@ -647,7 +743,7 @@ Find the color of a given link based on the provided color options.
 *   `link` **any** The link for which to find the color.
 *   `colorOptions` **ColorOptions** The options for different link colors.
 
-Returns **[string][107]** The color of the link.
+Returns **[string][123]** The color of the link.
 
 ## getAllLeaves
 
@@ -656,9 +752,9 @@ Returns an array of all the child leaf nodes of the given node in a tree.
 ### Parameters
 
 *   `node` **any** A node of the tree.
-*   `includeSelf` **[boolean][109]** Whether to include the given node itself as a leaf node. Defaults to false. (optional, default `false`)
+*   `includeSelf` **[boolean][125]** Whether to include the given node itself as a leaf node. Defaults to false. (optional, default `false`)
 
-Returns **[Array][111]\<any>** An array of leaf nodes.
+Returns **[Array][127]\<any>** An array of leaf nodes.
 
 ## circularPoint
 
@@ -666,10 +762,10 @@ Calculate the coordinates of a point transformed onto a circle.
 
 ### Parameters
 
-*   `x` **[number][108]** The x-coordinate of the center of the point.
-*   `y` **[number][108]** The y-coordinate of the center of the point.
+*   `x` **[number][124]** The x-coordinate of the center of the point.
+*   `y` **[number][124]** The y-coordinate of the center of the point.
 
-Returns **\[[number][108], [number][108]]** The new x and y coordinates of the point on the circle.
+Returns **\[[number][124], [number][124]]** The new x and y coordinates of the point on the circle.
 
 ## setNodeLabelPosition
 
@@ -678,7 +774,7 @@ Sets the position and rotation of node labels based on layout.
 ### Parameters
 
 *   `selection` **d3.Selection\<any, any, any, any>** The text selection to position.
-*   `layout` **[string][107]** The current layout ("vertical", "horizontal", "circular").
+*   `layout` **[string][123]** The current layout ("vertical", "horizontal", "circular").
 
 Returns **void**&#x20;
 
@@ -875,44 +971,76 @@ Returns **void**&#x20;
 
 [91]: #parameters-42
 
-[92]: #recenter
+[92]: #setbranchnodesize
 
-[93]: #findnodecolor
+[93]: #parameters-43
 
-[94]: #parameters-43
+[94]: #setbranchlabelsize
 
-[95]: #interpolatecolor
+[95]: #parameters-44
 
-[96]: #parameters-44
+[96]: #setbranchdistancesize
 
-[97]: #findbranchcolor
+[97]: #parameters-45
 
-[98]: #parameters-45
+[98]: #setleafnodesize
 
-[99]: #getallleaves
+[99]: #parameters-46
 
-[100]: #parameters-46
+[100]: #setleaflabelsize
 
-[101]: #circularpoint
+[101]: #parameters-47
 
-[102]: #parameters-47
+[102]: #settooltips
 
-[103]: #setnodelabelposition
+[103]: #parameters-48
 
-[104]: #parameters-48
+[104]: #setshowtemporal
 
-[105]: #updateruler
+[105]: #parameters-49
 
-[106]: #parameters-49
+[106]: #setbackground
 
-[107]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[107]: #parameters-50
 
-[108]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[108]: #recenter
 
-[109]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[109]: #findnodecolor
 
-[110]: https://developer.mozilla.org/docs/Web/API/Element
+[110]: #parameters-51
 
-[111]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[111]: #interpolatecolor
 
-[112]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/undefined
+[112]: #parameters-52
+
+[113]: #findbranchcolor
+
+[114]: #parameters-53
+
+[115]: #getallleaves
+
+[116]: #parameters-54
+
+[117]: #circularpoint
+
+[118]: #parameters-55
+
+[119]: #setnodelabelposition
+
+[120]: #parameters-56
+
+[121]: #updateruler
+
+[122]: #parameters-57
+
+[123]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[124]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[125]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[126]: https://developer.mozilla.org/docs/Web/API/Element
+
+[127]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[128]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/undefined
