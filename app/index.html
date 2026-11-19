@@ -647,7 +647,7 @@
       </div>
     </div>
 
-    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
     <script
       src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
       integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
@@ -700,7 +700,7 @@
       d3.select("#source").on("input", function() {
         let reader = new FileReader();
         reader.onload = () => buildTree(reader.result);
-        reader.readAsText(d3.event.srcElement.files[0]);
+        reader.readAsText(this.files[0]);
       });
       d3.select("#load-url").on("click", async function() {
         const url = d3.select("#tree-url").property("value").trim();
@@ -741,14 +741,10 @@
             layout: d3.select("#layout").node().value,
             mode: d3.select("#mode").node().value,
             type: d3.select("#type").node().value,
-            colorOptions: 
-            { 
-              nodeColorMode: "list",
-              branchColorMode: "monophyletic",
-              defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-              defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-              highlightColor: d3.select("#highlightColor").node().value,
-            },
+            colorOptions: Object.assign(currentColorOptions(), {
+              nodeColorMode: "none",
+              branchColorMode: "none"
+            }),
             leafNodes: d3.select("#leafNodes").node().checked,
             branchNodes: d3.select("#branchNodes").node().checked,
             leafLabels: d3.select("#leafLabels").node().checked,
@@ -765,6 +761,24 @@
             hidetooltip: hideTooltip
           }
         );
+        // Highlighting needs the drawn nodes, so apply it once the tree is drawn
+        if (d3.select("#highlightMode").property("value") !== "none") {
+          tree.setColorOptions(currentColorOptions());
+        }
+      }
+
+      // Builds colorOptions from the current state of the highlighting controls
+      function currentColorOptions() {
+        let mode = d3.select("#highlightMode").property("value");
+        return {
+          nodeColorMode: mode === "none" ? "none" : "predicate",
+          branchColorMode: mode === "monophyletic" ? "monophyletic" : "none",
+          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+          defaultBranchColor: d3.select("#defaultBranchColor").node().value,
+          highlightColor: d3.select("#highlightColor").node().value,
+          leavesOnly: mode !== "monophyletic",
+          predicate: mode === "monophyletic" ? isEColiOrShigellaNode : null
+        };
       }
 
       d3.select("#reset").on("click", e => buildTree());
@@ -805,79 +819,15 @@
         // this bc its recursive and the children are organized differently
         let nodeData = node.__data__ ? node.__data__.data : node;
        
-        if (nodeData.children.length === 0) {
+        if (nodeData.isLeaf()) {
           return nodeData.id.includes("Escherichia_coli") || nodeData.id.includes("Shigella");
         } else {
           return nodeData.children.every(isEColiOrShigellaNode);
         }
       }
 
-      d3.select("#highlightMode").on("input", function() {
-        if (this.value === "none") {
-          tree.setColorOptions({
-            nodeColorMode: "none",
-            branchColorMode: "none",
-            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-            highlightColor: d3.select("#highlightColor").node().value
-          });
-        } else if (this.value === "leaves") {
-          tree.setColorOptions({
-            nodeColorMode: "predicate",
-            branchColorMode: "none",
-            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-            highlightColor: d3.select("#highlightColor").node().value,
-            leavesOnly: true,
-          });
-        } else if (this.value === "monophyletic") {
-          tree.setColorOptions({
-            nodeColorMode: "predicate",
-            branchColorMode: "monophyletic",
-            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-            highlightColor: d3.select("#highlightColor").node().value,
-            leavesOnly: false,
-            predicate: isEColiOrShigellaNode
-          })
-        }
-      });
-
-      d3.select("#defaultNodeColor").on("input", function() {
-        tree.setColorOptions({ 
-          nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "predicate",
-          branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
-          defaultNodeColor: this.value,
-          defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-          highlightColor: d3.select("#highlightColor").node().value,
-          leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
-          predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
-        });
-      });
-
-      d3.select("#defaultBranchColor").on("input", function() {
-        tree.setColorOptions({ 
-          nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
-          branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
-          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-          defaultBranchColor: this.value,
-          highlightColor: d3.select("#highlightColor").node().value,
-          leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
-          predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
-        });
-      });
-
-      d3.select("#highlightColor").on("input", function() {
-        tree.setColorOptions({ 
-          nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
-          branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
-          defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-          defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-          highlightColor: this.value,
-          leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
-          predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
-        });
-      });
+      d3.selectAll("#highlightMode, #defaultNodeColor, #defaultBranchColor, #highlightColor")
+        .on("input", () => tree.setColorOptions(currentColorOptions()));
       
       d3.select("#branchNodeSize").on("input", function() {
         tree.eachBranchNode((node, data) => {
@@ -988,15 +938,16 @@
         }
       });
 
-      d3.select("#search").on("input", () => {
-        if (!d3.event.target.value.length)
+      d3.select("#search").on("input", function() {
+        let query = this.value;
+        if (!query.length)
           return tree.parent.selectAll("circle").style("fill", "steelblue");
         tree
-          .search(d => !d.data.id.includes(d3.event.target.value))
+          .search(d => !d.data.id.includes(query))
           .selectAll("circle")
           .style("fill", "steelblue");
         tree
-          .search(d => d.data.id.includes(d3.event.target.value))
+          .search(d => d.data.id.includes(query))
           .selectAll("circle")
           .style("fill", "red");
       });
@@ -1009,7 +960,7 @@
       });
 
       function contextMenu(d) {
-        let e = d3.event;
+        let e = d[1];
         if (!e) return;
         e.preventDefault();
         hideTooltip();
@@ -1018,38 +969,28 @@
           .style("left", e.pageX + "px")
           .style("z-index", 1000)
           .style("display", "block");
-        d3.select("#reroot").on("click", c =>
-          tree.setData(d[0].data.reroot())
-        );
-        d3.select("#rotate").on("click", c =>
-          tree.setData(d[0].data.rotate().getRoot())
-        );
-        d3.select("#flip").on("click", c =>
-          tree.setData(d[0].data.flip().getRoot())
-        );
-        d3.select("#sort").on("click", c =>
-          tree.setData(d[0].data.sort().getRoot())
-        );
-        d3.select("#remove").on("click", c =>
-          tree.setData(d[0].data.remove())
-        );
-        d3.select("#isolate").on("click", c =>
-          tree.setData(d[0].data.isolate())
-        );
-        d3.select("#excise").on("click", c =>
-          tree.setData(d[0].data.excise().getRoot())
-        );
-        d3.select("#simplify").on("click", c =>
-          tree.setData(d[0].data.simplify().getRoot())
-        );
-        d3.select("#consolidate").on("click", c =>
-          tree.setData(d[0].data.consolidate().getRoot())
-        );
+        // patristic throws on edits that can't apply here (e.g. isolating the root)
+        let edit = fn => () => {
+          try {
+            tree.setData(fn(d[0].data));
+          } catch (err) {
+            alert(err.message);
+          }
+        };
+        d3.select("#reroot").on("click", edit(b => b.reroot()));
+        d3.select("#rotate").on("click", edit(b => b.rotate().getRoot()));
+        d3.select("#flip").on("click", edit(b => b.flip().getRoot()));
+        d3.select("#sort").on("click", edit(b => b.sort().getRoot()));
+        d3.select("#remove").on("click", edit(b => b.remove()));
+        d3.select("#isolate").on("click", edit(b => b.isolate()));
+        d3.select("#excise").on("click", edit(b => b.excise().getRoot()));
+        d3.select("#simplify").on("click", edit(b => b.simplify().getRoot()));
+        d3.select("#consolidate").on("click", edit(b => b.consolidate().getRoot()));
       }
 
       function showTooltip(d) {
         if (!d3.select("#tooltips").node().checked) return;
-        let e = d3.event;
+        let e = d[1];
         e.preventDefault();
         d3.select("#tooltip")
           .text(d[0].data.id)

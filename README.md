@@ -17,11 +17,11 @@ It's designed to replicate much of the functionality of [FigTree](http://tree.bi
 First import the library:
 
 ```HTML
-<script src="https://d3js.org/d3.v5.min.js"></script>
-<script src="https://unpkg.com/tidytree@0.5.0/dist/tidytree.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://unpkg.com/tidytree/dist/tidytree.min.js"></script>
 ```
 
-(It requires [d3](https://d3js.org/)!)
+(It requires [d3](https://d3js.org/)! The current version needs d3 v7; releases up to 0.7.0 need d3 v5.)
 
 Then stick this in an HTML `script` tag:
 

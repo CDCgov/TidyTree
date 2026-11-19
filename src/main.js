@@ -1,5 +1,5 @@
-import "patristic";
-// import "d3";
+import * as patristic from "patristic";
+// d3 (v7) is expected as a global, e.g. loaded from a <script> tag.
 
 /**
  * This class function creates a TidyTree object.
@@ -42,10 +42,10 @@ export default function TidyTree(data, options, events) {
 
   if (this.parent) this.draw(this.parent);
 
-  if (data instanceof patristic.Branch) {
-    this.setData(data);
-  } else {
+  if (typeof data === "string") {
     this.setTree(data);
+  } else {
+    this.setData(data);
   }
 
   if (this.parent) this.recenter();
@@ -88,6 +88,18 @@ TidyTree.prototype.setTree = function (newick) {
   if (!newick) throw Error("Invalid Newick String");
   return this.setData(patristic.parseNewick(newick));
 };
+
+/**
+ * The bundled copy of patristic, used to parse and manipulate trees.
+ * @type {Object}
+ */
+TidyTree.patristic = patristic;
+
+// Earlier builds bundled patristic's UMD build, which defined a global
+// `patristic`. Keep providing it for pages that relied on that.
+if (typeof globalThis !== "undefined" && !globalThis.patristic) {
+  globalThis.patristic = patristic;
+}
 
 /**
  * The available layouts for rendering trees.
@@ -162,8 +174,8 @@ TidyTree.prototype.draw = function (selector) {
     .attr("y", -5)
     .attr("fill", "white");
 
-  this.zoom = d3.zoom().on("zoom", () => {
-    let transform = (this.transform = d3.event.transform);
+  this.zoom = d3.zoom().on("zoom", event => {
+    let transform = (this.transform = event.transform);
     g.attr(
       "transform",
       `translate(${transform.x},${transform.y}) scale(${transform.k}) rotate(${
@@ -455,7 +467,7 @@ function getAllLeaves(node, includeSelf) {
   if (includeSelf && node.height === 0) {
     leaves.push(node);
   } else {
-    node.children.forEach(child => {
+    (node.children ?? []).forEach(child => {
       leaves.push(...getAllLeaves(child, true));
     });
   }
@@ -694,10 +706,10 @@ TidyTree.prototype.redraw = function () {
           (!d.children && this.leafNodes) ? 1 : 0
         )
         .style("fill", d => findNodeColor(d, this.colorOptions))
-        .on("mouseenter focusin", d => this.trigger("showtooltip", d))
-        .on("mouseout focusout", d => this.trigger("hidetooltip", d))
-        .on("contextmenu", d => this.trigger("contextmenu", d))
-        .on("click", d => this.trigger("select", d))
+        .on("mouseenter focusin", (e, d) => this.trigger("showtooltip", d, e))
+        .on("mouseout focusout", (e, d) => this.trigger("hidetooltip", d, e))
+        .on("contextmenu", (e, d) => this.trigger("contextmenu", d, e))
+        .on("click", (e, d) => this.trigger("select", d, e))
         .attr("r", 2.5);
 
       let nodeLabels = newNodes
@@ -805,6 +817,14 @@ function updateRuler(transform) {
         .attr("x", -25);
     }
     let axis = this.layout == "horizontal" ? d3.axisBottom() : d3.axisLeft();
+    let orient = this.layout == "horizontal" ? "bottom" : "left";
+    if (ruler.attr("data-orient") !== orient) {
+      // d3-axis only sets tick line/text attributes and the group's
+      // text-anchor when its elements are first created, so clear the
+      // previous axis before switching between axisLeft and axisBottom.
+      ruler.selectAll(".tick, .domain").remove();
+      ruler.property("__axis", null).attr("data-orient", orient);
+    }
     if (this.type === "tree" && this.layout !== "circular") {
       ruler
         .attr("opacity", 1)
@@ -913,7 +933,7 @@ TidyTree.prototype.setColorOptions = function (newColorOptions) {
     if (!newColorOptions.predicate) {
       console.warn('Warning: colorOptions.predicate not supplied');
     }
-    if (!newColorOptions.leavesOnly) {
+    if (newColorOptions.leavesOnly === undefined) {
       newColorOptions.leavesOnly = false;
       console.warn('Warning: colorOptions.leavesOnly not supplied and defaulted to false');
     }
@@ -1266,18 +1286,13 @@ TidyTree.prototype.setRuler = function (show) {
 TidyTree.prototype.getNodeGUIDs = function (leavesOnly, predicate) {
   let nodeList = this.parent
     .select("svg")
-    .selectAll("g.tidytree-node-leaf circle")
-    ._groups[0];
-
-  if (!leavesOnly) {
-    nodeList = this.parent
-      .select("svg")
-      .selectAll("g.tidytree-node-leaf circle, g.tidytree-node-internal circle")
-      ._groups[0];
-  }
+    .selectAll(leavesOnly ?
+      "g.tidytree-node-leaf circle" :
+      "g.tidytree-node-leaf circle, g.tidytree-node-internal circle")
+    .nodes();
 
   let nodeGUIDs = [];
-  for (const node of nodeList.values()) {
+  for (const node of nodeList) {
     if (!predicate || predicate(node)) {
       nodeGUIDs.push({ _guid: node.__data__.data._guid, id: node.__data__.data.id });
     }

@@ -1,5 +1,5 @@
 {
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Uncompromisingly Flexible Phylogenetic Trees, Powered by D3.js",
   "name": "tidytree",
   "main": "dist/tidytree.js",
@@ -10,9 +10,9 @@
     "dev": "npm run demo & npm run watch",
     "doc": "npx documentation build src/main.js -f md -o docs/README.md",
     "minify": "npx terser dist/tidytree.js --compress > dist/tidytree.min.js",
-    "version": "npm version patch",
+    "bump": "npm version patch",
     "watch": "rollup -c --watch"
-    },
+  },
   "author": "Tony Boyles <tony@ephemer.ai>",
   "license": "Apache-2.0",
   "repository": {
@@ -20,11 +20,11 @@
     "url": "git+https://github.com/cdcgov/TidyTree.git"
   },
   "dependencies": {
-    "d3": "^7.6.1",
-    "patristic": "github:CDCgov/patristic"
+    "d3": "^7.9.0",
+    "patristic": "^0.7.1"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^9.0.0",
-    "rollup": "^1.32.1"
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "rollup": "^4.64.5"
   }
 }
