@@ -87,6 +87,12 @@ interface LinkDatum {
   target: d3.HierarchyNode<NodeDatum>;
 }
 
+// Earlier builds bundled patristic's UMD build, which defined a global
+// `patristic`. Keep providing it for pages that relied on that.
+if (typeof globalThis !== "undefined" && !(globalThis as any).patristic) {
+  (globalThis as any).patristic = patristic;
+}
+
 export default class TidyTree {
   static patristic = patristic;
 
@@ -239,10 +245,10 @@ export default class TidyTree {
 
     if (this.parent) this.draw(this.parent);
 
-    if (data instanceof patristic.Branch) {
-      this.setData(data);
-    } else {
+    if (typeof data === "string") {
       this.setTree(data);
+    } else {
+      this.setData(data);
     }
 
     if (this.parent) this.recenter();
@@ -421,7 +427,7 @@ export default class TidyTree {
       if (!newColorOptions.predicate) {
         console.warn('Warning: colorOptions.predicate not supplied');
       }
-      if (!newColorOptions.leavesOnly) {
+      if (newColorOptions.leavesOnly === undefined) {
         newColorOptions.leavesOnly = false;
         console.warn('Warning: colorOptions.leavesOnly not supplied and defaulted to false');
       }
@@ -1408,11 +1414,11 @@ export default class TidyTree {
             .style("fill", (d: any) => findNodeColor(d, t.colorOptions))
             .on("mouseenter focusin", (event: any, d: any) => {
               const content = t.tooltipFormatter ? t.tooltipFormatter(d.data) : d.data.id;
-              t.trigger("showtooltip", d, content);
+              t.trigger("showtooltip", d, event, content);
             })
-            .on("mouseout focusout", (d: any) => t.trigger("hidetooltip", d))
-            .on("contextmenu", (d: any) => t.trigger("contextmenu", d))
-            .on("click", (d: any) => t.trigger("select", d));
+            .on("mouseout focusout", (event: any, d: any) => t.trigger("hidetooltip", d, event))
+            .on("contextmenu", (event: any, d: any) => t.trigger("contextmenu", d, event))
+            .on("click", (event: any, d: any) => t.trigger("select", d, event));
 
           const nodeLabels = newNodes
             .append("text")
@@ -2367,6 +2373,14 @@ function updateRuler(this: TidyTree, transform: d3.ZoomTransform): void {
     }
     const axisFn: any = this.layout == "horizontal" ? d3.axisBottom : d3.axisLeft;
     const axis = axisFn();
+    const orient = this.layout == "horizontal" ? "bottom" : "left";
+    if (ruler.attr("data-orient") !== orient) {
+      // d3-axis only sets tick line/text attributes and the group's
+      // text-anchor when its elements are first created, so clear the
+      // previous axis before switching between axisLeft and axisBottom.
+      ruler.selectAll(".tick, .domain").remove();
+      ruler.property("__axis", null).attr("data-orient", orient);
+    }
     if (this.type === "tree" && this.layout !== "circular") {
       ruler
         .attr("opacity", 1)

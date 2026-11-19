@@ -1,6 +1,7 @@
 var TidyTree = (function () {
   'use strict';
 
+  // https://d3js.org/d3-array/ v3.2.5 Copyright 2010-2026 Mike Bostock
   function ascending$1(a, b) {
     return a == null || b == null ? NaN : a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
   }
@@ -67,69 +68,71 @@ var TidyTree = (function () {
     return 0;
   }
 
-  function number$2(x) {
+  function number$3(x) {
     return x === null ? NaN : +x;
   }
 
   const ascendingBisect = bisector(ascending$1);
   const bisectRight = ascendingBisect.right;
-  bisector(number$2).center;
+  bisector(number$3).center;
 
-  var e10 = Math.sqrt(50),
+  const e10 = Math.sqrt(50),
       e5 = Math.sqrt(10),
       e2 = Math.sqrt(2);
 
-  function ticks(start, stop, count) {
-    var reverse,
-        i = -1,
-        n,
-        ticks,
-        step;
-
-    stop = +stop, start = +start, count = +count;
-    if (start === stop && count > 0) return [start];
-    if (reverse = stop < start) n = start, start = stop, stop = n;
-    if ((step = tickIncrement(start, stop, count)) === 0 || !isFinite(step)) return [];
-
-    if (step > 0) {
-      let r0 = Math.round(start / step), r1 = Math.round(stop / step);
-      if (r0 * step < start) ++r0;
-      if (r1 * step > stop) --r1;
-      ticks = new Array(n = r1 - r0 + 1);
-      while (++i < n) ticks[i] = (r0 + i) * step;
+  function tickSpec(start, stop, count) {
+    const step = (stop - start) / Math.max(0, count),
+        power = Math.floor(Math.log10(step)),
+        error = step / Math.pow(10, power),
+        factor = error >= e10 ? 10 : error >= e5 ? 5 : error >= e2 ? 2 : 1;
+    let i1, i2, inc;
+    if (power < 0) {
+      inc = Math.pow(10, -power) / factor;
+      i1 = Math.round(start * inc);
+      i2 = Math.round(stop * inc);
+      if (i1 / inc < start) ++i1;
+      if (i2 / inc > stop) --i2;
+      inc = -inc;
     } else {
-      step = -step;
-      let r0 = Math.round(start * step), r1 = Math.round(stop * step);
-      if (r0 / step < start) ++r0;
-      if (r1 / step > stop) --r1;
-      ticks = new Array(n = r1 - r0 + 1);
-      while (++i < n) ticks[i] = (r0 + i) / step;
+      inc = Math.pow(10, power) * factor;
+      i1 = Math.round(start / inc);
+      i2 = Math.round(stop / inc);
+      if (i1 * inc < start) ++i1;
+      if (i2 * inc > stop) --i2;
     }
+    if (i2 < i1 && 0.5 <= count && count < 2) return tickSpec(start, stop, count * 2);
+    return [i1, i2, inc];
+  }
 
-    if (reverse) ticks.reverse();
-
+  function ticks(start, stop, count) {
+    stop = +stop, start = +start, count = +count;
+    if (!(count > 0)) return [];
+    if (start === stop) return [start];
+    const reverse = stop < start, [i1, i2, inc] = reverse ? tickSpec(stop, start, count) : tickSpec(start, stop, count);
+    if (!(i2 >= i1)) return [];
+    const n = i2 - i1 + 1, ticks = new Array(n);
+    if (reverse) {
+      if (inc < 0) for (let i = 0; i < n; ++i) ticks[i] = (i2 - i) / -inc;
+      else for (let i = 0; i < n; ++i) ticks[i] = (i2 - i) * inc;
+    } else {
+      if (inc < 0) for (let i = 0; i < n; ++i) ticks[i] = (i1 + i) / -inc;
+      else for (let i = 0; i < n; ++i) ticks[i] = (i1 + i) * inc;
+    }
     return ticks;
   }
 
   function tickIncrement(start, stop, count) {
-    var step = (stop - start) / Math.max(0, count),
-        power = Math.floor(Math.log(step) / Math.LN10),
-        error = step / Math.pow(10, power);
-    return power >= 0
-        ? (error >= e10 ? 10 : error >= e5 ? 5 : error >= e2 ? 2 : 1) * Math.pow(10, power)
-        : -Math.pow(10, -power) / (error >= e10 ? 10 : error >= e5 ? 5 : error >= e2 ? 2 : 1);
+    stop = +stop, start = +start, count = +count;
+    return tickSpec(start, stop, count)[2];
   }
 
   function tickStep(start, stop, count) {
-    var step0 = Math.abs(stop - start) / Math.max(0, count),
-        step1 = Math.pow(10, Math.floor(Math.log(step0) / Math.LN10)),
-        error = step0 / step1;
-    if (error >= e10) step1 *= 10;
-    else if (error >= e5) step1 *= 5;
-    else if (error >= e2) step1 *= 2;
-    return stop < start ? -step1 : step1;
+    stop = +stop, start = +start, count = +count;
+    const reverse = stop < start, inc = reverse ? tickIncrement(stop, start, count) : tickIncrement(start, stop, count);
+    return (reverse ? -1 : 1) * (inc < 0 ? 1 / -inc : inc);
   }
 
+  // https://d3js.org/d3-axis/ v3.0.1 Copyright 2010-2026 Mike Bostock
   function identity$4(x) {
     return x;
   }
@@ -138,7 +141,7 @@ var TidyTree = (function () {
       right = 2,
       bottom = 3,
       left = 4,
-      epsilon$1 = 1e-6;
+      epsilon$2 = 1e-6;
 
   function translateX(x) {
     return "translate(" + x + ",0)";
@@ -148,7 +151,7 @@ var TidyTree = (function () {
     return "translate(0," + y + ")";
   }
 
-  function number$1(scale) {
+  function number$2(scale) {
     return d => +scale(d);
   }
 
@@ -181,7 +184,7 @@ var TidyTree = (function () {
           range = scale.range(),
           range0 = +range[0] + offset,
           range1 = +range[range.length - 1] + offset,
-          position = (scale.bandwidth ? center : number$1)(scale.copy(), offset),
+          position = (scale.bandwidth ? center : number$2)(scale.copy(), offset),
           selection = context.selection ? context.selection() : context,
           path = selection.selectAll(".domain").data([null]),
           tick = selection.selectAll(".tick").data(values, scale).order(),
@@ -212,11 +215,11 @@ var TidyTree = (function () {
         text = text.transition(context);
 
         tickExit = tickExit.transition(context)
-            .attr("opacity", epsilon$1)
+            .attr("opacity", epsilon$2)
             .attr("transform", function(d) { return isFinite(d = position(d)) ? transform(d + offset) : this.getAttribute("transform"); });
 
         tickEnter
-            .attr("opacity", epsilon$1)
+            .attr("opacity", epsilon$2)
             .attr("transform", function(d) { var p = this.parentNode.__axis; return transform((p && isFinite(p = p(d)) ? p : position(d)) + offset); });
       }
 
@@ -299,7 +302,8 @@ var TidyTree = (function () {
     return axis(left, scale);
   }
 
-  var noop = {value: () => {}};
+  // https://d3js.org/d3-dispatch/ v3.0.2 Copyright 2010-2026 Mike Bostock
+  var noop$1 = {value: () => {}};
 
   function dispatch() {
     for (var i = 0, n = arguments.length, _ = {}, t; i < n; ++i) {
@@ -374,7 +378,7 @@ var TidyTree = (function () {
   function set$1(type, name, callback) {
     for (var i = 0, n = type.length; i < n; ++i) {
       if (type[i].name === name) {
-        type[i] = noop, type = type.slice(0, i).concat(type.slice(i + 1));
+        type[i] = noop$1, type = type.slice(0, i).concat(type.slice(i + 1));
         break;
       }
     }
@@ -382,6 +386,7 @@ var TidyTree = (function () {
     return type;
   }
 
+  // https://d3js.org/d3-selection/ v3.0.1 Copyright 2010-2026 Mike Bostock
   var xhtml = "http://www.w3.org/1999/xhtml";
 
   var namespaces = {
@@ -1306,6 +1311,30 @@ var TidyTree = (function () {
         : new Selection$1([[selector]], root);
   }
 
+  var nextId = 0;
+
+  function Local() {
+    this._ = "@" + (++nextId).toString(36);
+  }
+
+  Local.prototype = {
+    constructor: Local,
+    get: function(node) {
+      var id = this._;
+      while (!(id in node)) if (!(node = node.parentNode)) return;
+      return node[id];
+    },
+    set: function(node, value) {
+      return node[this._] = value;
+    },
+    remove: function(node) {
+      return this._ in node && delete node[this._];
+    },
+    toString: function() {
+      return this._;
+    }
+  };
+
   function sourceEvent(event) {
     let sourceEvent;
     while (sourceEvent = event.sourceEvent) event = sourceEvent;
@@ -1331,8 +1360,7 @@ var TidyTree = (function () {
     return [event.pageX, event.pageY];
   }
 
-  // These are typically used in conjunction with noevent to ensure that we can
-  // preventDefault on the event.
+  // https://d3js.org/d3-drag/ v3.0.1 Copyright 2010-2026 Mike Bostock
   const nonpassivecapture = {capture: true, passive: false};
 
   function noevent$1(event) {
@@ -1340,7 +1368,7 @@ var TidyTree = (function () {
     event.stopImmediatePropagation();
   }
 
-  function dragDisable(view) {
+  function nodrag(view) {
     var root = view.document.documentElement,
         selection = select(view).on("dragstart.drag", noevent$1, nonpassivecapture);
     if ("onselectstart" in root) {
@@ -1366,6 +1394,7 @@ var TidyTree = (function () {
     }
   }
 
+  // https://d3js.org/d3-color/ v3.1.1 Copyright 2010-2026 Mike Bostock
   function define(constructor, factory, prototype) {
     constructor.prototype = factory.prototype = prototype;
     prototype.constructor = constructor;
@@ -1610,7 +1639,7 @@ var TidyTree = (function () {
     return new Rgb(o.r, o.g, o.b, o.opacity);
   }
 
-  function rgb(r, g, b, opacity) {
+  function rgb$1(r, g, b, opacity) {
     return arguments.length === 1 ? rgbConvert(r) : new Rgb(r, g, b, opacity == null ? 1 : opacity);
   }
 
@@ -1621,7 +1650,7 @@ var TidyTree = (function () {
     this.opacity = +opacity;
   }
 
-  define(Rgb, rgb, extend(Color, {
+  define(Rgb, rgb$1, extend(Color, {
     brighter(k) {
       k = k == null ? brighter : Math.pow(brighter, k);
       return new Rgb(this.r * k, this.g * k, this.b * k, this.opacity);
@@ -1772,6 +1801,181 @@ var TidyTree = (function () {
         : m1) * 255;
   }
 
+  const radians = Math.PI / 180;
+  const degrees$1 = 180 / Math.PI;
+
+  // https://observablehq.com/@mbostock/lab-and-rgb
+  const K = 18,
+      Xn = 0.96422,
+      Yn = 1,
+      Zn = 0.82521,
+      t0 = 4 / 29,
+      t1 = 6 / 29,
+      t2 = 3 * t1 * t1,
+      t3 = t1 * t1 * t1;
+
+  function labConvert(o) {
+    if (o instanceof Lab) return new Lab(o.l, o.a, o.b, o.opacity);
+    if (o instanceof Hcl) return hcl2lab(o);
+    if (!(o instanceof Rgb)) o = rgbConvert(o);
+    var r = rgb2lrgb(o.r),
+        g = rgb2lrgb(o.g),
+        b = rgb2lrgb(o.b),
+        y = xyz2lab((0.2225045 * r + 0.7168786 * g + 0.0606169 * b) / Yn), x, z;
+    if (r === g && g === b) x = z = y; else {
+      x = xyz2lab((0.4360747 * r + 0.3850649 * g + 0.1430804 * b) / Xn);
+      z = xyz2lab((0.0139322 * r + 0.0971045 * g + 0.7141733 * b) / Zn);
+    }
+    return new Lab(116 * y - 16, 500 * (x - y), 200 * (y - z), o.opacity);
+  }
+
+  function lab(l, a, b, opacity) {
+    return arguments.length === 1 ? labConvert(l) : new Lab(l, a, b, opacity == null ? 1 : opacity);
+  }
+
+  function Lab(l, a, b, opacity) {
+    this.l = +l;
+    this.a = +a;
+    this.b = +b;
+    this.opacity = +opacity;
+  }
+
+  define(Lab, lab, extend(Color, {
+    brighter(k) {
+      return new Lab(this.l + K * (k == null ? 1 : k), this.a, this.b, this.opacity);
+    },
+    darker(k) {
+      return new Lab(this.l - K * (k == null ? 1 : k), this.a, this.b, this.opacity);
+    },
+    rgb() {
+      var y = (this.l + 16) / 116,
+          x = isNaN(this.a) ? y : y + this.a / 500,
+          z = isNaN(this.b) ? y : y - this.b / 200;
+      x = Xn * lab2xyz(x);
+      y = Yn * lab2xyz(y);
+      z = Zn * lab2xyz(z);
+      return new Rgb(
+        lrgb2rgb( 3.1338561 * x - 1.6168667 * y - 0.4906146 * z),
+        lrgb2rgb(-0.9787684 * x + 1.9161415 * y + 0.0334540 * z),
+        lrgb2rgb( 0.0719453 * x - 0.2289914 * y + 1.4052427 * z),
+        this.opacity
+      );
+    }
+  }));
+
+  function xyz2lab(t) {
+    return t > t3 ? Math.pow(t, 1 / 3) : t / t2 + t0;
+  }
+
+  function lab2xyz(t) {
+    return t > t1 ? t * t * t : t2 * (t - t0);
+  }
+
+  function lrgb2rgb(x) {
+    return 255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055);
+  }
+
+  function rgb2lrgb(x) {
+    return (x /= 255) <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+  }
+
+  function hclConvert(o) {
+    if (o instanceof Hcl) return new Hcl(o.h, o.c, o.l, o.opacity);
+    if (!(o instanceof Lab)) o = labConvert(o);
+    if (o.a === 0 && o.b === 0) return new Hcl(NaN, 0 < o.l && o.l < 100 ? 0 : NaN, o.l, o.opacity);
+    var h = Math.atan2(o.b, o.a) * degrees$1;
+    return new Hcl(h < 0 ? h + 360 : h, Math.sqrt(o.a * o.a + o.b * o.b), o.l, o.opacity);
+  }
+
+  function hcl(h, c, l, opacity) {
+    return arguments.length === 1 ? hclConvert(h) : new Hcl(h, c, l, opacity == null ? 1 : opacity);
+  }
+
+  function Hcl(h, c, l, opacity) {
+    this.h = +h;
+    this.c = +c;
+    this.l = +l;
+    this.opacity = +opacity;
+  }
+
+  function hcl2lab(o) {
+    if (isNaN(o.h)) return new Lab(o.l, 0, 0, o.opacity);
+    var h = o.h * radians;
+    return new Lab(o.l, Math.cos(h) * o.c, Math.sin(h) * o.c, o.opacity);
+  }
+
+  define(Hcl, hcl, extend(Color, {
+    brighter(k) {
+      return new Hcl(this.h, this.c, this.l + K * (k == null ? 1 : k), this.opacity);
+    },
+    darker(k) {
+      return new Hcl(this.h, this.c, this.l - K * (k == null ? 1 : k), this.opacity);
+    },
+    rgb() {
+      return hcl2lab(this).rgb();
+    }
+  }));
+
+  var A = -0.14861,
+      B = 1.78277,
+      C = -0.29227,
+      D = -0.90649,
+      E = 1.97294,
+      ED = E * D,
+      EB = E * B,
+      BC_DA = B * C - D * A;
+
+  function cubehelixConvert(o) {
+    if (o instanceof Cubehelix) return new Cubehelix(o.h, o.s, o.l, o.opacity);
+    if (!(o instanceof Rgb)) o = rgbConvert(o);
+    var r = o.r / 255,
+        g = o.g / 255,
+        b = o.b / 255,
+        l = (BC_DA * b + ED * r - EB * g) / (BC_DA + ED - EB),
+        bl = b - l,
+        k = (E * (g - l) - C * bl) / D,
+        s = Math.sqrt(k * k + bl * bl) / (E * l * (1 - l)), // NaN if l=0 or l=1
+        h = s ? Math.atan2(k, bl) * degrees$1 - 120 : NaN;
+    return new Cubehelix(h < 0 ? h + 360 : h, s, l, o.opacity);
+  }
+
+  function cubehelix$1(h, s, l, opacity) {
+    return arguments.length === 1 ? cubehelixConvert(h) : new Cubehelix(h, s, l, opacity == null ? 1 : opacity);
+  }
+
+  function Cubehelix(h, s, l, opacity) {
+    this.h = +h;
+    this.s = +s;
+    this.l = +l;
+    this.opacity = +opacity;
+  }
+
+  define(Cubehelix, cubehelix$1, extend(Color, {
+    brighter(k) {
+      k = k == null ? brighter : Math.pow(brighter, k);
+      return new Cubehelix(this.h, this.s, this.l * k, this.opacity);
+    },
+    darker(k) {
+      k = k == null ? darker : Math.pow(darker, k);
+      return new Cubehelix(this.h, this.s, this.l * k, this.opacity);
+    },
+    rgb() {
+      var h = isNaN(this.h) ? 0 : (this.h + 120) * radians,
+          l = +this.l,
+          a = isNaN(this.s) ? 0 : this.s * l * (1 - l),
+          cosh = Math.cos(h),
+          sinh = Math.sin(h);
+      return new Rgb(
+        255 * (l + a * (A * cosh + B * sinh)),
+        255 * (l + a * (C * cosh + D * sinh)),
+        255 * (l + a * (E * cosh)),
+        this.opacity
+      );
+    }
+  }));
+
+  // https://d3js.org/d3-interpolate/ v3.0.2 Copyright 2010-2026 Mike Bostock
+
   var constant$2 = x => () => x;
 
   function linear$1(a, d) {
@@ -1786,6 +1990,11 @@ var TidyTree = (function () {
     };
   }
 
+  function hue$1(a, b) {
+    var d = b - a;
+    return d ? linear$1(a, d > 180 || d < -180 ? d - 360 * Math.round(d / 360) : d) : constant$2(isNaN(a) ? b : a);
+  }
+
   function gamma(y) {
     return (y = +y) === 1 ? nogamma : function(a, b) {
       return b - a ? exponential(a, b, y) : constant$2(isNaN(a) ? b : a);
@@ -1797,11 +2006,11 @@ var TidyTree = (function () {
     return d ? linear$1(a, d) : constant$2(isNaN(a) ? b : a);
   }
 
-  var interpolateRgb = (function rgbGamma(y) {
+  var rgb = (function rgbGamma(y) {
     var color = gamma(y);
 
-    function rgb$1(start, end) {
-      var r = color((start = rgb(start)).r, (end = rgb(end)).r),
+    function rgb(start, end) {
+      var r = color((start = rgb$1(start)).r, (end = rgb$1(end)).r),
           g = color(start.g, end.g),
           b = color(start.b, end.b),
           opacity = nogamma(start.opacity, end.opacity);
@@ -1814,9 +2023,9 @@ var TidyTree = (function () {
       };
     }
 
-    rgb$1.gamma = rgbGamma;
+    rgb.gamma = rgbGamma;
 
-    return rgb$1;
+    return rgb;
   })(1);
 
   function numberArray(a, b) {
@@ -1841,7 +2050,7 @@ var TidyTree = (function () {
         c = new Array(nb),
         i;
 
-    for (i = 0; i < na; ++i) x[i] = interpolate$1(a[i], b[i]);
+    for (i = 0; i < na; ++i) x[i] = value(a[i], b[i]);
     for (; i < nb; ++i) c[i] = b[i];
 
     return function(t) {
@@ -1857,7 +2066,7 @@ var TidyTree = (function () {
     };
   }
 
-  function interpolateNumber(a, b) {
+  function number(a, b) {
     return a = +a, b = +b, function(t) {
       return a * (1 - t) + b * t;
     };
@@ -1873,7 +2082,7 @@ var TidyTree = (function () {
 
     for (k in b) {
       if (k in a) {
-        i[k] = interpolate$1(a[k], b[k]);
+        i[k] = value(a[k], b[k]);
       } else {
         c[k] = b[k];
       }
@@ -1900,7 +2109,7 @@ var TidyTree = (function () {
     };
   }
 
-  function interpolateString(a, b) {
+  function string(a, b) {
     var bi = reA.lastIndex = reB.lastIndex = 0, // scan index for next number in b
         am, // current match in a
         bm, // current match in b
@@ -1925,7 +2134,7 @@ var TidyTree = (function () {
         else s[++i] = bm;
       } else { // interpolate non-matching numbers
         s[++i] = null;
-        q.push({i: i, x: interpolateNumber(am, bm)});
+        q.push({i: i, x: number(am, bm)});
       }
       bi = reB.lastIndex;
     }
@@ -1948,20 +2157,20 @@ var TidyTree = (function () {
           });
   }
 
-  function interpolate$1(a, b) {
+  function value(a, b) {
     var t = typeof b, c;
     return b == null || t === "boolean" ? constant$2(b)
-        : (t === "number" ? interpolateNumber
-        : t === "string" ? ((c = color(b)) ? (b = c, interpolateRgb) : interpolateString)
-        : b instanceof color ? interpolateRgb
+        : (t === "number" ? number
+        : t === "string" ? ((c = color(b)) ? (b = c, rgb) : string)
+        : b instanceof color ? rgb
         : b instanceof Date ? date
         : isNumberArray(b) ? numberArray
         : Array.isArray(b) ? genericArray
         : typeof b.valueOf !== "function" && typeof b.toString !== "function" || isNaN(b) ? object
-        : interpolateNumber)(a, b);
+        : number)(a, b);
   }
 
-  function interpolateRound(a, b) {
+  function round(a, b) {
     return a = +a, b = +b, function(t) {
       return Math.round(a * (1 - t) + b * t);
     };
@@ -2020,7 +2229,7 @@ var TidyTree = (function () {
     function translate(xa, ya, xb, yb, s, q) {
       if (xa !== xb || ya !== yb) {
         var i = s.push("translate(", null, pxComma, null, pxParen);
-        q.push({i: i - 4, x: interpolateNumber(xa, xb)}, {i: i - 2, x: interpolateNumber(ya, yb)});
+        q.push({i: i - 4, x: number(xa, xb)}, {i: i - 2, x: number(ya, yb)});
       } else if (xb || yb) {
         s.push("translate(" + xb + pxComma + yb + pxParen);
       }
@@ -2029,7 +2238,7 @@ var TidyTree = (function () {
     function rotate(a, b, s, q) {
       if (a !== b) {
         if (a - b > 180) b += 360; else if (b - a > 180) a += 360; // shortest path
-        q.push({i: s.push(pop(s) + "rotate(", null, degParen) - 2, x: interpolateNumber(a, b)});
+        q.push({i: s.push(pop(s) + "rotate(", null, degParen) - 2, x: number(a, b)});
       } else if (b) {
         s.push(pop(s) + "rotate(" + b + degParen);
       }
@@ -2037,7 +2246,7 @@ var TidyTree = (function () {
 
     function skewX(a, b, s, q) {
       if (a !== b) {
-        q.push({i: s.push(pop(s) + "skewX(", null, degParen) - 2, x: interpolateNumber(a, b)});
+        q.push({i: s.push(pop(s) + "skewX(", null, degParen) - 2, x: number(a, b)});
       } else if (b) {
         s.push(pop(s) + "skewX(" + b + degParen);
       }
@@ -2046,7 +2255,7 @@ var TidyTree = (function () {
     function scale(xa, ya, xb, yb, s, q) {
       if (xa !== xb || ya !== yb) {
         var i = s.push(pop(s) + "scale(", null, ",", null, ")");
-        q.push({i: i - 4, x: interpolateNumber(xa, xb)}, {i: i - 2, x: interpolateNumber(ya, yb)});
+        q.push({i: i - 4, x: number(xa, xb)}, {i: i - 2, x: number(ya, yb)});
       } else if (xb !== 1 || yb !== 1) {
         s.push(pop(s) + "scale(" + xb + "," + yb + ")");
       }
@@ -2086,7 +2295,7 @@ var TidyTree = (function () {
     return ((x = Math.exp(2 * x)) - 1) / (x + 1);
   }
 
-  var interpolateZoom = (function zoomRho(rho, rho2, rho4) {
+  var zoom$1 = (function zoomRho(rho, rho2, rho4) {
 
     // p0 = [ux0, uy0, w0]
     // p1 = [ux1, uy1, w1]
@@ -2131,7 +2340,7 @@ var TidyTree = (function () {
         };
       }
 
-      i.duration = S * 1000 * rho / Math.SQRT2;
+      i.duration = Math.abs(S) * 1000 * rho / Math.SQRT2;
 
       return i;
     }
@@ -2144,9 +2353,37 @@ var TidyTree = (function () {
     return zoom;
   })(Math.SQRT2, 2, 4);
 
+  function cubehelix(hue) {
+    return (function cubehelixGamma(y) {
+      y = +y;
+
+      function cubehelix(start, end) {
+        var h = hue((start = cubehelix$1(start)).h, (end = cubehelix$1(end)).h),
+            s = nogamma(start.s, end.s),
+            l = nogamma(start.l, end.l),
+            opacity = nogamma(start.opacity, end.opacity);
+        return function(t) {
+          start.h = h(t);
+          start.s = s(t);
+          start.l = l(Math.pow(t, y));
+          start.opacity = opacity(t);
+          return start + "";
+        };
+      }
+
+      cubehelix.gamma = cubehelixGamma;
+
+      return cubehelix;
+    })(1);
+  }
+
+  cubehelix(hue$1);
+  cubehelix(nogamma);
+
+  // https://d3js.org/d3-timer/ v3.0.2 Copyright 2010-2026 Mike Bostock
   var frame = 0, // is an animation frame pending?
       timeout$1 = 0, // is a timeout pending?
-      interval = 0, // are any timers active?
+      interval$1 = 0, // are any timers active?
       pokeDelay = 1000, // how frequently we check for clock skew
       taskHead,
       taskTail,
@@ -2247,10 +2484,10 @@ var TidyTree = (function () {
     if (timeout$1) timeout$1 = clearTimeout(timeout$1);
     var delay = time - clockNow; // Strictly less than if we recomputed clockNow.
     if (delay > 24) {
-      if (time < Infinity) timeout$1 = setTimeout(wake, time - clock.now() - clockSkew);
-      if (interval) interval = clearInterval(interval);
+      if (time < Infinity) timeout$1 = setTimeout(wake, Math.ceil(time - clock.now() - clockSkew) + 1);
+      if (interval$1) interval$1 = clearInterval(interval$1);
     } else {
-      if (!interval) clockLast = clock.now(), interval = setInterval(poke, pokeDelay);
+      if (!interval$1) clockLast = clock.now(), interval$1 = setInterval(poke, pokeDelay);
       frame = 1, setFrame(wake);
     }
   }
@@ -2264,6 +2501,140 @@ var TidyTree = (function () {
     }, delay, time);
     return t;
   }
+
+  // https://d3js.org/d3-ease/ v3.0.2 Copyright 2010-2026 Mike Bostock, 2001 Robert Penner
+
+  function cubicInOut(t) {
+    return ((t *= 2) <= 1 ? t * t * t : (t -= 2) * t * t + 2) / 2;
+  }
+
+  var exponent$1 = 3;
+
+  ((function custom(e) {
+    e = +e;
+
+    function polyIn(t) {
+      return Math.pow(t, e);
+    }
+
+    polyIn.exponent = custom;
+
+    return polyIn;
+  }))(exponent$1);
+
+  ((function custom(e) {
+    e = +e;
+
+    function polyOut(t) {
+      return 1 - Math.pow(1 - t, e);
+    }
+
+    polyOut.exponent = custom;
+
+    return polyOut;
+  }))(exponent$1);
+
+  ((function custom(e) {
+    e = +e;
+
+    function polyInOut(t) {
+      return ((t *= 2) <= 1 ? Math.pow(t, e) : 2 - Math.pow(2 - t, e)) / 2;
+    }
+
+    polyInOut.exponent = custom;
+
+    return polyInOut;
+  }))(exponent$1);
+
+  // tpmt is two power minus ten times t scaled to [0,1]
+  function tpmt(x) {
+    return (Math.pow(2, -10 * x) - 0.0009765625) * 1.0009775171065494;
+  }
+
+  var overshoot = 1.70158;
+
+  ((function custom(s) {
+    s = +s;
+
+    function backIn(t) {
+      return (t = +t) * t * (s * (t - 1) + t);
+    }
+
+    backIn.overshoot = custom;
+
+    return backIn;
+  }))(overshoot);
+
+  ((function custom(s) {
+    s = +s;
+
+    function backOut(t) {
+      return --t * t * ((t + 1) * s + t) + 1;
+    }
+
+    backOut.overshoot = custom;
+
+    return backOut;
+  }))(overshoot);
+
+  ((function custom(s) {
+    s = +s;
+
+    function backInOut(t) {
+      return ((t *= 2) < 1 ? t * t * ((s + 1) * t - s) : (t -= 2) * t * ((s + 1) * t + s) + 2) / 2;
+    }
+
+    backInOut.overshoot = custom;
+
+    return backInOut;
+  }))(overshoot);
+
+  var tau$1 = 2 * Math.PI,
+      amplitude = 1,
+      period = 0.3;
+
+  ((function custom(a, p) {
+    var s = Math.asin(1 / (a = Math.max(1, a))) * (p /= tau$1);
+
+    function elasticIn(t) {
+      return a * tpmt(-(--t)) * Math.sin((s - t) / p);
+    }
+
+    elasticIn.amplitude = function(a) { return custom(a, p * tau$1); };
+    elasticIn.period = function(p) { return custom(a, p); };
+
+    return elasticIn;
+  }))(amplitude, period);
+
+  ((function custom(a, p) {
+    var s = Math.asin(1 / (a = Math.max(1, a))) * (p /= tau$1);
+
+    function elasticOut(t) {
+      return 1 - a * tpmt(t = +t) * Math.sin((t + s) / p);
+    }
+
+    elasticOut.amplitude = function(a) { return custom(a, p * tau$1); };
+    elasticOut.period = function(p) { return custom(a, p); };
+
+    return elasticOut;
+  }))(amplitude, period);
+
+  ((function custom(a, p) {
+    var s = Math.asin(1 / (a = Math.max(1, a))) * (p /= tau$1);
+
+    function elasticInOut(t) {
+      return ((t = t * 2 - 1) < 0
+          ? a * tpmt(-t) * Math.sin((s - t) / p)
+          : 2 - a * tpmt(t) * Math.sin((s + t) / p)) / 2;
+    }
+
+    elasticInOut.amplitude = function(a) { return custom(a, p * tau$1); };
+    elasticInOut.period = function(p) { return custom(a, p); };
+
+    return elasticInOut;
+  }))(amplitude, period);
+
+  // https://d3js.org/d3-transition/ v3.0.2 Copyright 2010-2026 Mike Bostock
 
   var emptyOn = dispatch("start", "end", "cancel", "interrupt");
   var emptyTween = [];
@@ -2411,7 +2782,7 @@ var TidyTree = (function () {
       self.state = ENDED;
       self.timer.stop();
       delete schedules[id];
-      for (var i in schedules) return; // eslint-disable-line no-unused-vars
+      for (var i in schedules) return;
       delete node.__transition;
     }
   }
@@ -2527,10 +2898,10 @@ var TidyTree = (function () {
 
   function interpolate(a, b) {
     var c;
-    return (typeof b === "number" ? interpolateNumber
-        : b instanceof color ? interpolateRgb
-        : (c = color(b)) ? (b = c, interpolateRgb)
-        : interpolateString)(a, b);
+    return (typeof b === "number" ? number
+        : b instanceof color ? rgb
+        : (c = color(b)) ? (b = c, rgb)
+        : string)(a, b);
   }
 
   function attrRemove(name) {
@@ -3087,10 +3458,6 @@ var TidyTree = (function () {
     [Symbol.iterator]: selection_prototype[Symbol.iterator]
   };
 
-  function cubicInOut(t) {
-    return ((t *= 2) <= 1 ? t * t * t : (t -= 2) * t * t + 2) / 2;
-  }
-
   var defaultTiming = {
     time: null, // Set on use.
     delay: 0,
@@ -3132,44 +3499,81 @@ var TidyTree = (function () {
   selection.prototype.interrupt = selection_interrupt;
   selection.prototype.transition = selection_transition;
 
+  // https://d3js.org/d3-path/ v3.1.1 Copyright 2015-2026 Mike Bostock
   const pi = Math.PI,
       tau = 2 * pi,
-      epsilon = 1e-6,
-      tauEpsilon = tau - epsilon;
+      epsilon$1 = 1e-6,
+      tauEpsilon = tau - epsilon$1;
 
-  function Path() {
-    this._x0 = this._y0 = // start of current subpath
-    this._x1 = this._y1 = null; // end of current subpath
-    this._ = "";
+  function append(strings) {
+    this._ += strings[0];
+    for (let i = 1, n = strings.length; i < n; ++i) {
+      this._ += arguments[i] + strings[i];
+    }
   }
 
-  function path() {
-    return new Path;
+  function appendRound(digits) {
+    let d = Math.floor(digits);
+    if (!(d >= 0)) throw new Error(`invalid digits: ${digits}`);
+    if (d > 15) return append;
+    const k = 10 ** d;
+    return function(strings) {
+      this._ += strings[0];
+      for (let i = 1, n = strings.length; i < n; ++i) {
+        this._ += Math.round(arguments[i] * k) / k + strings[i];
+      }
+    };
   }
 
-  Path.prototype = path.prototype = {
-    constructor: Path,
-    moveTo: function(x, y) {
-      this._ += "M" + (this._x0 = this._x1 = +x) + "," + (this._y0 = this._y1 = +y);
-    },
-    closePath: function() {
+  function equal(x0, y0, x1, y1) {
+    return x0 === x1 && y0 === y1;
+  }
+
+  function equalRound(digits) {
+    const d = Math.floor(digits);
+    if (!(d <= 15)) return equal;
+    const k = 10 ** d;
+    const r = function(value) {
+      return Math.round(value * k);
+    };
+    return function(x0, y0, x1, y1) {
+      return r(x0) === r(x1) && r(y0) === r(y1);
+    };
+  }
+
+  class Path {
+    constructor(digits) {
+      this._x0 = this._y0 = // start of current subpath
+      this._x1 = this._y1 = null; // end of current subpath
+      this._ = "";
+      this._append = digits == null ? append : appendRound(digits);
+      this._equal = digits == null ? equal : equalRound(digits);
+    }
+    moveTo(x, y) {
+      this._append`M${this._x0 = this._x1 = +x},${this._y0 = this._y1 = +y}`;
+    }
+    closePath() {
       if (this._x1 !== null) {
         this._x1 = this._x0, this._y1 = this._y0;
-        this._ += "Z";
+        this._append`Z`;
       }
-    },
-    lineTo: function(x, y) {
-      this._ += "L" + (this._x1 = +x) + "," + (this._y1 = +y);
-    },
-    quadraticCurveTo: function(x1, y1, x, y) {
-      this._ += "Q" + (+x1) + "," + (+y1) + "," + (this._x1 = +x) + "," + (this._y1 = +y);
-    },
-    bezierCurveTo: function(x1, y1, x2, y2, x, y) {
-      this._ += "C" + (+x1) + "," + (+y1) + "," + (+x2) + "," + (+y2) + "," + (this._x1 = +x) + "," + (this._y1 = +y);
-    },
-    arcTo: function(x1, y1, x2, y2, r) {
+    }
+    lineTo(x, y) {
+      this._append`L${this._x1 = +x},${this._y1 = +y}`;
+    }
+    quadraticCurveTo(x1, y1, x, y) {
+      this._append`Q${+x1},${+y1},${this._x1 = +x},${this._y1 = +y}`;
+    }
+    bezierCurveTo(x1, y1, x2, y2, x, y) {
+      this._append`C${+x1},${+y1},${+x2},${+y2},${this._x1 = +x},${this._y1 = +y}`;
+    }
+    arcTo(x1, y1, x2, y2, r) {
       x1 = +x1, y1 = +y1, x2 = +x2, y2 = +y2, r = +r;
-      var x0 = this._x1,
+
+      // Is the radius negative? Error.
+      if (r < 0) throw new Error(`negative radius: ${r}`);
+
+      let x0 = this._x1,
           y0 = this._y1,
           x21 = x2 - x1,
           y21 = y2 - y1,
@@ -3177,27 +3581,24 @@ var TidyTree = (function () {
           y01 = y0 - y1,
           l01_2 = x01 * x01 + y01 * y01;
 
-      // Is the radius negative? Error.
-      if (r < 0) throw new Error("negative radius: " + r);
-
       // Is this path empty? Move to (x1,y1).
       if (this._x1 === null) {
-        this._ += "M" + (this._x1 = x1) + "," + (this._y1 = y1);
+        this._append`M${this._x1 = x1},${this._y1 = y1}`;
       }
 
       // Or, is (x1,y1) coincident with (x0,y0)? Do nothing.
-      else if (!(l01_2 > epsilon));
+      else if (!(l01_2 > epsilon$1));
 
       // Or, are (x0,y0), (x1,y1) and (x2,y2) collinear?
       // Equivalently, is (x1,y1) coincident with (x2,y2)?
       // Or, is the radius zero? Line to (x1,y1).
-      else if (!(Math.abs(y01 * x21 - y21 * x01) > epsilon) || !r) {
-        this._ += "L" + (this._x1 = x1) + "," + (this._y1 = y1);
+      else if (!(Math.abs(y01 * x21 - y21 * x01) > epsilon$1) || !r) {
+        this._append`L${this._x1 = x1},${this._y1 = y1}`;
       }
 
       // Otherwise, draw an arc!
       else {
-        var x20 = x2 - x0,
+        let x20 = x2 - x0,
             y20 = y2 - y0,
             l21_2 = x21 * x21 + y21 * y21,
             l20_2 = x20 * x20 + y20 * y20,
@@ -3208,33 +3609,34 @@ var TidyTree = (function () {
             t21 = l / l21;
 
         // If the start tangent is not coincident with (x0,y0), line to.
-        if (Math.abs(t01 - 1) > epsilon) {
-          this._ += "L" + (x1 + t01 * x01) + "," + (y1 + t01 * y01);
+        if (Math.abs(t01 - 1) > epsilon$1) {
+          this._append`L${x1 + t01 * x01},${y1 + t01 * y01}`;
         }
 
-        this._ += "A" + r + "," + r + ",0,0," + (+(y01 * x20 > x01 * y20)) + "," + (this._x1 = x1 + t21 * x21) + "," + (this._y1 = y1 + t21 * y21);
+        this._append`A${r},${r},0,0,${+(y01 * x20 > x01 * y20)},${this._x1 = x1 + t21 * x21},${this._y1 = y1 + t21 * y21}`;
       }
-    },
-    arc: function(x, y, r, a0, a1, ccw) {
+    }
+    arc(x, y, r, a0, a1, ccw) {
       x = +x, y = +y, r = +r, ccw = !!ccw;
-      var dx = r * Math.cos(a0),
+
+      // Is the radius negative? Error.
+      if (r < 0) throw new Error(`negative radius: ${r}`);
+
+      let dx = r * Math.cos(a0),
           dy = r * Math.sin(a0),
           x0 = x + dx,
           y0 = y + dy,
           cw = 1 ^ ccw,
           da = ccw ? a0 - a1 : a1 - a0;
 
-      // Is the radius negative? Error.
-      if (r < 0) throw new Error("negative radius: " + r);
-
       // Is this path empty? Move to (x0,y0).
       if (this._x1 === null) {
-        this._ += "M" + x0 + "," + y0;
+        this._append`M${x0},${y0}`;
       }
 
       // Or, is (x0,y0) not coincident with the previous point? Line to (x0,y0).
-      else if (Math.abs(this._x1 - x0) > epsilon || Math.abs(this._y1 - y0) > epsilon) {
-        this._ += "L" + x0 + "," + y0;
+      else if (Math.abs(this._x1 - x0) > epsilon$1 || Math.abs(this._y1 - y0) > epsilon$1) {
+        this._append`L${x0},${y0}`;
       }
 
       // Is this arc empty? We’re done.
@@ -3245,22 +3647,31 @@ var TidyTree = (function () {
 
       // Is this a complete circle? Draw two arcs to complete the circle.
       if (da > tauEpsilon) {
-        this._ += "A" + r + "," + r + ",0,1," + cw + "," + (x - dx) + "," + (y - dy) + "A" + r + "," + r + ",0,1," + cw + "," + (this._x1 = x0) + "," + (this._y1 = y0);
+        this._append`A${r},${r},0,1,${cw},${x - dx},${y - dy}A${r},${r},0,1,${cw},${this._x1 = x0},${this._y1 = y0}`;
       }
 
       // Is this arc non-empty? Draw an arc!
-      else if (da > epsilon) {
-        this._ += "A" + r + "," + r + ",0," + (+(da >= pi)) + "," + cw + "," + (this._x1 = x + r * Math.cos(a1)) + "," + (this._y1 = y + r * Math.sin(a1));
+      else if (da > epsilon$1) {
+        // If the start and end points are coincident after rounding, we need to draw two consecutive arcs.
+        const x1 = x + r * Math.cos(a1);
+        const y1 = y + r * Math.sin(a1);
+        if (da >= pi && this._equal(x0, y0, x1, y1)) {
+          da /= 2;
+          let a00 = a0 + da;
+          this._append`A${r},${r},0,${+(da >= pi)},${cw},${x + r * Math.cos(a00)},${y + r * Math.sin(a00)}`;
+        }
+        this._append`A${r},${r},0,${+(da >= pi)},${cw},${this._x1 = x1},${this._y1 = y1}`;
       }
-    },
-    rect: function(x, y, w, h) {
-      this._ += "M" + (this._x0 = this._x1 = +x) + "," + (this._y0 = this._y1 = +y) + "h" + (+w) + "v" + (+h) + "h" + (-w) + "Z";
-    },
-    toString: function() {
+    }
+    rect(x, y, w, h) {
+      this._append`M${this._x0 = this._x1 = +x},${this._y0 = this._y1 = +y}h${w = +w}v${+h}h${-w}Z`;
+    }
+    toString() {
       return this._;
     }
-  };
+  }
 
+  // https://d3js.org/d3-format/ v3.1.3 Copyright 2010-2026 Mike Bostock
   function formatDecimal(x) {
     return Math.abs(x = Math.round(x)) >= 1e21
         ? x.toLocaleString("en").replace(/,/g, "")
@@ -3271,8 +3682,8 @@ var TidyTree = (function () {
   // significant digits p, where x is positive and p is in [1, 21] or undefined.
   // For example, formatDecimalParts(1.23) returns ["123", 0].
   function formatDecimalParts(x, p) {
-    if ((i = (x = p ? x.toExponential(p - 1) : x.toExponential()).indexOf("e")) < 0) return null; // NaN, ±Infinity
-    var i, coefficient = x.slice(0, i);
+    if (!isFinite(x) || x === 0) return null; // NaN, ±Infinity, ±0
+    var i = (x = p ? x.toExponential(p - 1) : x.toExponential()).indexOf("e"), coefficient = x.slice(0, i);
 
     // The string returned by toExponential either has the form \d\.\d+e[-+]\d+
     // (e.g., 1.2e+3) or the form \de[-+]\d+ (e.g., 1e+3).
@@ -3377,7 +3788,7 @@ var TidyTree = (function () {
 
   function formatPrefixAuto(x, p) {
     var d = formatDecimalParts(x, p);
-    if (!d) return x + "";
+    if (!d) return prefixExponent = undefined, x.toPrecision(p);
     var coefficient = d[0],
         exponent = d[1],
         i = exponent - (prefixExponent = Math.max(-8, Math.min(8, Math.floor(exponent / 3))) * 3) + 1,
@@ -3431,7 +3842,7 @@ var TidyTree = (function () {
         minus = locale.minus === undefined ? "−" : locale.minus + "",
         nan = locale.nan === undefined ? "NaN" : locale.nan + "";
 
-    function newFormat(specifier) {
+    function newFormat(specifier, options) {
       specifier = formatSpecifier(specifier);
 
       var fill = specifier.fill,
@@ -3456,8 +3867,8 @@ var TidyTree = (function () {
 
       // Compute the prefix and suffix.
       // For SI-prefix, the suffix is lazily computed.
-      var prefix = symbol === "$" ? currencyPrefix : symbol === "#" && /[boxX]/.test(type) ? "0" + type.toLowerCase() : "",
-          suffix = symbol === "$" ? currencySuffix : /[%p]/.test(type) ? percent : "";
+      var prefix = (options && options.prefix !== undefined ? options.prefix : "") + (symbol === "$" ? currencyPrefix : symbol === "#" && /[boxX]/.test(type) ? "0" + type.toLowerCase() : ""),
+          suffix = (symbol === "$" ? currencySuffix : /[%p]/.test(type) ? percent : "") + (options && options.suffix !== undefined ? options.suffix : "");
 
       // What format function should we use?
       // Is this an integer type?
@@ -3498,7 +3909,7 @@ var TidyTree = (function () {
 
           // Compute the prefix and suffix.
           valuePrefix = (valueNegative ? (sign === "(" ? sign : minus) : sign === "-" || sign === "(" ? "" : sign) + valuePrefix;
-          valueSuffix = (type === "s" ? prefixes[8 + prefixExponent / 3] : "") + valueSuffix + (valueNegative && sign === "(" ? ")" : "");
+          valueSuffix = (type === "s" && !isNaN(value) && prefixExponent !== undefined ? prefixes[8 + prefixExponent / 3] : "") + valueSuffix + (valueNegative && sign === "(" ? ")" : "");
 
           // Break the formatted value into the integer “value” part that can be
           // grouped, and fractional or exponential “suffix” part that is not.
@@ -3543,12 +3954,11 @@ var TidyTree = (function () {
     }
 
     function formatPrefix(specifier, value) {
-      var f = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier)),
-          e = Math.max(-8, Math.min(8, Math.floor(exponent(value) / 3))) * 3,
+      var e = Math.max(-8, Math.min(8, Math.floor(exponent(value) / 3))) * 3,
           k = Math.pow(10, -e),
-          prefix = prefixes[8 + e / 3];
+          f = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier), {suffix: prefixes[8 + e / 3]});
       return function(value) {
-        return f(k * value) + prefix;
+        return f(k * value);
       };
     }
 
@@ -3588,6 +3998,7 @@ var TidyTree = (function () {
     return Math.max(0, exponent(max) - exponent(step)) + 1;
   }
 
+  // https://d3js.org/d3-hierarchy/ v3.1.3 Copyright 2010-2026 Mike Bostock
   function defaultSeparation$1(a, b) {
     return a.parent === b.parent ? 1 : 2;
   }
@@ -3836,7 +4247,7 @@ var TidyTree = (function () {
       children = objectChildren;
     }
 
-    var root = new Node(data),
+    var root = new Node$1(data),
         node,
         nodes = [root],
         child,
@@ -3848,7 +4259,7 @@ var TidyTree = (function () {
       if ((childs = children(node.data)) && (n = (childs = Array.from(childs)).length)) {
         node.children = childs;
         for (i = n - 1; i >= 0; --i) {
-          nodes.push(child = childs[i] = new Node(childs[i]));
+          nodes.push(child = childs[i] = new Node$1(childs[i]));
           child.parent = node;
           child.depth = node.depth + 1;
         }
@@ -3881,15 +4292,15 @@ var TidyTree = (function () {
     while ((node = node.parent) && (node.height < ++height));
   }
 
-  function Node(data) {
+  function Node$1(data) {
     this.data = data;
     this.depth =
     this.height = 0;
     this.parent = null;
   }
 
-  Node.prototype = hierarchy.prototype = {
-    constructor: Node,
+  Node$1.prototype = hierarchy.prototype = {
+    constructor: Node$1,
     count: node_count,
     each: node_each,
     eachAfter: node_eachAfter,
@@ -3905,6 +4316,19 @@ var TidyTree = (function () {
     copy: node_copy,
     [Symbol.iterator]: node_iterator
   };
+
+  function treemapDice(parent, x0, y0, x1, y1) {
+    var nodes = parent.children,
+        node,
+        i = -1,
+        n = nodes.length,
+        k = parent.value && (x1 - x0) / parent.value;
+
+    while (++i < n) {
+      node = nodes[i], node.y0 = y0, node.y1 = y1;
+      node.x0 = x0, node.x1 = x0 += node.value * k;
+    }
+  }
 
   function defaultSeparation(a, b) {
     return a.parent === b.parent ? 1 : 2;
@@ -3977,7 +4401,7 @@ var TidyTree = (function () {
     this.i = i; // number
   }
 
-  TreeNode.prototype = Object.create(Node.prototype);
+  TreeNode.prototype = Object.create(Node$1.prototype);
 
   function treeRoot(root) {
     var tree = new TreeNode(root, 0),
@@ -4142,6 +4566,118 @@ var TidyTree = (function () {
     return tree;
   }
 
+  function treemapSlice(parent, x0, y0, x1, y1) {
+    var nodes = parent.children,
+        node,
+        i = -1,
+        n = nodes.length,
+        k = parent.value && (y1 - y0) / parent.value;
+
+    while (++i < n) {
+      node = nodes[i], node.x0 = x0, node.x1 = x1;
+      node.y0 = y0, node.y1 = y0 += node.value * k;
+    }
+  }
+
+  var phi = (1 + Math.sqrt(5)) / 2;
+
+  function squarifyRatio(ratio, parent, x0, y0, x1, y1) {
+    var rows = [],
+        nodes = parent.children,
+        row,
+        nodeValue,
+        i0 = 0,
+        i1 = 0,
+        n = nodes.length,
+        dx, dy,
+        value = parent.value,
+        sumValue,
+        minValue,
+        maxValue,
+        newRatio,
+        minRatio,
+        alpha,
+        beta;
+
+    while (i0 < n) {
+      dx = x1 - x0, dy = y1 - y0;
+
+      // Find the next non-empty node.
+      do sumValue = nodes[i1++].value; while (!sumValue && i1 < n);
+      minValue = maxValue = sumValue;
+      alpha = Math.max(dy / dx, dx / dy) / (value * ratio);
+      beta = sumValue * sumValue * alpha;
+      minRatio = Math.max(maxValue / beta, beta / minValue);
+
+      // Keep adding nodes while the aspect ratio maintains or improves.
+      for (; i1 < n; ++i1) {
+        sumValue += nodeValue = nodes[i1].value;
+        if (nodeValue < minValue) minValue = nodeValue;
+        if (nodeValue > maxValue) maxValue = nodeValue;
+        beta = sumValue * sumValue * alpha;
+        newRatio = Math.max(maxValue / beta, beta / minValue);
+        if (newRatio > minRatio) { sumValue -= nodeValue; break; }
+        minRatio = newRatio;
+      }
+
+      // Position and record the row orientation.
+      rows.push(row = {value: sumValue, dice: dx < dy, children: nodes.slice(i0, i1)});
+      if (row.dice) treemapDice(row, x0, y0, x1, value ? y0 += dy * sumValue / value : y1);
+      else treemapSlice(row, x0, y0, value ? x0 += dx * sumValue / value : x1, y1);
+      value -= sumValue, i0 = i1;
+    }
+
+    return rows;
+  }
+
+  ((function custom(ratio) {
+
+    function squarify(parent, x0, y0, x1, y1) {
+      squarifyRatio(ratio, parent, x0, y0, x1, y1);
+    }
+
+    squarify.ratio = function(x) {
+      return custom((x = +x) > 1 ? x : 1);
+    };
+
+    return squarify;
+  }))(phi);
+
+  ((function custom(ratio) {
+
+    function resquarify(parent, x0, y0, x1, y1) {
+      if ((rows = parent._squarify) && (rows.ratio === ratio)) {
+        var rows,
+            row,
+            nodes,
+            i,
+            j = -1,
+            n,
+            m = rows.length,
+            value = parent.value;
+
+        while (++j < m) {
+          row = rows[j], nodes = row.children;
+          for (i = row.value = 0, n = nodes.length; i < n; ++i) row.value += nodes[i].value;
+          if (row.dice) treemapDice(row, x0, y0, x1, value ? y0 += (y1 - y0) * row.value / value : y1);
+          else treemapSlice(row, x0, y0, value ? x0 += (x1 - x0) * row.value / value : x1, y1);
+          value -= row.value;
+        }
+      } else {
+        parent._squarify = rows = squarifyRatio(ratio, parent, x0, y0, x1, y1);
+        rows.ratio = ratio;
+      }
+    }
+
+    resquarify.ratio = function(x) {
+      return custom((x = +x) > 1 ? x : 1);
+    };
+
+    return resquarify;
+  }))(phi);
+
+  // https://d3js.org/d3-scale/ v4.0.3 Copyright 2010-2026 Mike Bostock
+
   function initRange(domain, range) {
     switch (arguments.length) {
       case 0: break;
@@ -4157,7 +4693,7 @@ var TidyTree = (function () {
     };
   }
 
-  function number(x) {
+  function number$1(x) {
     return +x;
   }
 
@@ -4211,7 +4747,7 @@ var TidyTree = (function () {
     };
   }
 
-  function copy(source, target) {
+  function copy$1(source, target) {
     return target
         .domain(source.domain())
         .range(source.range())
@@ -4220,10 +4756,10 @@ var TidyTree = (function () {
         .unknown(source.unknown());
   }
 
-  function transformer() {
+  function transformer$2() {
     var domain = unit,
         range = unit,
-        interpolate = interpolate$1,
+        interpolate$1 = value,
         transform,
         untransform,
         unknown,
@@ -4241,15 +4777,15 @@ var TidyTree = (function () {
     }
 
     function scale(x) {
-      return x == null || isNaN(x = +x) ? unknown : (output || (output = piecewise(domain.map(transform), range, interpolate)))(transform(clamp(x)));
+      return x == null || isNaN(x = +x) ? unknown : (output || (output = piecewise(domain.map(transform), range, interpolate$1)))(transform(clamp(x)));
     }
 
     scale.invert = function(y) {
-      return clamp(untransform((input || (input = piecewise(range, domain.map(transform), interpolateNumber)))(y)));
+      return clamp(untransform((input || (input = piecewise(range, domain.map(transform), number)))(y)));
     };
 
     scale.domain = function(_) {
-      return arguments.length ? (domain = Array.from(_, number), rescale()) : domain.slice();
+      return arguments.length ? (domain = Array.from(_, number$1), rescale()) : domain.slice();
     };
 
     scale.range = function(_) {
@@ -4257,7 +4793,7 @@ var TidyTree = (function () {
     };
 
     scale.rangeRound = function(_) {
-      return range = Array.from(_), interpolate = interpolateRound, rescale();
+      return range = Array.from(_), interpolate$1 = round, rescale();
     };
 
     scale.clamp = function(_) {
@@ -4265,7 +4801,7 @@ var TidyTree = (function () {
     };
 
     scale.interpolate = function(_) {
-      return arguments.length ? (interpolate = _, rescale()) : interpolate;
+      return arguments.length ? (interpolate$1 = _, rescale()) : interpolate$1;
     };
 
     scale.unknown = function(_) {
@@ -4279,7 +4815,7 @@ var TidyTree = (function () {
   }
 
   function continuous() {
-    return transformer()(identity$1, identity$1);
+    return transformer$2()(identity$1, identity$1);
   }
 
   function tickFormat(start, stop, count, specifier) {
@@ -4367,7 +4903,7 @@ var TidyTree = (function () {
     var scale = continuous();
 
     scale.copy = function() {
-      return copy(scale, linear());
+      return copy$1(scale, linear());
     };
 
     initRange.apply(scale, arguments);
@@ -4375,10 +4911,32 @@ var TidyTree = (function () {
     return linearish(scale);
   }
 
+  // https://d3js.org/d3-shape/ v3.2.1 Copyright 2010-2026 Mike Bostock
+
   function constant$1(x) {
     return function constant() {
       return x;
     };
+  }
+
+  const epsilon = 1e-12;
+
+  function withPath(shape) {
+    let digits = 3;
+
+    shape.digits = function(_) {
+      if (!arguments.length) return digits;
+      if (_ == null) {
+        digits = null;
+      } else {
+        const d = Math.floor(_);
+        if (!(d >= 0)) throw new RangeError(`invalid digits: ${_}`);
+        digits = d;
+      }
+      return shape;
+    };
+
+    return () => new Path(digits);
   }
 
   var slice = Array.prototype.slice;
@@ -4443,8 +5001,8 @@ var TidyTree = (function () {
     lineEnd() {}
     point(x, y) {
       x = +x, y = +y;
-      if (this._point++ === 0) {
-        this._x0 = x, this._y0 = y;
+      if (this._point === 0) {
+        this._point = 1;
       } else {
         const p0 = pointRadial(this._x0, this._y0);
         const p1 = pointRadial(this._x0, this._y0 = (this._y0 + y) / 2);
@@ -4453,6 +5011,7 @@ var TidyTree = (function () {
         this._context.moveTo(...p0);
         this._context.bezierCurveTo(...p1, ...p2, ...p3);
       }
+      this._x0 = x, this._y0 = y;
     }
   }
 
@@ -4477,12 +5036,13 @@ var TidyTree = (function () {
   }
 
   function link(curve) {
-    let source = linkSource;
-    let target = linkTarget;
-    let x$1 = x;
-    let y$1 = y;
-    let context = null;
-    let output = null;
+    let source = linkSource,
+        target = linkTarget,
+        x$1 = x,
+        y$1 = y,
+        context = null,
+        output = null,
+        path = withPath(link);
 
     function link() {
       let buffer;
@@ -4534,6 +5094,581 @@ var TidyTree = (function () {
     l.radius = l.y, delete l.y;
     return l;
   }
+
+  function noop() {}
+
+  function point$3(that, x, y) {
+    that._context.bezierCurveTo(
+      (2 * that._x0 + that._x1) / 3,
+      (2 * that._y0 + that._y1) / 3,
+      (that._x0 + 2 * that._x1) / 3,
+      (that._y0 + 2 * that._y1) / 3,
+      (that._x0 + 4 * that._x1 + x) / 6,
+      (that._y0 + 4 * that._y1 + y) / 6
+    );
+  }
+
+  function Basis(context) {
+    this._context = context;
+  }
+
+  Basis.prototype = {
+    areaStart: function() {
+      this._line = 0;
+    },
+    areaEnd: function() {
+      this._line = NaN;
+    },
+    lineStart: function() {
+      this._x0 = this._x1 =
+      this._y0 = this._y1 = NaN;
+      this._point = 0;
+    },
+    lineEnd: function() {
+      switch (this._point) {
+        case 3: point$3(this, this._x1, this._y1); // falls through
+        case 2: this._context.lineTo(this._x1, this._y1); break;
+      }
+      if (this._line || (this._line !== 0 && this._point === 1)) this._context.closePath();
+      this._line = 1 - this._line;
+    },
+    point: function(x, y) {
+      x = +x, y = +y;
+      switch (this._point) {
+        case 0: this._point = 1; this._line ? this._context.lineTo(x, y) : this._context.moveTo(x, y); break;
+        case 1: this._point = 2; break;
+        case 2: this._point = 3; this._context.lineTo((5 * this._x0 + this._x1) / 6, (5 * this._y0 + this._y1) / 6); // falls through
+        default: point$3(this, x, y); break;
+      }
+      this._x0 = this._x1, this._x1 = x;
+      this._y0 = this._y1, this._y1 = y;
+    }
+  };
+
+  function Bundle(context, beta) {
+    this._basis = new Basis(context);
+    this._beta = beta;
+  }
+
+  Bundle.prototype = {
+    lineStart: function() {
+      this._x = [];
+      this._y = [];
+      this._basis.lineStart();
+    },
+    lineEnd: function() {
+      var x = this._x,
+          y = this._y,
+          j = x.length - 1;
+
+      if (j > 0) {
+        var x0 = x[0],
+            y0 = y[0],
+            dx = x[j] - x0,
+            dy = y[j] - y0,
+            i = -1,
+            t;
+
+        while (++i <= j) {
+          t = i / j;
+          this._basis.point(
+            this._beta * x[i] + (1 - this._beta) * (x0 + t * dx),
+            this._beta * y[i] + (1 - this._beta) * (y0 + t * dy)
+          );
+        }
+      }
+
+      this._x = this._y = null;
+      this._basis.lineEnd();
+    },
+    point: function(x, y) {
+      this._x.push(+x);
+      this._y.push(+y);
+    }
+  };
+
+  ((function custom(beta) {
+
+    function bundle(context) {
+      return beta === 1 ? new Basis(context) : new Bundle(context, beta);
+    }
+
+    bundle.beta = function(beta) {
+      return custom(+beta);
+    };
+
+    return bundle;
+  }))(0.85);
+
+  function point$2(that, x, y) {
+    that._context.bezierCurveTo(
+      that._x1 + that._k * (that._x2 - that._x0),
+      that._y1 + that._k * (that._y2 - that._y0),
+      that._x2 + that._k * (that._x1 - x),
+      that._y2 + that._k * (that._y1 - y),
+      that._x2,
+      that._y2
+    );
+  }
+
+  function Cardinal(context, tension) {
+    this._context = context;
+    this._k = (1 - tension) / 6;
+  }
+
+  Cardinal.prototype = {
+    areaStart: function() {
+      this._line = 0;
+    },
+    areaEnd: function() {
+      this._line = NaN;
+    },
+    lineStart: function() {
+      this._x0 = this._x1 = this._x2 =
+      this._y0 = this._y1 = this._y2 = NaN;
+      this._point = 0;
+    },
+    lineEnd: function() {
+      switch (this._point) {
+        case 2: this._context.lineTo(this._x2, this._y2); break;
+        case 3: point$2(this, this._x1, this._y1); break;
+      }
+      if (this._line || (this._line !== 0 && this._point === 1)) this._context.closePath();
+      this._line = 1 - this._line;
+    },
+    point: function(x, y) {
+      x = +x, y = +y;
+      switch (this._point) {
+        case 0: this._point = 1; this._line ? this._context.lineTo(x, y) : this._context.moveTo(x, y); break;
+        case 1: this._point = 2; this._x1 = x, this._y1 = y; break;
+        case 2: this._point = 3; // falls through
+        default: point$2(this, x, y); break;
+      }
+      this._x0 = this._x1, this._x1 = this._x2, this._x2 = x;
+      this._y0 = this._y1, this._y1 = this._y2, this._y2 = y;
+    }
+  };
+
+  ((function custom(tension) {
+
+    function cardinal(context) {
+      return new Cardinal(context, tension);
+    }
+
+    cardinal.tension = function(tension) {
+      return custom(+tension);
+    };
+
+    return cardinal;
+  }))(0);
+
+  function CardinalClosed(context, tension) {
+    this._context = context;
+    this._k = (1 - tension) / 6;
+  }
+
+  CardinalClosed.prototype = {
+    areaStart: noop,
+    areaEnd: noop,
+    lineStart: function() {
+      this._x0 = this._x1 = this._x2 = this._x3 = this._x4 = this._x5 =
+      this._y0 = this._y1 = this._y2 = this._y3 = this._y4 = this._y5 = NaN;
+      this._point = 0;
+    },
+    lineEnd: function() {
+      switch (this._point) {
+        case 1: {
+          this._context.moveTo(this._x3, this._y3);
+          this._context.closePath();
+          break;
+        }
+        case 2: {
+          this._context.lineTo(this._x3, this._y3);
+          this._context.closePath();
+          break;
+        }
+        case 3: {
+          this.point(this._x3, this._y3);
+          this.point(this._x4, this._y4);
+          this.point(this._x5, this._y5);
+          break;
+        }
+      }
+    },
+    point: function(x, y) {
+      x = +x, y = +y;
+      switch (this._point) {
+        case 0: this._point = 1; this._x3 = x, this._y3 = y; break;
+        case 1: this._point = 2; this._context.moveTo(this._x4 = x, this._y4 = y); break;
+        case 2: this._point = 3; this._x5 = x, this._y5 = y; break;
+        default: point$2(this, x, y); break;
+      }
+      this._x0 = this._x1, this._x1 = this._x2, this._x2 = x;
+      this._y0 = this._y1, this._y1 = this._y2, this._y2 = y;
+    }
+  };
+
+  ((function custom(tension) {
+
+    function cardinal(context) {
+      return new CardinalClosed(context, tension);
+    }
+
+    cardinal.tension = function(tension) {
+      return custom(+tension);
+    };
+
+    return cardinal;
+  }))(0);
+
+  function CardinalOpen(context, tension) {
+    this._context = context;
+    this._k = (1 - tension) / 6;
+  }
+
+  CardinalOpen.prototype = {
+    areaStart: function() {
+      this._line = 0;
+    },
+    areaEnd: function() {
+      this._line = NaN;
+    },
+    lineStart: function() {
+      this._x0 = this._x1 = this._x2 =
+      this._y0 = this._y1 = this._y2 = NaN;
+      this._point = 0;
+    },
+    lineEnd: function() {
+      if (this._line || (this._line !== 0 && this._point === 3)) this._context.closePath();
+      this._line = 1 - this._line;
+    },
+    point: function(x, y) {
+      x = +x, y = +y;
+      switch (this._point) {
+        case 0: this._point = 1; break;
+        case 1: this._point = 2; break;
+        case 2: this._point = 3; this._line ? this._context.lineTo(this._x2, this._y2) : this._context.moveTo(this._x2, this._y2); break;
+        case 3: this._point = 4; // falls through
+        default: point$2(this, x, y); break;
+      }
+      this._x0 = this._x1, this._x1 = this._x2, this._x2 = x;
+      this._y0 = this._y1, this._y1 = this._y2, this._y2 = y;
+    }
+  };
+
+  ((function custom(tension) {
+
+    function cardinal(context) {
+      return new CardinalOpen(context, tension);
+    }
+
+    cardinal.tension = function(tension) {
+      return custom(+tension);
+    };
+
+    return cardinal;
+  }))(0);
+
+  function point$1(that, x, y) {
+    var x1 = that._x1,
+        y1 = that._y1,
+        x2 = that._x2,
+        y2 = that._y2;
+
+    if (that._l01_a > epsilon) {
+      var a = 2 * that._l01_2a + 3 * that._l01_a * that._l12_a + that._l12_2a,
+          n = 3 * that._l01_a * (that._l01_a + that._l12_a);
+      x1 = (x1 * a - that._x0 * that._l12_2a + that._x2 * that._l01_2a) / n;
+      y1 = (y1 * a - that._y0 * that._l12_2a + that._y2 * that._l01_2a) / n;
+    }
+
+    if (that._l23_a > epsilon) {
+      var b = 2 * that._l23_2a + 3 * that._l23_a * that._l12_a + that._l12_2a,
+          m = 3 * that._l23_a * (that._l23_a + that._l12_a);
+      x2 = (x2 * b + that._x1 * that._l23_2a - x * that._l12_2a) / m;
+      y2 = (y2 * b + that._y1 * that._l23_2a - y * that._l12_2a) / m;
+    }
+
+    that._context.bezierCurveTo(x1, y1, x2, y2, that._x2, that._y2);
+  }
+
+  function CatmullRom(context, alpha) {
+    this._context = context;
+    this._alpha = alpha;
+  }
+
+  CatmullRom.prototype = {
+    areaStart: function() {
+      this._line = 0;
+    },
+    areaEnd: function() {
+      this._line = NaN;
+    },
+    lineStart: function() {
+      this._x0 = this._x1 = this._x2 =
+      this._y0 = this._y1 = this._y2 = NaN;
+      this._l01_a = this._l12_a = this._l23_a =
+      this._l01_2a = this._l12_2a = this._l23_2a =
+      this._point = 0;
+    },
+    lineEnd: function() {
+      switch (this._point) {
+        case 2: this._context.lineTo(this._x2, this._y2); break;
+        case 3: this.point(this._x2, this._y2); break;
+      }
+      if (this._line || (this._line !== 0 && this._point === 1)) this._context.closePath();
+      this._line = 1 - this._line;
+    },
+    point: function(x, y) {
+      x = +x, y = +y;
+
+      if (this._point) {
+        var x23 = this._x2 - x,
+            y23 = this._y2 - y;
+        this._l23_a = Math.sqrt(this._l23_2a = Math.pow(x23 * x23 + y23 * y23, this._alpha));
+      }
+
+      switch (this._point) {
+        case 0: this._point = 1; this._line ? this._context.lineTo(x, y) : this._context.moveTo(x, y); break;
+        case 1: this._point = 2; break;
+        case 2: this._point = 3; // falls through
+        default: point$1(this, x, y); break;
+      }
+
+      this._l01_a = this._l12_a, this._l12_a = this._l23_a;
+      this._l01_2a = this._l12_2a, this._l12_2a = this._l23_2a;
+      this._x0 = this._x1, this._x1 = this._x2, this._x2 = x;
+      this._y0 = this._y1, this._y1 = this._y2, this._y2 = y;
+    }
+  };
+
+  ((function custom(alpha) {
+
+    function catmullRom(context) {
+      return alpha ? new CatmullRom(context, alpha) : new Cardinal(context, 0);
+    }
+
+    catmullRom.alpha = function(alpha) {
+      return custom(+alpha);
+    };
+
+    return catmullRom;
+  }))(0.5);
+
+  function CatmullRomClosed(context, alpha) {
+    this._context = context;
+    this._alpha = alpha;
+  }
+
+  CatmullRomClosed.prototype = {
+    areaStart: noop,
+    areaEnd: noop,
+    lineStart: function() {
+      this._x0 = this._x1 = this._x2 = this._x3 = this._x4 = this._x5 =
+      this._y0 = this._y1 = this._y2 = this._y3 = this._y4 = this._y5 = NaN;
+      this._l01_a = this._l12_a = this._l23_a =
+      this._l01_2a = this._l12_2a = this._l23_2a =
+      this._point = 0;
+    },
+    lineEnd: function() {
+      switch (this._point) {
+        case 1: {
+          this._context.moveTo(this._x3, this._y3);
+          this._context.closePath();
+          break;
+        }
+        case 2: {
+          this._context.lineTo(this._x3, this._y3);
+          this._context.closePath();
+          break;
+        }
+        case 3: {
+          this.point(this._x3, this._y3);
+          this.point(this._x4, this._y4);
+          this.point(this._x5, this._y5);
+          break;
+        }
+      }
+    },
+    point: function(x, y) {
+      x = +x, y = +y;
+
+      if (this._point) {
+        var x23 = this._x2 - x,
+            y23 = this._y2 - y;
+        this._l23_a = Math.sqrt(this._l23_2a = Math.pow(x23 * x23 + y23 * y23, this._alpha));
+      }
+
+      switch (this._point) {
+        case 0: this._point = 1; this._x3 = x, this._y3 = y; break;
+        case 1: this._point = 2; this._context.moveTo(this._x4 = x, this._y4 = y); break;
+        case 2: this._point = 3; this._x5 = x, this._y5 = y; break;
+        default: point$1(this, x, y); break;
+      }
+
+      this._l01_a = this._l12_a, this._l12_a = this._l23_a;
+      this._l01_2a = this._l12_2a, this._l12_2a = this._l23_2a;
+      this._x0 = this._x1, this._x1 = this._x2, this._x2 = x;
+      this._y0 = this._y1, this._y1 = this._y2, this._y2 = y;
+    }
+  };
+
+  ((function custom(alpha) {
+
+    function catmullRom(context) {
+      return alpha ? new CatmullRomClosed(context, alpha) : new CardinalClosed(context, 0);
+    }
+
+    catmullRom.alpha = function(alpha) {
+      return custom(+alpha);
+    };
+
+    return catmullRom;
+  }))(0.5);
+
+  function CatmullRomOpen(context, alpha) {
+    this._context = context;
+    this._alpha = alpha;
+  }
+
+  CatmullRomOpen.prototype = {
+    areaStart: function() {
+      this._line = 0;
+    },
+    areaEnd: function() {
+      this._line = NaN;
+    },
+    lineStart: function() {
+      this._x0 = this._x1 = this._x2 =
+      this._y0 = this._y1 = this._y2 = NaN;
+      this._l01_a = this._l12_a = this._l23_a =
+      this._l01_2a = this._l12_2a = this._l23_2a =
+      this._point = 0;
+    },
+    lineEnd: function() {
+      if (this._line || (this._line !== 0 && this._point === 3)) this._context.closePath();
+      this._line = 1 - this._line;
+    },
+    point: function(x, y) {
+      x = +x, y = +y;
+
+      if (this._point) {
+        var x23 = this._x2 - x,
+            y23 = this._y2 - y;
+        this._l23_a = Math.sqrt(this._l23_2a = Math.pow(x23 * x23 + y23 * y23, this._alpha));
+      }
+
+      switch (this._point) {
+        case 0: this._point = 1; break;
+        case 1: this._point = 2; break;
+        case 2: this._point = 3; this._line ? this._context.lineTo(this._x2, this._y2) : this._context.moveTo(this._x2, this._y2); break;
+        case 3: this._point = 4; // falls through
+        default: point$1(this, x, y); break;
+      }
+
+      this._l01_a = this._l12_a, this._l12_a = this._l23_a;
+      this._l01_2a = this._l12_2a, this._l12_2a = this._l23_2a;
+      this._x0 = this._x1, this._x1 = this._x2, this._x2 = x;
+      this._y0 = this._y1, this._y1 = this._y2, this._y2 = y;
+    }
+  };
+
+  ((function custom(alpha) {
+
+    function catmullRom(context) {
+      return alpha ? new CatmullRomOpen(context, alpha) : new CardinalOpen(context, 0);
+    }
+
+    catmullRom.alpha = function(alpha) {
+      return custom(+alpha);
+    };
+
+    return catmullRom;
+  }))(0.5);
+
+  function sign(x) {
+    return x < 0 ? -1 : 1;
+  }
+
+  // Calculate the slopes of the tangents (Hermite-type interpolation) based on
+  // the following paper: Steffen, M. 1990. A Simple Method for Monotonic
+  // Interpolation in One Dimension. Astronomy and Astrophysics, Vol. 239, NO.
+  // NOV(II), P. 443, 1990.
+  function slope3(that, x2, y2) {
+    var h0 = that._x1 - that._x0,
+        h1 = x2 - that._x1,
+        s0 = (that._y1 - that._y0) / (h0 || h1 < 0 && -0),
+        s1 = (y2 - that._y1) / (h1 || h0 < 0 && -0),
+        p = (s0 * h1 + s1 * h0) / (h0 + h1);
+    return (sign(s0) + sign(s1)) * Math.min(Math.abs(s0), Math.abs(s1), 0.5 * Math.abs(p)) || 0;
+  }
+
+  // Calculate a one-sided slope.
+  function slope2(that, t) {
+    var h = that._x1 - that._x0;
+    return h ? (3 * (that._y1 - that._y0) / h - t) / 2 : t;
+  }
+
+  // According to https://en.wikipedia.org/wiki/Cubic_Hermite_spline#Representations
+  // "you can express cubic Hermite interpolation in terms of cubic Bézier curves
+  // with respect to the four values p0, p0 + m0 / 3, p1 - m1 / 3, p1".
+  function point(that, t0, t1) {
+    var x0 = that._x0,
+        y0 = that._y0,
+        x1 = that._x1,
+        y1 = that._y1,
+        dx = (x1 - x0) / 3;
+    that._context.bezierCurveTo(x0 + dx, y0 + dx * t0, x1 - dx, y1 - dx * t1, x1, y1);
+  }
+
+  function MonotoneX(context) {
+    this._context = context;
+  }
+
+  MonotoneX.prototype = {
+    areaStart: function() {
+      this._line = 0;
+    },
+    areaEnd: function() {
+      this._line = NaN;
+    },
+    lineStart: function() {
+      this._x0 = this._x1 =
+      this._y0 = this._y1 =
+      this._t0 = NaN;
+      this._point = 0;
+    },
+    lineEnd: function() {
+      switch (this._point) {
+        case 2: this._context.lineTo(this._x1, this._y1); break;
+        case 3: point(this, this._t0, slope2(this, this._t0)); break;
+      }
+      if (this._line || (this._line !== 0 && this._point === 1)) this._context.closePath();
+      this._line = 1 - this._line;
+    },
+    point: function(x, y) {
+      var t1 = NaN;
+
+      x = +x, y = +y;
+      if (x === this._x1 && y === this._y1) return; // Ignore coincident points.
+      switch (this._point) {
+        case 0: this._point = 1; this._line ? this._context.lineTo(x, y) : this._context.moveTo(x, y); break;
+        case 1: this._point = 2; break;
+        case 2: this._point = 3; point(this, slope2(this, t1 = slope3(this, x, y)), t1); break;
+        default: point(this, this._t0, t1 = slope3(this, x, y)); break;
+      }
+
+      this._x0 = this._x1, this._x1 = x;
+      this._y0 = this._y1, this._y1 = y;
+      this._t0 = t1;
+    }
+  };
+
+  (Object.create(MonotoneX.prototype)).point = function(x, y) {
+    MonotoneX.prototype.point.call(this, y, x);
+  };
+
+  // https://d3js.org/d3-zoom/ v3.0.1 Copyright 2010-2026 Mike Bostock
 
   var constant = x => () => x;
 
@@ -4659,7 +5794,7 @@ var TidyTree = (function () {
         scaleExtent = [0, Infinity],
         translateExtent = [[-Infinity, -Infinity], [Infinity, Infinity]],
         duration = 250,
-        interpolate = interpolateZoom,
+        interpolate = zoom$1,
         listeners = dispatch("start", "zoom", "end"),
         touchstarting,
         touchfirst,
@@ -4875,7 +6010,7 @@ var TidyTree = (function () {
           x0 = event.clientX,
           y0 = event.clientY;
 
-      dragDisable(event.view);
+      nodrag(event.view);
       nopropagation(event);
       g.mouse = [p, this.__zoom.invert(p)];
       interrupt(this);
@@ -7299,6 +8434,11 @@ var TidyTree = (function () {
     version: version
   });
 
+  // Earlier builds bundled patristic's UMD build, which defined a global
+  // `patristic`. Keep providing it for pages that relied on that.
+  if (typeof globalThis !== "undefined" && !globalThis.patristic) {
+      globalThis.patristic = patristic$1;
+  }
   class TidyTree {
       /**
        * This class function creates a TidyTree object.
@@ -7394,11 +8534,11 @@ var TidyTree = (function () {
           this.showTemporalAnnotations = options.showTemporalAnnotations ?? true;
           if (this.parent)
               this.draw(this.parent);
-          if (data instanceof Branch) {
-              this.setData(data);
+          if (typeof data === "string") {
+              this.setTree(data);
           }
           else {
-              this.setTree(data);
+              this.setData(data);
           }
           if (this.parent)
               this.recenter();
@@ -7559,7 +8699,7 @@ var TidyTree = (function () {
               if (!newColorOptions.predicate) {
                   console.warn('Warning: colorOptions.predicate not supplied');
               }
-              if (!newColorOptions.leavesOnly) {
+              if (newColorOptions.leavesOnly === undefined) {
                   newColorOptions.leavesOnly = false;
                   console.warn('Warning: colorOptions.leavesOnly not supplied and defaulted to false');
               }
@@ -8491,11 +9631,11 @@ var TidyTree = (function () {
                       .style("fill", (d) => findNodeColor(d, t.colorOptions))
                       .on("mouseenter focusin", (event, d) => {
                       const content = t.tooltipFormatter ? t.tooltipFormatter(d.data) : d.data.id;
-                      t.trigger("showtooltip", d, content);
+                      t.trigger("showtooltip", d, event, content);
                   })
-                      .on("mouseout focusout", (d) => t.trigger("hidetooltip", d))
-                      .on("contextmenu", (d) => t.trigger("contextmenu", d))
-                      .on("click", (d) => t.trigger("select", d));
+                      .on("mouseout focusout", (event, d) => t.trigger("hidetooltip", d, event))
+                      .on("contextmenu", (event, d) => t.trigger("contextmenu", d, event))
+                      .on("click", (event, d) => t.trigger("select", d, event));
                   const nodeLabels = newNodes
                       .append("text")
                       .text((d) => d.data.id)
@@ -9314,6 +10454,14 @@ var TidyTree = (function () {
           }
           const axisFn = this.layout == "horizontal" ? axisBottom : axisLeft;
           const axis = axisFn();
+          const orient = this.layout == "horizontal" ? "bottom" : "left";
+          if (ruler.attr("data-orient") !== orient) {
+              // d3-axis only sets tick line/text attributes and the group's
+              // text-anchor when its elements are first created, so clear the
+              // previous axis before switching between axisLeft and axisBottom.
+              ruler.selectAll(".tick, .domain").remove();
+              ruler.property("__axis", null).attr("data-orient", orient);
+          }
           if (this.type === "tree" && this.layout !== "circular") {
               ruler
                   .attr("opacity", 1)

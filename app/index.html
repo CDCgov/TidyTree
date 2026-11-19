@@ -1193,14 +1193,10 @@
               layout: d3.select("#layout").node().value,
               mode: d3.select("#mode").node().value,
               type: d3.select("#type").node().value,
-              colorOptions: 
-              { 
-                nodeColorMode: "list",
-                branchColorMode: "monophyletic",
-                defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-                defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-                highlightColor: d3.select("#highlightColor").node().value,
-              },
+              colorOptions: Object.assign(currentColorOptions(), {
+                nodeColorMode: "none",
+                branchColorMode: "none"
+              }),
               leafNodes: d3.select("#leafNodes").node().checked,
               branchNodes: d3.select("#branchNodes").node().checked,
               leafLabels: d3.select("#leafLabels").node().checked,
@@ -1217,7 +1213,25 @@
               hidetooltip: hideTooltip
             }
           );
+          // Highlighting needs the drawn nodes, so apply it once the tree is drawn
+          if (d3.select("#highlightMode").property("value") !== "none") {
+            tree.setColorOptions(currentColorOptions());
+          }
           populateCollapseNodeSelect();
+        }
+
+        // Builds colorOptions from the current state of the highlighting controls
+        function currentColorOptions() {
+          let mode = d3.select("#highlightMode").property("value");
+          return {
+            nodeColorMode: mode === "none" ? "none" : "predicate",
+            branchColorMode: mode === "monophyletic" ? "monophyletic" : "none",
+            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
+            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
+            highlightColor: d3.select("#highlightColor").node().value,
+            leavesOnly: mode !== "monophyletic",
+            predicate: mode === "monophyletic" ? isEColiOrShigellaNode : null
+          };
         }
 
         d3.select("#reset").on("click", e => buildTree());
@@ -1257,73 +1271,9 @@
           }
         }
 
-        d3.select("#highlightMode").on("input", function() {
-          if (this.value === "none") {
-            tree.setColorOptions({
-              nodeColorMode: "none",
-              branchColorMode: "none",
-              defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-              defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-              highlightColor: d3.select("#highlightColor").node().value
-            });
-          } else if (this.value === "leaves") {
-            tree.setColorOptions({
-              nodeColorMode: "predicate",
-              branchColorMode: "none",
-              defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-              defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-              highlightColor: d3.select("#highlightColor").node().value,
-              leavesOnly: true,
-            });
-          } else if (this.value === "monophyletic") {
-            tree.setColorOptions({
-              nodeColorMode: "predicate",
-              branchColorMode: "monophyletic",
-              defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-              defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-              highlightColor: d3.select("#highlightColor").node().value,
-              leavesOnly: false,
-              predicate: isEColiOrShigellaNode
-            })
-          }
-        });
+        d3.selectAll("#highlightMode, #defaultNodeColor, #defaultBranchColor, #highlightColor")
+          .on("input", () => tree.setColorOptions(currentColorOptions()));
 
-        d3.select("#defaultNodeColor").on("input", function() {
-          tree.setColorOptions({ 
-            nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "predicate",
-            branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
-            defaultNodeColor: this.value,
-            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-            highlightColor: d3.select("#highlightColor").node().value,
-            leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
-            predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
-          });
-        });
-
-        d3.select("#defaultBranchColor").on("input", function() {
-          tree.setColorOptions({ 
-            nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
-            branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
-            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-            defaultBranchColor: this.value,
-            highlightColor: d3.select("#highlightColor").node().value,
-            leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
-            predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
-          });
-        });
-
-        d3.select("#highlightColor").on("input", function() {
-          tree.setColorOptions({ 
-            nodeColorMode: d3.select("#highlightMode").property("value") === "none" ? "none" : "list",
-            branchColorMode: d3.select("#highlightMode").property("value") === "monophyletic" ? "monophyletic" : "none",
-            defaultNodeColor: d3.select("#defaultNodeColor").node().value,
-            defaultBranchColor: d3.select("#defaultBranchColor").node().value,
-            highlightColor: this.value,
-            leavesOnly: d3.select("#highlightMode").property("value") === "monophyletic" ? false : true,
-            predicate: d3.select("#highlightMode").property("value") === "monophyletic" ? isEColiOrShigellaNode : null
-          });
-        });
-        
         d3.select("#branchNodeSize").on("input", function() {
           tree.eachBranchNode((node, data) => {
             d3.select(node).attr("r", this.value);
@@ -1478,7 +1428,7 @@
         });
 
         // Context menu
-        function contextMenu(event, d) {
+        function contextMenu([d, event]) {
           event.preventDefault();
           const menu = d3.select("#context-menu");
           menu.style("display", "block")
@@ -1491,7 +1441,7 @@
         });
 
         // Tooltip
-        function showTooltip(event, d, content) {
+        function showTooltip([d, event, content]) {
           const tooltip = d3.select("#tooltip");
           tooltip.html(content)
             .style("display", "block")
