@@ -22,6 +22,7 @@ Upgrading from 0.7.x? See [Upgrading from 0.7.x to 0.8.0](README.md#upgrading-fr
 
 ### Fixed
 - `npm test` no longer reports unhandled errors from `redraw()` running against mocked DOM elements.
+- Demo app: highlighting is kept after Reset or loading a new tree, and the "collapse node" list is populated. Both read the rendered tree before it had been drawn.
 
 ## [0.8.0] - 2026-11-19
 

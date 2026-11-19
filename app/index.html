@@ -1213,10 +1213,13 @@
               hidetooltip: hideTooltip
             }
           );
-          // Highlighting needs the drawn nodes, so apply it once the tree is drawn
-          if (d3.select("#highlightMode").property("value") !== "none") {
-            tree.setColorOptions(currentColorOptions());
-          }
+          // Highlighting reads the drawn nodes, and the tree draws on the next
+          // animation frame, so apply it in a frame queued after that one.
+          requestAnimationFrame(() => {
+            if (d3.select("#highlightMode").property("value") !== "none") {
+              tree.setColorOptions(currentColorOptions());
+            }
+          });
           populateCollapseNodeSelect();
         }
 
@@ -1309,18 +1312,22 @@
         });
 
         // Collapse / Expand controls
+        // Called after changes that redraw the tree. Redraws happen on the next
+        // animation frame, so read the drawn nodes in a frame queued after it.
         function populateCollapseNodeSelect() {
           if (!tree) return;
-          const select = d3.select("#collapseNode");
-          select.selectAll("option").remove();
-          const guids = tree.getNodeGUIDs(false, null);
-          select
-            .selectAll("option")
-            .data(guids)
-            .enter()
-            .append("option")
-            .attr("value", d => d._guid)
-            .text(d => d.id || d._guid);
+          requestAnimationFrame(() => {
+            const select = d3.select("#collapseNode");
+            select.selectAll("option").remove();
+            const guids = tree.getNodeGUIDs(false, null);
+            select
+              .selectAll("option")
+              .data(guids)
+              .enter()
+              .append("option")
+              .attr("value", d => d._guid)
+              .text(d => d.id || d._guid);
+          });
         }
 
         d3.select("#btn-collapse").on("click", function() {
