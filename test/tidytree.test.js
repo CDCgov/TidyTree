@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import TidyTree from "../src/main.ts";
 
 describe("TidyTree", () => {
@@ -233,5 +233,50 @@ describe("TidyTree", () => {
       const tree = new TidyTree("((A:1.5,B:1):1,C:1);");
       expect(tree).toBeDefined();
     });
+  });
+});
+
+describe("destroy (#81)", () => {
+  // setup.js drops animation frames; queue them here so the test can run them.
+  let frames, raf, caf;
+  beforeEach(() => {
+    frames = new Map();
+    let next = 1;
+    raf = globalThis.requestAnimationFrame;
+    caf = globalThis.cancelAnimationFrame;
+    globalThis.requestAnimationFrame = (cb) => { frames.set(next, cb); return next++; };
+    globalThis.cancelAnimationFrame = (id) => { frames.delete(id); };
+  });
+  afterEach(() => {
+    globalThis.requestAnimationFrame = raf;
+    globalThis.cancelAnimationFrame = caf;
+  });
+  const flushFrames = () => { const cbs = [...frames.values()]; frames.clear(); cbs.forEach(cb => cb()); };
+
+  // A drawn tree whose parent is emptied on destroy; any later redraw work fails loudly.
+  const mockParent = (log) => ({
+    html: () => { log.push("html"); },
+    style: () => { log.push("redraw ran"); throw new Error("redraw ran after destroy"); }
+  });
+
+  it("skips a redraw queued before destroy()", () => {
+    const tree = new TidyTree("((A:1,B:1):1,C:1);");
+    const log = [];
+    tree.parent = mockParent(log);
+    tree.redraw();
+    tree.destroy();
+    expect(() => flushFrames()).not.toThrow();
+    expect(log).toEqual(["html"]);
+  });
+
+  it("does not queue new redraws after destroy()", () => {
+    const tree = new TidyTree("((A:1,B:1):1,C:1);");
+    const log = [];
+    tree.parent = mockParent(log);
+    tree.destroy();
+    tree.redraw();
+    expect(frames.size).toBe(0);
+    flushFrames();
+    expect(log).toEqual(["html"]);
   });
 });

@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import * as patristic from "patristic";
+import interpolatePath from "./interpolatePath";
 
 // Type definitions
 type Layout = "horizontal" | "vertical" | "circular" | "radial" | "unrooted";
@@ -173,6 +174,11 @@ export default class TidyTree {
   transform: d3.ZoomTransform = d3.zoomIdentity;
   zoom?: d3.ZoomBehavior<any, any>;
   tooltipFormatter?: (data: any) => string;
+
+  /** True once destroy() has been called; queued redraws are skipped. */
+  _destroyed: boolean = false;
+  /** Pending requestAnimationFrame ids for queued redraws. */
+  _pendingFrames: Set<number> = new Set();
 
   collapsedNodes: Set<string> = new Set();
   annotations: Map<string, any> = new Map();
@@ -1153,6 +1159,13 @@ export default class TidyTree {
    * @return undefined
    */
   destroy(): void {
+    this._destroyed = true;
+    // Cancel any redraw still waiting for its animation frame, so it can't touch
+    // removed elements (or a new tree drawn into the same parent).
+    if (typeof cancelAnimationFrame === "function") {
+      this._pendingFrames.forEach(id => cancelAnimationFrame(id));
+    }
+    this._pendingFrames.clear();
     if (this.parent) {
       //i.e. has already been drawn
       this.parent.html(null);
@@ -1206,9 +1219,13 @@ export default class TidyTree {
   redraw(): TidyTree {
     // eslint-disable-next-line @typescript-eslint/no-this-alias -- d3 .each(function) callbacks below rebind `this` to the DOM element
     const tree = this;
+    if (tree._destroyed) return tree;
     // Wrap the redraw in requestAnimationFrame for smoother rendering
-    requestAnimationFrame(() => {
-      const parent = tree.parent!;
+    const frame: number = requestAnimationFrame(() => {
+      tree._pendingFrames.delete(frame);
+      // destroy() may have run after this frame was queued
+      if (tree._destroyed || !tree.parent) return;
+      const parent = tree.parent;
 
       tree.width  = (parseFloat(parent.style("width")) - tree.margin[1] - tree.margin[3]) * tree.hStretch;
       tree.height = (parseFloat(parent.style("height")) - tree.margin[0] - tree.margin[2] - tree._rulerOffset()) * tree.vStretch;
@@ -1296,7 +1313,11 @@ export default class TidyTree {
             paths
               .transition()
               .duration(tree.animation)
-              .attr("d", linkTransformer)
+              // Not attr("d", …): d3's string interpolation would tween arc
+              // flags through invalid fractional values (see #80).
+              .attrTween("d", function (this: any, d: any) {
+                return interpolatePath(this.getAttribute("d") || "", linkTransformer(d));
+              })
               .attr("stroke", (d: any) => findBranchColor(d, tree.colorOptions))
               .attr("opacity", 1);
           }
@@ -1586,6 +1607,7 @@ export default class TidyTree {
       // Pass current zoom transform so the ruler respects zoom level
       updateRuler.call(t, t.transform || { k: 1 });
     });
+    tree._pendingFrames.add(frame);
 
     return this;
   }
