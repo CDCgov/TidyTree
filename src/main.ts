@@ -1539,8 +1539,14 @@ export default class TidyTree {
                 (!d.children && t.leafNodes) ? 1 : 0
               );
 
+            // Animate label rotation and offset alongside the node. Named so
+            // it doesn't interrupt (or get interrupted by) opacity transitions
+            // from setLeafLabels / setBranchLabels.
             const nodeLabels = update.select("text");
-            setNodeLabelPosition(nodeLabels, t.layout);
+            setNodeLabelPosition(
+              nodeLabels.transition("position").duration(t.animation),
+              t.layout
+            );
             // Update annotation text
             update.select("text.tidytree-node-annotation")
               .text((d: any) => {
@@ -2182,23 +2188,34 @@ linkTransformers.dendrogram = linkTransformers.tree;
  * @param selection - The text selection to position.
  * @param layout - The current layout ("vertical", "horizontal", "circular").
  */
-function setNodeLabelPosition(selection: d3.Selection<any, any, any, any>, layout: string): void {
-  if (layout === "vertical") {
-    selection
-      .attr("text-anchor", "start")
-      .attr("x", 5)
-      .attr("transform", "rotate(90)");
-  } else if (layout === "horizontal" || layout === "unrooted") {
-    selection
-      .attr("text-anchor", "start")
-      .attr("x", 5)
-      .attr("transform", "rotate(0)");
+function setNodeLabelPosition(
+  selection: d3.Selection<any, any, any, any> | d3.Transition<any, any, any, any>,
+  layout: string
+): void {
+  const circular = layout !== "vertical" && layout !== "horizontal" && layout !== "unrooted";
+  const anchor = (l: any) => (circular && isLeftHalf(l.x) ? "end" : "start");
+  const x = (l: any) => (circular && isLeftHalf(l.x) ? -5 : 5);
+  const transform = (l: any) =>
+    layout === "vertical" ? "rotate(90)" :
+    circular ? `rotate(${(((l.x / Math.PI) * 180) % 180) - 90})` :
+    "rotate(0)";
+
+  if ("duration" in selection) {
+    // text-anchor can't be tweened, so flip it halfway through, when the
+    // label is mid-turn, rather than snapping at the start.
+    (selection as d3.Transition<any, any, any, any>)
+      .attr("transform", transform)
+      .attr("x", x)
+      .attrTween("text-anchor", function (this: any, l: any) {
+        const from = this.getAttribute("text-anchor") || "start";
+        const to = anchor(l);
+        return (t: number) => (t < 0.5 ? from : to);
+      });
   } else {
-    // circular or radial
-    selection
-      .attr("transform", (l: any) => `rotate(${(((l.x / Math.PI) * 180) % 180) - 90})`)
-      .attr("text-anchor", (l: any) => (isLeftHalf(l.x) ? "end" : "start"))
-      .attr("x", (l: any) => (isLeftHalf(l.x) ? -5 : 5));
+    (selection as d3.Selection<any, any, any, any>)
+      .attr("text-anchor", anchor)
+      .attr("x", x)
+      .attr("transform", transform);
   }
 }
 

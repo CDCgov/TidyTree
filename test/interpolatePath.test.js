@@ -43,3 +43,51 @@ describe("interpolatePath (#80)", () => {
     expect(interpolatePath(b, noArc)(0.3)).toBe(noArc);
   });
 });
+
+describe("interpolatePath across path structures", () => {
+  // Minimal stand-in for an SVG path that "measures" the straight line from
+  // the first to the last coordinate in its d attribute.
+  const fakeDocument = () => {
+    const el = (tag) => ({
+      tag,
+      style: {},
+      isConnected: false,
+      attrs: {},
+      setAttribute(k, v) { this.attrs[k] = v; },
+      appendChild(child) { child.isConnected = this.isConnected; },
+      getTotalLength() {
+        const n = this.attrs.d.match(NUM).map(Number);
+        const [x0, y0, x1, y1] = [n[0], n[1], n[n.length - 2], n[n.length - 1]];
+        return Math.hypot(x1 - x0, y1 - y0);
+      },
+      getPointAtLength(len) {
+        const n = this.attrs.d.match(NUM).map(Number);
+        const [x0, y0, x1, y1] = [n[0], n[1], n[n.length - 2], n[n.length - 1]];
+        const f = len / Math.hypot(x1 - x0, y1 - y0);
+        return { x: x0 + (x1 - x0) * f, y: y0 + (y1 - y0) * f };
+      }
+    });
+    return {
+      body: { appendChild(child) { child.isConnected = true; } },
+      createElementNS: (_ns, tag) => el(tag)
+    };
+  };
+
+  it("tweens through resampled polylines when the DOM can measure paths", () => {
+    const saved = globalThis.document;
+    globalThis.document = fakeDocument();
+    try {
+      const square = "M0,0V10H10";
+      const smooth = "M0,0C5,0,5,10,10,10";
+      const interp = interpolatePath(square, smooth);
+      expect(interp(0)).toBe(square);
+      expect(interp(1)).toBe(smooth);
+      const mid = interp(0.5);
+      expect(mid).toMatch(/^M0,0L/);
+      expect(mid.match(/L/g).length).toBe(32);
+      expect(mid).toMatch(/L10,10$/);
+    } finally {
+      globalThis.document = saved;
+    }
+  });
+});
