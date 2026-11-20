@@ -34,14 +34,24 @@ let tree = new TidyTree(newick, { parent: "body" });
 
 ### TypeScript / ES Modules
 
-TidyTree is written in TypeScript and published as ES modules. You can also import it directly:
+TidyTree is written in TypeScript, but it is currently distributed only as a browser script that defines a global `TidyTree` (and expects a global `d3`). Importing it from a bundler (`import TidyTree from 'tidytree'`) doesn't work yet; ES module and CommonJS builds are tracked in [#55](https://github.com/CDCgov/TidyTree/issues/55) and [#56](https://github.com/CDCgov/TidyTree/issues/56). Type declarations are generated at `dist/main.d.ts`.
 
-```typescript
-import TidyTree from 'tidytree';
+### Upgrading from 0.7.x to 0.8.0
 
-const newick = "(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);";
-const tree = new TidyTree(newick, { parent: "body" });
-```
+No public methods were removed, but check the following. The [CHANGELOG](CHANGELOG.md) has the full list.
+
+- **Load d3 v7, not v5.** For example: `<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>`.
+- **Rendering happens on the next animation frame.** The constructor and setters no longer update the SVG synchronously. If you read the rendered tree right after creating or changing it (for example `getNodeGUIDs()`, or `setColorOptions()` with `nodeColorMode: "predicate"`, which uses it), wait a frame first:
+
+  ```javascript
+  const tree = new TidyTree(newick, { parent: "#tree" });
+  requestAnimationFrame(() => {
+    tree.setColorOptions({ nodeColorMode: "predicate", predicate: isInteresting, leavesOnly: true });
+  });
+  ```
+- **Event handlers** still receive one array argument with the node datum first; the DOM event is now its second element (`[datum, event]`), and `showtooltip` adds the formatted tooltip content as a third.
+- **Defaults changed:** node radius is now 3px (was 2.5px) and branch label size 10px (was 12px). Pass `nodeSize: 2.5` and `branchLabelSize: 12` to keep the old look.
+- **The constructor** treats a string as Newick and anything else as tree data, so pass a Newick string or a patristic `Branch`.
 
 ## Features
 
@@ -58,7 +68,7 @@ TidyTree supports the following features:
 - **Tooltips**: customizable via `setTooltipFormatter()`
 - **Virtualization**: render only visible nodes for large trees (1000+ nodes)
 - **Export**: PNG, SVG, PDF, and Newick formats
-- **Interactivity**: pan & zoom, search, context menu, node selection
+- **Interactivity**: pan & zoom, `search()`, and events for click (`select`), context menu, and tooltips
 
 ## Developer Documentation
 
@@ -133,6 +143,10 @@ and may be archived. Learn more at [http://www.cdc.gov/other/privacy.html](http:
 
 In order to test your changes locally before submitting a pull request, make your changes to `src/main.ts` and `app/index.html`. Then,
 use `rollup -c` from the root of the project directory. You can then open `app/index.html` in your browser to test your changes.
+
+Please add a line describing user-visible changes under **Unreleased** in [CHANGELOG.md](CHANGELOG.md).
+
+To cut a release, rename the **Unreleased** section in CHANGELOG.md to the new version and date, commit, then run `npm run release` (it bumps the version in `package.json`, `package-lock.json`, and the demo app, then commits and tags `vX.Y.Z`).
 
 ## Records
 
