@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import * as patristic from "patristic";
 import interpolatePath from "./interpolatePath";
+import { circularPoint, chordLinkLabel, elbowLinkLabel, smoothRadialLinkLabel, isLeftHalf } from "./radialLabels";
 
 // Type definitions
 type Layout = "horizontal" | "vertical" | "circular" | "radial" | "unrooted";
@@ -2177,19 +2178,6 @@ const linkTransformers: Record<string, Record<string, Record<string, (d: any) =>
 linkTransformers.dendrogram = linkTransformers.tree;
 
 /**
- * Calculate the coordinates of a point transformed onto a circle.
- *
- * @param x - The x-coordinate of the center of the point.
- * @param y - The y-coordinate of the center of the point.
- * @return The new x and y coordinates of the point on the circle.
- */
-function circularPoint(x: number, y: number): [number, number] {
-  y = +y;
-  x -= Math.PI / 2;
-  return [y * Math.cos(x), y * Math.sin(x)];
-}
-
-/**
  * Sets the position and rotation of node labels based on layout.
  * @param selection - The text selection to position.
  * @param layout - The current layout ("vertical", "horizontal", "circular").
@@ -2209,8 +2197,8 @@ function setNodeLabelPosition(selection: d3.Selection<any, any, any, any>, layou
     // circular or radial
     selection
       .attr("transform", (l: any) => `rotate(${(((l.x / Math.PI) * 180) % 180) - 90})`)
-      .attr("text-anchor", (l: any) => l.x % (2 * Math.PI) > Math.PI ? "end" : "start")
-      .attr("x", (l: any) => (l.x % (2 * Math.PI) > Math.PI ? -5 : 5));
+      .attr("text-anchor", (l: any) => (isLeftHalf(l.x) ? "end" : "start"))
+      .attr("x", (l: any) => (isLeftHalf(l.x) ? -5 : 5));
   }
 }
 
@@ -2248,18 +2236,8 @@ const labelTransformers: Record<string, Record<string, Record<string, (l: any) =
           2}) rotate(${Math.atan(
           (l.source.y - l.target.y) / (l.source.x - l.target.x)
         ) * radToDeg})`,
-      circular: (l: any) => {
-        const s = circularPoint(l.source.x, l.source.y),
-          t = circularPoint(l.target.x, l.target.y);
-        return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
-          2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
-      },
-      radial: (l: any) => {
-        const s = circularPoint(l.source.x, l.source.y),
-          t = circularPoint(l.target.x, l.target.y);
-        return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
-          2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
-      },
+      circular: (l: any) => chordLinkLabel(l.source.x, l.source.y, l.target.x, l.target.y),
+      radial: (l: any) => elbowLinkLabel(l.source.y, l.target.x, l.target.y),
       unrooted: (l: any) =>
         `translate(${(l.source.y + l.target.y) / 2}, ${(l.source.x +
           l.target.x) /
@@ -2272,18 +2250,8 @@ const labelTransformers: Record<string, Record<string, Record<string, (l: any) =
         `translate(${(l.source.y + l.target.y) / 2}, ${l.target.x})`,
       vertical: (l: any) =>
         `translate(${l.target.x}, ${(l.source.y + l.target.y) / 2}) rotate(90)`,
-      circular: (l: any) => {
-        const u = circularPoint(l.target.x, (l.source.y + l.target.y) / 2);
-        return `translate(${u[0]}, ${u[1]}) rotate(${((l.target.x * radToDeg) %
-          180) -
-          90})`;
-      },
-      radial: (l: any) => {
-        const u = circularPoint(l.target.x, (l.source.y + l.target.y) / 2);
-        return `translate(${u[0]}, ${u[1]}) rotate(${((l.target.x * radToDeg) %
-          180) -
-          90})`;
-      },
+      circular: (l: any) => elbowLinkLabel(l.source.y, l.target.x, l.target.y),
+      radial: (l: any) => elbowLinkLabel(l.source.y, l.target.x, l.target.y),
       unrooted: (l: any) =>
         `translate(${(l.source.y + l.target.y) / 2}, ${l.target.x})`
     }
@@ -2302,18 +2270,8 @@ const labelTransformers: Record<string, Record<string, Record<string, (l: any) =
           2}) rotate(${Math.atan(
           (l.source.weight - l.target.weight) / (l.source.x - l.target.x)
         ) * radToDeg})`,
-      circular: (l: any) => {
-        const s = circularPoint(l.source.x, l.source.weight),
-          t = circularPoint(l.target.x, l.target.weight);
-        return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
-          2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
-      },
-      radial: (l: any) => {
-        const s = circularPoint(l.source.x, l.source.weight),
-          t = circularPoint(l.target.x, l.target.weight);
-        return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
-          2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
-      },
+      circular: (l: any) => chordLinkLabel(l.source.x, l.source.weight, l.target.x, l.target.weight),
+      radial: (l: any) => elbowLinkLabel(l.source.weight, l.target.x, l.target.weight),
       unrooted: (l: any) =>
         `translate(${(l.source.weight + l.target.weight) / 2}, ${(l.source.x +
           l.target.x) /
@@ -2329,26 +2287,8 @@ const labelTransformers: Record<string, Record<string, Record<string, (l: any) =
         translate(${l.target.x}, ${(l.source.weight + l.target.weight) / 2})
         rotate(90)
       `,
-      circular: (l: any) => {
-        const u = circularPoint(
-          l.target.x,
-          (l.source.weight + l.target.weight) / 2
-        );
-        return `
-          translate(${u[0]}, ${u[1]})
-          rotate(${((l.target.x * radToDeg) % 180) - 90})
-        `;
-      },
-      radial: (l: any) => {
-        const u = circularPoint(
-          l.target.x,
-          (l.source.weight + l.target.weight) / 2
-        );
-        return `
-          translate(${u[0]}, ${u[1]})
-          rotate(${((l.target.x * radToDeg) % 180) - 90})
-        `;
-      },
+      circular: (l: any) => elbowLinkLabel(l.source.weight, l.target.x, l.target.weight),
+      radial: (l: any) => elbowLinkLabel(l.source.weight, l.target.x, l.target.weight),
       unrooted: (l: any) => `
         translate(${(l.source.weight + l.target.weight) / 2}, ${l.target.x})
       `
@@ -2356,8 +2296,18 @@ const labelTransformers: Record<string, Record<string, Record<string, (l: any) =
   }
 };
 
-labelTransformers.tree.smooth = labelTransformers.tree.straight;
-labelTransformers.weighted.smooth = labelTransformers.weighted.straight;
+// Smooth links match straight ones except in the circular/radial layouts,
+// where d3.linkRadial draws a curve rather than a chord.
+labelTransformers.tree.smooth = {
+  ...labelTransformers.tree.straight,
+  circular: (l: any) => smoothRadialLinkLabel(l.source.x, l.source.y, l.target.x, l.target.y),
+  radial: (l: any) => smoothRadialLinkLabel(l.source.x, l.source.y, l.target.x, l.target.y)
+};
+labelTransformers.weighted.smooth = {
+  ...labelTransformers.weighted.straight,
+  circular: (l: any) => smoothRadialLinkLabel(l.source.x, l.source.weight, l.target.x, l.target.weight),
+  radial: (l: any) => smoothRadialLinkLabel(l.source.x, l.source.weight, l.target.x, l.target.weight)
+};
 labelTransformers.dendrogram = labelTransformers.tree;
 
 function labeler(d: any): string {
