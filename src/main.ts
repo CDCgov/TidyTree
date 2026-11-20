@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import * as patristic from "patristic";
 import interpolatePath from "./interpolatePath";
-import { circularPoint, chordLinkLabel, elbowLinkLabel, smoothRadialLinkLabel, isLeftHalf } from "./radialLabels";
+import { circularPoint, chordLinkLabel, elbowLinkLabel, smoothLinkLabel, smoothRadialLinkLabel, isLeftHalf } from "./linkLabels";
 
 // Type definitions
 type Layout = "horizontal" | "vertical" | "circular" | "radial" | "unrooted";
@@ -2296,15 +2296,19 @@ const labelTransformers: Record<string, Record<string, Record<string, (l: any) =
   }
 };
 
-// Smooth links match straight ones except in the circular/radial layouts,
-// where d3.linkRadial draws a curve rather than a chord.
+// Smooth links are Bézier curves (d3.linkHorizontal / linkVertical /
+// linkRadial), so their labels follow the curve rather than the chord.
 labelTransformers.tree.smooth = {
-  ...labelTransformers.tree.straight,
+  horizontal: (l: any) => smoothLinkLabel(l.source.y, l.source.x, l.target.y, l.target.x, true),
+  vertical: (l: any) => smoothLinkLabel(l.source.x, l.source.y, l.target.x, l.target.y, false),
+  unrooted: (l: any) => smoothLinkLabel(l.source.y, l.source.x, l.target.y, l.target.x, true),
   circular: (l: any) => smoothRadialLinkLabel(l.source.x, l.source.y, l.target.x, l.target.y),
   radial: (l: any) => smoothRadialLinkLabel(l.source.x, l.source.y, l.target.x, l.target.y)
 };
 labelTransformers.weighted.smooth = {
-  ...labelTransformers.weighted.straight,
+  horizontal: (l: any) => smoothLinkLabel(l.source.weight, l.source.x, l.target.weight, l.target.x, true),
+  vertical: (l: any) => smoothLinkLabel(l.source.x, l.source.weight, l.target.x, l.target.weight, false),
+  unrooted: (l: any) => smoothLinkLabel(l.source.weight, l.source.x, l.target.weight, l.target.x, true),
   circular: (l: any) => smoothRadialLinkLabel(l.source.x, l.source.weight, l.target.x, l.target.weight),
   radial: (l: any) => smoothRadialLinkLabel(l.source.x, l.source.weight, l.target.x, l.target.weight)
 };

@@ -1,6 +1,6 @@
-// Label geometry for the circular and radial layouts. Angles follow d3's
-// convention (0 at 12 o'clock, increasing clockwise), so these agree with
-// d3.linkRadial / d3.pointRadial.
+// Branch and node label geometry. For the circular and radial layouts, angles
+// follow d3's convention (0 at 12 o'clock, increasing clockwise), so these
+// agree with d3.linkRadial / d3.pointRadial.
 
 const radToDeg = 180 / Math.PI;
 
@@ -16,6 +16,21 @@ function uprightRotation(dx: number, dy: number): number {
   if (dx === 0 && dy === 0) return 0;
   if (dx === 0) return 90;
   return Math.atan(dy / dx) * radToDeg;
+}
+
+/**
+ * Branch label for a smooth link in a horizontal or vertical layout
+ * (d3.linkHorizontal / d3.linkVertical), given its ends in screen coordinates.
+ * These curves are symmetric, so their midpoint is the chord's midpoint, but
+ * their tangent there has twice the chord's slope across the depth axis.
+ * @param horizontal - true for d3.linkHorizontal (depth runs along x).
+ */
+export function smoothLinkLabel(
+  x0: number, y0: number, x1: number, y1: number, horizontal: boolean
+): string {
+  const dx = x1 - x0, dy = y1 - y0;
+  const rotation = horizontal ? uprightRotation(dx, 2 * dy) : uprightRotation(2 * dx, dy);
+  return `translate(${(x0 + x1) / 2}, ${(y0 + y1) / 2}) rotate(${rotation})`;
 }
 
 /**

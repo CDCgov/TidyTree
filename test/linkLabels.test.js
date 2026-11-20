@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import * as d3 from "d3";
 import {
-  circularPoint, smoothRadialLinkLabel, chordLinkLabel, elbowLinkLabel, isLeftHalf
-} from "../src/radialLabels.ts";
+  circularPoint, smoothLinkLabel, smoothRadialLinkLabel, chordLinkLabel, elbowLinkLabel, isLeftHalf
+} from "../src/linkLabels.ts";
 
 const parse = (transform) => {
   const [, x, y, r] = transform.match(/translate\(([^,]+), ([^)]+)\) rotate\(([^)]+)\)/);
@@ -53,6 +53,31 @@ describe("smooth circular/radial branch labels (#68)", () => {
       }
     }
   });
+});
+
+describe("smooth horizontal/vertical/unrooted branch labels (#84)", () => {
+  // [x0, y0, x1, y1] in screen coordinates, including upward, flat and zero-length branches
+  const ends = [[0, 100, 80, 160], [10, 50, 90, -30], [0, 0, 120, 0], [0, 0, 0, 40], [20, 20, 20, 20]];
+
+  for (const [name, link, horizontal] of [
+    ["linkHorizontal", d3.linkHorizontal(), true],
+    ["linkVertical", d3.linkVertical(), false]
+  ]) {
+    it(`sit on the ${name} curve's midpoint, aligned with its tangent`, () => {
+      for (const [x0, y0, x1, y1] of ends) {
+        const n = link({ source: [x0, y0], target: [x1, y1] }).match(/-?[\d.]+(?:e[-+]?\d+)?/g).map(Number);
+        expect(n).toHaveLength(8);
+        const mid = [0, 1].map(i => (n[i] + 3 * n[2 + i] + 3 * n[4 + i] + n[6 + i]) / 8);
+        const tangent = [0, 1].map(i => n[6 + i] + n[4 + i] - n[2 + i] - n[i]);
+
+        const label = parse(smoothLinkLabel(x0, y0, x1, y1, horizontal));
+        expect(Math.hypot(label.x - mid[0], label.y - mid[1])).toBeLessThan(0.01);
+        if (Math.hypot(...tangent) > 1e-6) {
+          expect(sameLine(label.rotate, Math.atan2(tangent[1], tangent[0]) * 180 / Math.PI)).toBeLessThan(0.1);
+        }
+      }
+    });
+  }
 });
 
 describe("straight circular branch labels", () => {
