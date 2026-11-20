@@ -784,6 +784,10 @@ export default class TidyTree {
    * Set a custom formatter function for tooltip content.
    * The formatter receives the node data object and should return a string
    * to display in the tooltip. If not set, the node id is used by default.
+   * The result is passed to `showtooltip` handlers as the third element of
+   * their argument. It may contain text from the Newick input, so handlers
+   * should render it as plain text (e.g. `selection.text()` or
+   * `textContent`), not as HTML.
    * @param formatter A function that takes node data and returns a string.
    * @return The TidyTree object.
    */

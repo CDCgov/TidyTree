@@ -1450,7 +1450,9 @@
         // Tooltip
         function showTooltip([d, event, content]) {
           const tooltip = d3.select("#tooltip");
-          tooltip.html(content)
+          // Plain text only: content comes from node names in the loaded Newick
+          // file, so rendering it as HTML would allow script injection (#65).
+          tooltip.text(content)
             .style("display", "block")
             .style("left", (event.pageX + 10) + "px")
             .style("top", (event.pageY + 10) + "px");
