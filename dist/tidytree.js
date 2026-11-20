@@ -8434,6 +8434,192 @@ var TidyTree = (function () {
     version: version
   });
 
+  const NUMBER = /[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g;
+  /**
+   * Returns the indices (among all numbers in the path) of arc flags, i.e. the
+   * large-arc-flag and sweep-flag arguments of each `A`/`a` command. These must
+   * be 0 or 1, so they cannot be linearly interpolated.
+   */
+  function arcFlagIndices(path) {
+      const flags = new Set();
+      const token = /([A-Za-z])|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g;
+      let command = "";
+      let argIndex = 0;
+      let numIndex = 0;
+      let m;
+      while ((m = token.exec(path))) {
+          if (m[1]) {
+              command = m[1].toUpperCase();
+              argIndex = 0;
+          }
+          else {
+              if (command === "A") {
+                  const k = argIndex % 7;
+                  if (k === 3 || k === 4)
+                      flags.add(numIndex);
+              }
+              argIndex++;
+              numIndex++;
+          }
+      }
+      return flags;
+  }
+  /**
+   * Interpolates between two SVG path strings with the same command structure,
+   * keeping arc flags valid (0 or 1). d3's default string interpolation tweens
+   * every number, including arc flags, producing invalid path data such as
+   * `A45,45 0 0 0.5 …` mid-transition.
+   *
+   * If the paths have different structures (e.g. switching between straight,
+   * square and smooth branches), both are resampled into polylines with the
+   * same number of points and those are tweened instead. Where the DOM can't
+   * measure paths (no `getPointAtLength`), the interpolator jumps to the target.
+   */
+  function interpolatePath(a, b) {
+      const template = b.replace(NUMBER, "#");
+      if (a.replace(NUMBER, "#") !== template)
+          return resampledInterpolator(a, b);
+      const from = (a.match(NUMBER) || []).map(Number);
+      const to = (b.match(NUMBER) || []).map(Number);
+      const flags = arcFlagIndices(b);
+      return (t) => {
+          if (t >= 1)
+              return b;
+          let i = 0;
+          return template.replace(/#/g, () => {
+              const v = from[i] + (to[i] - from[i]) * t;
+              return String(flags.has(i++) ? Math.round(v) : v);
+          });
+      };
+  }
+  const SAMPLES = 32;
+  let scratch = null;
+  /**
+   * Samples `SAMPLES + 1` evenly spaced points along a path, or returns null if
+   * the environment can't measure SVG paths.
+   */
+  function samplePath(d) {
+      if (typeof document === "undefined" || !document.body)
+          return null;
+      if (!scratch || !scratch.isConnected) {
+          // Some browsers can't measure paths that aren't in the document, so keep
+          // the scratch path in an invisible, zero-size SVG.
+          const ns = "http://www.w3.org/2000/svg";
+          const svg = document.createElementNS(ns, "svg");
+          svg.setAttribute("aria-hidden", "true");
+          svg.setAttribute("width", "0");
+          svg.setAttribute("height", "0");
+          svg.style.position = "absolute";
+          svg.style.visibility = "hidden";
+          scratch = document.createElementNS(ns, "path");
+          svg.appendChild(scratch);
+          document.body.appendChild(svg);
+      }
+      if (typeof scratch.getTotalLength !== "function" || typeof scratch.getPointAtLength !== "function")
+          return null;
+      scratch.setAttribute("d", d);
+      let length;
+      try {
+          length = scratch.getTotalLength();
+      }
+      catch {
+          return null;
+      }
+      if (!isFinite(length))
+          return null;
+      const points = [];
+      for (let i = 0; i <= SAMPLES; i++) {
+          const p = scratch.getPointAtLength((length * i) / SAMPLES);
+          points.push([p.x, p.y]);
+      }
+      return points;
+  }
+  function resampledInterpolator(a, b) {
+      const from = samplePath(a);
+      const to = from && samplePath(b);
+      if (!from || !to)
+          return () => b;
+      return (t) => {
+          if (t >= 1)
+              return b;
+          if (t <= 0)
+              return a;
+          return "M" + from
+              .map(([x, y], i) => `${x + (to[i][0] - x) * t},${y + (to[i][1] - y) * t}`)
+              .join("L");
+      };
+  }
+
+  // Branch and node label geometry. For the circular and radial layouts, angles
+  // follow d3's convention (0 at 12 o'clock, increasing clockwise), so these
+  // agree with d3.linkRadial / d3.pointRadial.
+  const radToDeg$1 = 180 / Math.PI;
+  /** Converts a polar position (angle, radius) to SVG [x, y]. */
+  function circularPoint(angle, radius) {
+      radius = +radius;
+      angle -= Math.PI / 2;
+      return [radius * Math.cos(angle), radius * Math.sin(angle)];
+  }
+  /** Rotation (degrees) that keeps text along direction (dx, dy) upright. */
+  function uprightRotation(dx, dy) {
+      if (dx === 0 && dy === 0)
+          return 0;
+      if (dx === 0)
+          return 90;
+      return Math.atan(dy / dx) * radToDeg$1;
+  }
+  /**
+   * Branch label for a smooth link in a horizontal or vertical layout
+   * (d3.linkHorizontal / d3.linkVertical), given its ends in screen coordinates.
+   * These curves are symmetric, so their midpoint is the chord's midpoint, but
+   * their tangent there has twice the chord's slope across the depth axis.
+   * @param horizontal - true for d3.linkHorizontal (depth runs along x).
+   */
+  function smoothLinkLabel(x0, y0, x1, y1, horizontal) {
+      const dx = x1 - x0, dy = y1 - y0;
+      const rotation = horizontal ? uprightRotation(dx, 2 * dy) : uprightRotation(2 * dx, dy);
+      return `translate(${(x0 + x1) / 2}, ${(y0 + y1) / 2}) rotate(${rotation})`;
+  }
+  /**
+   * Branch label for a smooth radial link (d3.linkRadial, a cubic Bézier with
+   * control points at the mid radius): placed at the curve's midpoint and
+   * aligned with its tangent there.
+   */
+  function smoothRadialLinkLabel(sourceAngle, sourceRadius, targetAngle, targetRadius) {
+      const midRadius = (sourceRadius + targetRadius) / 2;
+      const p0 = circularPoint(sourceAngle, sourceRadius);
+      const p1 = circularPoint(sourceAngle, midRadius);
+      const p2 = circularPoint(targetAngle, midRadius);
+      const p3 = circularPoint(targetAngle, targetRadius);
+      const x = (p0[0] + 3 * p1[0] + 3 * p2[0] + p3[0]) / 8;
+      const y = (p0[1] + 3 * p1[1] + 3 * p2[1] + p3[1]) / 8;
+      const rotation = uprightRotation(p3[0] + p2[0] - p1[0] - p0[0], p3[1] + p2[1] - p1[1] - p0[1]);
+      return `translate(${x}, ${y}) rotate(${rotation})`;
+  }
+  /** Branch label for a straight link drawn as a chord from source to target. */
+  function chordLinkLabel(sourceAngle, sourceRadius, targetAngle, targetRadius) {
+      const s = circularPoint(sourceAngle, sourceRadius);
+      const t = circularPoint(targetAngle, targetRadius);
+      return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) / 2}) rotate(${uprightRotation(t[0] - s[0], t[1] - s[1])})`;
+  }
+  /**
+   * Branch label for an elbow link (an arc at the source radius, then a radial
+   * line out to the target): placed at the middle of the radial line.
+   */
+  function elbowLinkLabel(sourceRadius, targetAngle, targetRadius) {
+      const u = circularPoint(targetAngle, (sourceRadius + targetRadius) / 2);
+      return `translate(${u[0]}, ${u[1]}) rotate(${((targetAngle * radToDeg$1) % 180) - 90})`;
+  }
+  /**
+   * Whether a node label at this angle is on the left half of the circle, where
+   * it is flipped (anchored at its end) so it reads outward and stays upright.
+   * The 6 o'clock position (angle π) counts as the left half: its rotation is
+   * -90°, so only an end anchor points the text away from the center.
+   */
+  function isLeftHalf(angle) {
+      return angle % (2 * Math.PI) >= Math.PI;
+  }
+
   // Earlier builds bundled patristic's UMD build, which defined a global
   // `patristic`. Keep providing it for pages that relied on that.
   if (typeof globalThis !== "undefined" && !globalThis.patristic) {
@@ -8477,6 +8663,10 @@ var TidyTree = (function () {
           this.height = 0;
           this.scalar = 0;
           this.transform = identity;
+          /** True once destroy() has been called; queued redraws are skipped. */
+          this._destroyed = false;
+          /** Pending requestAnimationFrame ids for queued redraws. */
+          this._pendingFrames = new Set();
           this.collapsedNodes = new Set();
           this.annotations = new Map();
           this.temporalAnnotations = new Map();
@@ -9036,6 +9226,10 @@ var TidyTree = (function () {
        * Set a custom formatter function for tooltip content.
        * The formatter receives the node data object and should return a string
        * to display in the tooltip. If not set, the node id is used by default.
+       * The result is passed to `showtooltip` handlers as the third element of
+       * their argument. It may contain text from the Newick input, so handlers
+       * should render it as plain text (e.g. `selection.text()` or
+       * `textContent`), not as HTML.
        * @param formatter A function that takes node data and returns a string.
        * @return The TidyTree object.
        */
@@ -9390,6 +9584,13 @@ var TidyTree = (function () {
        * @return undefined
        */
       destroy() {
+          this._destroyed = true;
+          // Cancel any redraw still waiting for its animation frame, so it can't touch
+          // removed elements (or a new tree drawn into the same parent).
+          if (typeof cancelAnimationFrame === "function") {
+              this._pendingFrames.forEach(id => cancelAnimationFrame(id));
+          }
+          this._pendingFrames.clear();
           if (this.parent) {
               //i.e. has already been drawn
               this.parent.html(null);
@@ -9441,8 +9642,14 @@ var TidyTree = (function () {
       redraw() {
           // eslint-disable-next-line @typescript-eslint/no-this-alias -- d3 .each(function) callbacks below rebind `this` to the DOM element
           const tree$1 = this;
+          if (tree$1._destroyed)
+              return tree$1;
           // Wrap the redraw in requestAnimationFrame for smoother rendering
-          requestAnimationFrame(() => {
+          const frame = requestAnimationFrame(() => {
+              tree$1._pendingFrames.delete(frame);
+              // destroy() may have run after this frame was queued
+              if (tree$1._destroyed || !tree$1.parent)
+                  return;
               const parent = tree$1.parent;
               tree$1.width = (parseFloat(parent.style("width")) - tree$1.margin[1] - tree$1.margin[3]) * tree$1.hStretch;
               tree$1.height = (parseFloat(parent.style("height")) - tree$1.margin[0] - tree$1.margin[2] - tree$1._rulerOffset()) * tree$1.vStretch;
@@ -9518,31 +9725,25 @@ var TidyTree = (function () {
                       paths
                           .transition()
                           .duration(tree$1.animation)
-                          .attr("d", linkTransformer)
+                          // Not attr("d", …): d3's string interpolation would tween arc
+                          // flags through invalid fractional values (see #80).
+                          .attrTween("d", function (d) {
+                          return interpolatePath(this.getAttribute("d") || "", linkTransformer(d));
+                      })
                           .attr("stroke", (d) => findBranchColor(d, tree$1.colorOptions))
                           .attr("opacity", 1);
                   }
                   const labelTransformer = labelTransformers[tree$1.type][tree$1.mode][tree$1.layout];
                   const labels = update.select("text");
                   if (tree$1.animation) {
-                      // Transition transform and text progressively
+                      // One transition for transform, opacity and text: a second unnamed
+                      // transition on the same element would interrupt this one (see #83).
                       labels
                           .transition()
                           .duration(tree$1.animation)
                           .attr("transform", (d) => labelTransformer(d))
+                          .style("opacity", tree$1.branchDistances ? 1 : 0)
                           .text(labeler);
-                      if (tree$1.branchDistances) {
-                          labels
-                              .transition()
-                              .duration(tree$1.animation)
-                              .style("opacity", 1);
-                      }
-                      else {
-                          labels
-                              .transition()
-                              .duration(tree$1.animation)
-                              .style("opacity", 0);
-                      }
                   }
                   else {
                       labels.text(labeler).attr("transform", (d) => labelTransformer(d));
@@ -9727,8 +9928,11 @@ var TidyTree = (function () {
                           .style("fill", (d) => findNodeColor(d, t.colorOptions))
                           .style("opacity", (d) => (d.children && t.branchNodes) ||
                           (!d.children && t.leafNodes) ? 1 : 0);
+                      // Animate label rotation and offset alongside the node. Named so
+                      // it doesn't interrupt (or get interrupted by) opacity transitions
+                      // from setLeafLabels / setBranchLabels.
                       const nodeLabels = update.select("text");
-                      setNodeLabelPosition(nodeLabels, t.layout);
+                      setNodeLabelPosition(nodeLabels.transition("position").duration(t.animation), t.layout);
                       // Update annotation text
                       update.select("text.tidytree-node-annotation")
                           .text((d) => {
@@ -9787,6 +9991,7 @@ var TidyTree = (function () {
               // Pass current zoom transform so the ruler respects zoom level
               updateRuler.call(t, t.transform || { k: 1 });
           });
+          tree$1._pendingFrames.add(frame);
           return this;
       }
       /**
@@ -10275,41 +10480,34 @@ var TidyTree = (function () {
   };
   linkTransformers.dendrogram = linkTransformers.tree;
   /**
-   * Calculate the coordinates of a point transformed onto a circle.
-   *
-   * @param x - The x-coordinate of the center of the point.
-   * @param y - The y-coordinate of the center of the point.
-   * @return The new x and y coordinates of the point on the circle.
-   */
-  function circularPoint(x, y) {
-      y = +y;
-      x -= Math.PI / 2;
-      return [y * Math.cos(x), y * Math.sin(x)];
-  }
-  /**
    * Sets the position and rotation of node labels based on layout.
    * @param selection - The text selection to position.
    * @param layout - The current layout ("vertical", "horizontal", "circular").
    */
   function setNodeLabelPosition(selection, layout) {
-      if (layout === "vertical") {
+      const circular = layout !== "vertical" && layout !== "horizontal" && layout !== "unrooted";
+      const anchor = (l) => (circular && isLeftHalf(l.x) ? "end" : "start");
+      const x = (l) => (circular && isLeftHalf(l.x) ? -5 : 5);
+      const transform = (l) => layout === "vertical" ? "rotate(90)" :
+          circular ? `rotate(${(((l.x / Math.PI) * 180) % 180) - 90})` :
+              "rotate(0)";
+      if ("duration" in selection) {
+          // text-anchor can't be tweened, so flip it halfway through, when the
+          // label is mid-turn, rather than snapping at the start.
           selection
-              .attr("text-anchor", "start")
-              .attr("x", 5)
-              .attr("transform", "rotate(90)");
-      }
-      else if (layout === "horizontal" || layout === "unrooted") {
-          selection
-              .attr("text-anchor", "start")
-              .attr("x", 5)
-              .attr("transform", "rotate(0)");
+              .attr("transform", transform)
+              .attr("x", x)
+              .attrTween("text-anchor", function (l) {
+              const from = this.getAttribute("text-anchor") || "start";
+              const to = anchor(l);
+              return (t) => (t < 0.5 ? from : to);
+          });
       }
       else {
-          // circular or radial
           selection
-              .attr("transform", (l) => `rotate(${(((l.x / Math.PI) * 180) % 180) - 90})`)
-              .attr("text-anchor", (l) => l.x % (2 * Math.PI) > Math.PI ? "end" : "start")
-              .attr("x", (l) => (l.x % (2 * Math.PI) > Math.PI ? -5 : 5));
+              .attr("text-anchor", anchor)
+              .attr("x", x)
+              .attr("transform", transform);
       }
   }
   const nodeTransformers = {
@@ -10338,16 +10536,8 @@ var TidyTree = (function () {
               vertical: (l) => `translate(${(l.source.x + l.target.x) / 2}, ${(l.source.y +
                 l.target.y) /
                 2}) rotate(${Math.atan((l.source.y - l.target.y) / (l.source.x - l.target.x)) * radToDeg})`,
-              circular: (l) => {
-                  const s = circularPoint(l.source.x, l.source.y), t = circularPoint(l.target.x, l.target.y);
-                  return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
-                    2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
-              },
-              radial: (l) => {
-                  const s = circularPoint(l.source.x, l.source.y), t = circularPoint(l.target.x, l.target.y);
-                  return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
-                    2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
-              },
+              circular: (l) => chordLinkLabel(l.source.x, l.source.y, l.target.x, l.target.y),
+              radial: (l) => elbowLinkLabel(l.source.y, l.target.x, l.target.y),
               unrooted: (l) => `translate(${(l.source.y + l.target.y) / 2}, ${(l.source.x +
                 l.target.x) /
                 2}) rotate(${Math.atan((l.target.x - l.source.x) / (l.target.y - l.source.y)) * radToDeg})`
@@ -10355,18 +10545,8 @@ var TidyTree = (function () {
           square: {
               horizontal: (l) => `translate(${(l.source.y + l.target.y) / 2}, ${l.target.x})`,
               vertical: (l) => `translate(${l.target.x}, ${(l.source.y + l.target.y) / 2}) rotate(90)`,
-              circular: (l) => {
-                  const u = circularPoint(l.target.x, (l.source.y + l.target.y) / 2);
-                  return `translate(${u[0]}, ${u[1]}) rotate(${((l.target.x * radToDeg) %
-                    180) -
-                    90})`;
-              },
-              radial: (l) => {
-                  const u = circularPoint(l.target.x, (l.source.y + l.target.y) / 2);
-                  return `translate(${u[0]}, ${u[1]}) rotate(${((l.target.x * radToDeg) %
-                    180) -
-                    90})`;
-              },
+              circular: (l) => elbowLinkLabel(l.source.y, l.target.x, l.target.y),
+              radial: (l) => elbowLinkLabel(l.source.y, l.target.x, l.target.y),
               unrooted: (l) => `translate(${(l.source.y + l.target.y) / 2}, ${l.target.x})`
           }
       },
@@ -10378,16 +10558,8 @@ var TidyTree = (function () {
               vertical: (l) => `translate(${(l.source.x + l.target.x) / 2}, ${(l.source.weight +
                 l.target.weight) /
                 2}) rotate(${Math.atan((l.source.weight - l.target.weight) / (l.source.x - l.target.x)) * radToDeg})`,
-              circular: (l) => {
-                  const s = circularPoint(l.source.x, l.source.weight), t = circularPoint(l.target.x, l.target.weight);
-                  return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
-                    2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
-              },
-              radial: (l) => {
-                  const s = circularPoint(l.source.x, l.source.weight), t = circularPoint(l.target.x, l.target.weight);
-                  return `translate(${(s[0] + t[0]) / 2}, ${(s[1] + t[1]) /
-                    2}) rotate(${Math.atan((s[1] - t[1]) / (s[0] - t[0])) * radToDeg})`;
-              },
+              circular: (l) => chordLinkLabel(l.source.x, l.source.weight, l.target.x, l.target.weight),
+              radial: (l) => elbowLinkLabel(l.source.weight, l.target.x, l.target.weight),
               unrooted: (l) => `translate(${(l.source.weight + l.target.weight) / 2}, ${(l.source.x +
                 l.target.x) /
                 2}) rotate(${Math.atan((l.target.x - l.source.x) / (l.target.weight - l.source.weight)) * radToDeg})`
@@ -10400,28 +10572,30 @@ var TidyTree = (function () {
         translate(${l.target.x}, ${(l.source.weight + l.target.weight) / 2})
         rotate(90)
       `,
-              circular: (l) => {
-                  const u = circularPoint(l.target.x, (l.source.weight + l.target.weight) / 2);
-                  return `
-          translate(${u[0]}, ${u[1]})
-          rotate(${((l.target.x * radToDeg) % 180) - 90})
-        `;
-              },
-              radial: (l) => {
-                  const u = circularPoint(l.target.x, (l.source.weight + l.target.weight) / 2);
-                  return `
-          translate(${u[0]}, ${u[1]})
-          rotate(${((l.target.x * radToDeg) % 180) - 90})
-        `;
-              },
+              circular: (l) => elbowLinkLabel(l.source.weight, l.target.x, l.target.weight),
+              radial: (l) => elbowLinkLabel(l.source.weight, l.target.x, l.target.weight),
               unrooted: (l) => `
         translate(${(l.source.weight + l.target.weight) / 2}, ${l.target.x})
       `
           }
       }
   };
-  labelTransformers.tree.smooth = labelTransformers.tree.straight;
-  labelTransformers.weighted.smooth = labelTransformers.weighted.straight;
+  // Smooth links are Bézier curves (d3.linkHorizontal / linkVertical /
+  // linkRadial), so their labels follow the curve rather than the chord.
+  labelTransformers.tree.smooth = {
+      horizontal: (l) => smoothLinkLabel(l.source.y, l.source.x, l.target.y, l.target.x, true),
+      vertical: (l) => smoothLinkLabel(l.source.x, l.source.y, l.target.x, l.target.y, false),
+      unrooted: (l) => smoothLinkLabel(l.source.y, l.source.x, l.target.y, l.target.x, true),
+      circular: (l) => smoothRadialLinkLabel(l.source.x, l.source.y, l.target.x, l.target.y),
+      radial: (l) => smoothRadialLinkLabel(l.source.x, l.source.y, l.target.x, l.target.y)
+  };
+  labelTransformers.weighted.smooth = {
+      horizontal: (l) => smoothLinkLabel(l.source.weight, l.source.x, l.target.weight, l.target.x, true),
+      vertical: (l) => smoothLinkLabel(l.source.x, l.source.weight, l.target.x, l.target.weight, false),
+      unrooted: (l) => smoothLinkLabel(l.source.weight, l.source.x, l.target.weight, l.target.x, true),
+      circular: (l) => smoothRadialLinkLabel(l.source.x, l.source.weight, l.target.x, l.target.weight),
+      radial: (l) => smoothRadialLinkLabel(l.source.x, l.source.weight, l.target.x, l.target.weight)
+  };
   labelTransformers.dendrogram = labelTransformers.tree;
   function labeler(d) {
       // Show actual branch length; leaves without an explicit length show "—"
