@@ -49,7 +49,7 @@ No public methods were removed, but check the following. The [CHANGELOG](CHANGEL
     tree.setColorOptions({ nodeColorMode: "predicate", predicate: isInteresting, leavesOnly: true });
   });
   ```
-- **Event handlers** still receive one array argument with the node datum first; the DOM event is now its second element (`[datum, event]`), and `showtooltip` adds the formatted tooltip content as a third.
+- **Event handlers** still receive one array argument with the node datum first; the DOM event is now its second element (`[datum, event]`), and `showtooltip` adds the formatted tooltip content as a third. That content can come straight from node names in the Newick input, so render it as text (`selection.text()` / `textContent`), never with `.html()` / `innerHTML`.
 - **Defaults changed:** node radius is now 3px (was 2.5px) and branch label size 10px (was 12px). Pass `nodeSize: 2.5` and `branchLabelSize: 12` to keep the old look.
 - **The constructor** treats a string as Newick and anything else as tree data, so pass a Newick string or a patristic `Branch`.
 

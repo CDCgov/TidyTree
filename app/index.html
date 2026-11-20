@@ -239,7 +239,8 @@
         border-bottom: 1px solid var(--color-border);
       }
 
-      .sidebar-section input[type="checkbox"] {
+      /* Hides only the accordion toggles, not the settings checkboxes */
+      .sidebar-section .accordion-checkbox {
         display: none;
       }
 
@@ -266,15 +267,15 @@
         transition: var(--transition);
       }
 
-      .sidebar-section input[type="checkbox"]:checked ~ .panel-content {
+      .sidebar-section .accordion-checkbox:checked ~ .panel-content {
         display: flex;
       }
 
-      .sidebar-section input[type="checkbox"]:not(:checked) ~ .panel-content {
+      .sidebar-section .accordion-checkbox:not(:checked) ~ .panel-content {
         display: none;
       }
 
-      .sidebar-section input[type="checkbox"]:checked ~ label h3::after {
+      .sidebar-section .accordion-checkbox:checked ~ label h3::after {
         transform: rotate(45deg);
       }
 
@@ -831,26 +832,26 @@
                 <label for="mode">Branch Mode</label>
                 <select id="mode" class="w-full"></select>
               </div>
-              <div class="toggle-group">
+              <label class="toggle-group">
                 <input type="checkbox" id="branchNodes">
                 <span>Show Branch Nodes</span>
-              </div>
+              </label>
               <div class="form-group">
                 <label>Branch Node Size</label>
                 <input id="branchNodeSize" type="range" min="0.5" max="10" value="2.5" step="0.5">
               </div>
-              <div class="toggle-group">
+              <label class="toggle-group">
                 <input type="checkbox" id="branchLabels">
                 <span>Show Branch Labels</span>
-              </div>
+              </label>
               <div class="form-group">
                 <label>Branch Label Size</label>
                 <input id="branchLabelSize" type="range" min="1" max="32" value="6" step="1">
               </div>
-              <div class="toggle-group">
+              <label class="toggle-group">
                 <input type="checkbox" id="branchDistances">
                 <span>Show Branch Distances</span>
-              </div>
+              </label>
               <div class="form-group">
                 <label>Branch Distance Size</label>
                 <input id="branchDistanceSize" type="range" min="1" max="32" value="12" step="1">
@@ -865,26 +866,26 @@
             <h3>Leaves</h3>
             </label>
             <div class="panel-content">
-              <div class="toggle-group">
+              <label class="toggle-group">
                 <input type="checkbox" id="leafNodes" checked>
                 <span>Show Leaf Nodes</span>
-              </div>
+              </label>
               <div class="form-group">
                 <label>Leaf Node Size</label>
                 <input id="leafNodeSize" type="range" min="0.5" max="10" value="2.5" step="0.5">
               </div>
-              <div class="toggle-group">
+              <label class="toggle-group">
                 <input type="checkbox" id="leafLabels">
                 <span>Show Leaf Labels</span>
-              </div>
+              </label>
               <div class="form-group">
                 <label>Leaf Label Size</label>
                 <input id="leafLabelSize" type="range" min="1" max="32" value="12" step="1">
               </div>
-              <div class="toggle-group">
+              <label class="toggle-group">
                 <input type="checkbox" id="equidistantLeaves" checked>
                 <span>Equidistant Leaves</span>
-              </div>
+              </label>
             </div>
           </div>
 
@@ -947,22 +948,22 @@
             <h3>Meta</h3>
             </label>
             <div class="panel-content">
-              <div class="toggle-group">
+              <label class="toggle-group">
                 <input type="checkbox" id="ruler" checked>
                 <span>Show Ruler</span>
-              </div>
+              </label>
               <div class="form-group">
                 <label>Background</label>
                 <input type="color" id="background" value="#ffffff">
               </div>
-              <div class="toggle-group">
-                <input type="checkbox" id="tooltips">
+              <label class="toggle-group">
+                <input type="checkbox" id="tooltips" checked>
                 <span>Enable Tooltips</span>
-              </div>
-              <div class="toggle-group">
+              </label>
+              <label class="toggle-group">
                 <input type="checkbox" id="interactive" checked>
                 <span>Pan & Zoom</span>
-              </div>
+              </label>
               <div class="form-group">
                 <label>Animation Time (ms)</label>
                 <input id="animation" type="range" min="0" max="2000" value="0" step="10">
@@ -977,10 +978,10 @@
             <h3>Temporal Annotations</h3>
             </label>
             <div class="panel-content">
-              <div class="toggle-group">
+              <label class="toggle-group">
                 <input type="checkbox" id="showTemporal" checked>
                 <span>Show Temporal Bars</span>
-              </div>
+              </label>
               <div class="form-group">
                 <label for="temporalGuid">Node GUID</label>
                 <input type="text" id="temporalGuid" placeholder="Enter node GUID">
@@ -1100,7 +1101,7 @@
 
       <script src="https://d3js.org/d3.v7.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-      <script src="tidytree.js?v=0.8.0"></script>
+      <script src="tidytree.js?v=0.8.1"></script>
       <script>
         var tree, original;
 
@@ -1448,9 +1449,13 @@
         });
 
         // Tooltip
+        // TidyTree always emits tooltip events; the demo decides whether to show them.
         function showTooltip([d, event, content]) {
+          if (!d3.select("#tooltips").property("checked")) return;
           const tooltip = d3.select("#tooltip");
-          tooltip.html(content)
+          // Plain text only: content comes from node names in the loaded Newick
+          // file, so rendering it as HTML would allow script injection (#65).
+          tooltip.text(content)
             .style("display", "block")
             .style("left", (event.pageX + 10) + "px")
             .style("top", (event.pageY + 10) + "px");
@@ -1459,6 +1464,10 @@
         function hideTooltip() {
           d3.select("#tooltip").style("display", "none");
         }
+
+        d3.select("#tooltips").on("change.tooltip", function() {
+          if (!this.checked) hideTooltip();
+        });
 
         // Temporal Annotations
         d3.select("#btn-add-temporal").on("click", function() {

@@ -1,5 +1,5 @@
 {
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Uncompromisingly Flexible Phylogenetic Trees, Powered by D3.js",
   "name": "tidytree",
   "type": "module",
@@ -45,6 +45,6 @@
     "vitest": "^5.0.5"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=26.13.0"
   }
 }
