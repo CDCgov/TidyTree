@@ -1326,23 +1326,14 @@ export default class TidyTree {
             labelTransformers[tree.type][tree.mode][tree.layout];
           const labels = update.select("text");
           if (tree.animation) {
-            // Transition transform and text progressively
+            // One transition for transform, opacity and text: a second unnamed
+            // transition on the same element would interrupt this one (see #83).
             labels
               .transition()
               .duration(tree.animation)
               .attr("transform", (d: any) => labelTransformer(d))
+              .style("opacity", tree.branchDistances ? 1 : 0)
               .text(labeler);
-            if (tree.branchDistances) {
-              labels
-                .transition()
-                .duration(tree.animation)
-                .style("opacity", 1);
-            } else {
-              labels
-                .transition()
-                .duration(tree.animation)
-                .style("opacity", 0);
-            }
           } else {
             labels.text(labeler).attr("transform", (d: any) => labelTransformer(d));
             labels.style("opacity", tree.branchDistances ? 1 : 0);
